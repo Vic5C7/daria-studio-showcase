@@ -61,8 +61,8 @@ export type GraduationAddOn = {
 
 export const brand = {
   name: {
-    zh: "DG墨尔本摄影",
-    en: "DG Melbourne Photography"
+    zh: "DARIA STUDIO",
+    en: "DARIA STUDIO"
   },
   tagline: {
     zh: "毕业照与注册结婚跟拍",
