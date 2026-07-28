@@ -17,9 +17,11 @@ approach, and deployment direction are confirmed.
 
 ## Repository State
 
-- `prototype/high-fidelity/` contains the current runnable high-fidelity prototype.
-- `frontend/` is reserved for the future production frontend and is currently a placeholder.
-- `backend/` is reserved for the future production backend and is currently a placeholder.
+- `repos/` contains future production code placeholders.
+- `repos/frontend/` is reserved for the future production frontend.
+- `repos/backend/` is reserved for the future production backend.
+- `wiki/` contains product documentation, user stories, acceptance criteria, and prototypes.
+- `wiki/prototype/high-fidelity/` contains the current runnable high-fidelity prototype.
 - `sample_pic/` contains original photo assets.
 
 ## Decision Rules
@@ -59,8 +61,8 @@ approach, and deployment direction are confirmed.
 ## Git And Verification Rules
 
 - Check Git status before making changes and before finalizing work.
-- If a change affects `prototype/high-fidelity/`, verify that its build still passes.
-- GitHub Pages currently deploys `prototype/high-fidelity/`; if deployment configuration
+- If a change affects `wiki/prototype/high-fidelity/`, verify that its build still passes.
+- GitHub Pages currently deploys `wiki/prototype/high-fidelity/`; if deployment configuration
   changes, keep the working directory, cache path, and artifact path aligned.
 - Do not commit generated dependency folders or build output such as `node_modules/` or
   `dist/`.

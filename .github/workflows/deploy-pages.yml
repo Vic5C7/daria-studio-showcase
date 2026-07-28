@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: prototype/high-fidelity
+        working-directory: wiki/prototype/high-fidelity
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: prototype/high-fidelity/package-lock.json
+          cache-dependency-path: wiki/prototype/high-fidelity/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -44,7 +44,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: prototype/high-fidelity/dist
+          path: wiki/prototype/high-fidelity/dist
 
   deploy:
     needs: build

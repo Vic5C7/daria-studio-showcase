@@ -2,8 +2,11 @@
 
 This repository is being reset for the future production DARIA STUDIO website.
 
-The current working website is now kept as a high-fidelity prototype, while
-`frontend/` and `backend/` are reserved for the future production rebuild.
+The repository is organized into:
+
+- `repos/` for future production code.
+- `wiki/` for product documentation, user stories, acceptance criteria, and prototypes.
+- `sample_pic/` for original photo assets.
 
 ## Live Site
 
@@ -36,14 +39,16 @@ http://localhost:5173
 ## Project Structure
 
 ```text
-prototype/high-fidelity/  Archived React + TypeScript + Vite prototype
-frontend/                 Reserved for the future production frontend
-backend/                  Reserved for the future production backend
-sample_pic/               Original sample photos
+repos/                         Future production code
+repos/frontend/                Reserved for the future production frontend
+repos/backend/                 Reserved for the future production backend
+wiki/                          Product documentation and prototype artifacts
+wiki/prototype/high-fidelity/  Archived React + TypeScript + Vite prototype
+sample_pic/                    Original sample photos
 ```
 
 ## Deployment
 
 Pushing to `main` runs the GitHub Actions workflow in `.github/workflows/deploy-pages.yml`.
-The workflow builds `prototype/high-fidelity` with Vite and deploys its `dist` folder to
-GitHub Pages.
+The workflow builds `wiki/prototype/high-fidelity` with Vite and deploys its `dist`
+folder to GitHub Pages.

@@ -12,5 +12,5 @@ Planned responsibilities:
 The current high-fidelity prototype has been archived in:
 
 ```text
-prototype/high-fidelity/
+wiki/prototype/high-fidelity/
 ```
