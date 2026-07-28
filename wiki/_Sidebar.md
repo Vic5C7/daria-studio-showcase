@@ -2,6 +2,7 @@
 
 - [Home](Home.md)
 - [User Stories](user-stories/README.md)
+- [Stories By Epic](user-stories/stories-by-epic.md)
 - [Acceptance Criteria](acceptance-criteria/README.md)
 - [Prototype](prototype/README.md)
 - [Product Scope](product/product-scope.md)
