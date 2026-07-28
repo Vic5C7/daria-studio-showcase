@@ -528,7 +528,7 @@ export const galleryImages: GalleryImage[] = Array.from({ length: 9 }, (_, index
   const paddedIndex = String(index + 1).padStart(2, "0");
 
   return {
-    src: `/images/models/model-${paddedIndex}.jpg`,
+    src: `images/models/model-${paddedIndex}.jpg`,
     alt: {
       zh: `DG墨尔本摄影毕业照作品 ${index + 1}`,
       en: `DG Melbourne Photography graduation portrait ${index + 1}`
