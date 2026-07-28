@@ -7,8 +7,32 @@ import { readSavedLanguage, saveLanguage } from "./utils/language";
 
 type Route = "home" | "pricing";
 
+const basePath = import.meta.env.BASE_URL;
+
+function getPathInsideBase(pathname: string) {
+  if (basePath === "/") {
+    return pathname;
+  }
+
+  const normalizedBasePath = basePath.endsWith("/") ? basePath : `${basePath}/`;
+
+  if (pathname === normalizedBasePath.slice(0, -1)) {
+    return "/";
+  }
+
+  if (pathname.startsWith(normalizedBasePath)) {
+    return `/${pathname.slice(normalizedBasePath.length)}`;
+  }
+
+  return pathname;
+}
+
 function getRouteFromPathname(pathname: string): Route {
-  return pathname.startsWith("/pricing") ? "pricing" : "home";
+  return getPathInsideBase(pathname).startsWith("/pricing") ? "pricing" : "home";
+}
+
+function getPathForRoute(route: Route) {
+  return route === "pricing" ? `${basePath}pricing` : basePath;
 }
 
 export function App() {
@@ -30,7 +54,7 @@ export function App() {
 
   const navigate = useMemo(
     () => (nextRoute: Route) => {
-      const path = nextRoute === "pricing" ? "/pricing" : "/";
+      const path = getPathForRoute(nextRoute);
       window.history.pushState({}, "", path);
       setRoute(nextRoute);
       window.scrollTo({ top: 0, behavior: "smooth" });

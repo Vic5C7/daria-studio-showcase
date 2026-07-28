@@ -2,6 +2,14 @@
 
 Frontend website for DG墨尔本摄影.
 
+## Live Site
+
+GitHub Pages:
+
+```text
+https://vic5c7.github.io/dg-melbourne-photography/
+```
+
 ## Run With Docker
 
 From the project root:
@@ -29,3 +37,8 @@ frontend/   React + TypeScript + Vite website
 backend/    Reserved for future Python FastAPI backend
 sample_pic/ Original sample photos
 ```
+
+## Deployment
+
+Pushing to `main` runs the GitHub Actions workflow in `.github/workflows/deploy-pages.yml`.
+The workflow builds `frontend` with Vite and deploys `frontend/dist` to GitHub Pages.
