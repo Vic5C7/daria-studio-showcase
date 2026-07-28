@@ -363,6 +363,14 @@ h1 {
   white-space: nowrap;
 }
 
+.floating-total strong.floating-total-status {
+  max-width: 170px;
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  line-height: 1.25;
+  text-align: right;
+  white-space: normal;
+}
+
 .pricing-hero {
   display: grid;
   justify-items: start;
@@ -436,6 +444,15 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.scene-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.package-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
 .choice-button {
   flex-direction: column;
   align-items: flex-start;
@@ -462,6 +479,13 @@ h1 {
   color: #7a7168;
   font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.45;
+}
+
+.choice-button strong {
+  color: #1e1c1a;
+  font-size: 1.12rem;
+  line-height: 1.2;
 }
 
 .choice-button:hover:not(:disabled) {
@@ -480,9 +504,44 @@ h1 {
   color: #efe7da;
 }
 
+.choice-button.is-selected strong {
+  color: #ffffff;
+}
+
 .choice-button:disabled {
   cursor: not-allowed;
   opacity: 0.58;
+}
+
+.scene-choice,
+.addon-choice {
+  min-height: 118px;
+}
+
+.package-choice {
+  justify-content: flex-start;
+  min-height: 280px;
+}
+
+.package-price {
+  font-family: Georgia, "Times New Roman", "Microsoft YaHei", serif;
+  font-size: 1.55rem;
+}
+
+.choice-button .package-detail,
+.choice-button .addon-description {
+  color: #675f57;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.choice-button .package-detail::before {
+  content: "- ";
+}
+
+.choice-button.is-selected .package-detail,
+.choice-button.is-selected .addon-description {
+  color: #efe7da;
 }
 
 .compact-title {
@@ -498,6 +557,19 @@ h1 {
   border-radius: 8px;
   color: #675f57;
   background: #fbfaf7;
+}
+
+.pending-state {
+  align-items: start;
+  gap: 8px;
+}
+
+.pending-state strong {
+  color: #1e1c1a;
+}
+
+.pending-state span {
+  line-height: 1.65;
 }
 
 .field-label {
@@ -551,6 +623,22 @@ select:disabled {
   color: #9f7437;
   font-size: 0.92rem;
   font-weight: 700;
+}
+
+.selection-context,
+.panel-helper-copy {
+  display: block;
+  margin: 0 0 18px;
+  color: #675f57;
+  line-height: 1.7;
+}
+
+.add-on-intro-panel .compact-title {
+  margin-bottom: 0;
+}
+
+.add-on-intro-panel .panel-helper-copy {
+  margin-bottom: 0;
 }
 
 .gown-color-field {
@@ -755,7 +843,8 @@ select:disabled {
   }
 
   .service-options,
-  .addon-options {
+  .addon-options,
+  .package-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -834,7 +923,9 @@ select:disabled {
 
   .two-options,
   .service-options,
-  .addon-options {
+  .scene-options,
+  .addon-options,
+  .package-options {
     grid-template-columns: 1fr;
   }
 

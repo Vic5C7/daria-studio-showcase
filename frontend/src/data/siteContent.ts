@@ -1,20 +1,11 @@
 export type Language = "zh" | "en";
 
 export type LocalizedText = Record<Language, string>;
+export type LocalizedList = Record<Language, string[]>;
 
 export type GalleryImage = {
   src: string;
   alt: LocalizedText;
-};
-
-export type School = {
-  id: string;
-  name: LocalizedText;
-};
-
-export type Campus = {
-  id: string;
-  name: LocalizedText;
 };
 
 export type ServiceAreaId = "shanghai" | "melbourne";
@@ -36,10 +27,36 @@ export type ServiceType = {
   isAvailable: boolean;
 };
 
-export type AddOnOption = {
+export type GraduationSchoolId = "unimelb" | "monash" | "rmit";
+
+export type GraduationSchool = {
+  id: GraduationSchoolId;
+  name: LocalizedText;
+};
+
+export type SceneTypeId = "unimelb-single" | "unimelb-carlton-garden";
+
+export type GraduationSceneType = {
+  id: SceneTypeId;
+  name: LocalizedText;
+  description: LocalizedText;
+};
+
+export type GraduationPackage = {
+  id: string;
+  sceneTypeId: SceneTypeId;
+  name: LocalizedText;
+  priceAud: number;
+  details: LocalizedList;
+};
+
+export type AddOnGroupId = "clothing" | "props" | "makeup";
+
+export type GraduationAddOn = {
   id: string;
   name: LocalizedText;
-  priceAud?: number;
+  priceAud: number;
+  description?: LocalizedText;
 };
 
 export const brand = {
@@ -120,85 +137,69 @@ export const pricingContent = {
     zh: "请选择学校",
     en: "Please choose a school"
   },
-  campusLabel: {
-    zh: "选择校区",
-    en: "Choose a campus"
+  sceneTypeLabel: {
+    zh: "选择场景类型",
+    en: "Choose scene type"
   },
-  campusPlaceholder: {
-    zh: "请选择校区",
-    en: "Please choose a campus"
-  },
-  pointsLabel: {
-    zh: "选择拍照点位",
-    en: "Choose photo spots"
-  },
-  propsLabel: {
-    zh: "道具",
-    en: "Props"
+  packageLabel: {
+    zh: "选择毕业照套餐",
+    en: "Choose graduation package"
   },
   clothingLabel: {
     zh: "服装",
     en: "Clothing"
   },
+  propsLabel: {
+    zh: "道具",
+    en: "Props"
+  },
   makeupLabel: {
-    zh: "美妆",
-    en: "Makeup"
+    zh: "妆造",
+    en: "Makeup and styling"
   },
-  gownColorLabel: {
-    zh: "选择学士服披肩颜色",
-    en: "Choose academic hood color"
-  },
-  gownColorPlaceholder: {
-    zh: "请选择披肩颜色",
-    en: "Please choose a hood color"
-  },
-  gownColorNote: {
-    zh: "请您自行确认学士服披肩的颜色",
-    en: "Please confirm the academic hood color yourself."
-  },
-  selectedPrefix: {
-    zh: "已选择",
-    en: "Selected"
-  },
-  selectedSuffix: {
-    zh: "个点位",
-    en: "spots"
+  addOnsLabel: {
+    zh: "加购项",
+    en: "Add-ons"
   },
   estimatedTotal: {
     zh: "预计总价",
     en: "Estimated total"
   },
-  perPoint: {
-    zh: "每个拍照点位 25 AUD",
-    en: "25 AUD per photo spot"
+  choosePackageTotal: {
+    zh: "请选择套餐",
+    en: "Choose a package"
   },
-  noSelection: {
-    zh: "选择 A-Z 点位后自动计算价格",
-    en: "Select A-Z spots to calculate pricing"
+  pricePendingTotal: {
+    zh: "价格待确认",
+    en: "Price pending"
   },
   shanghaiEmpty: {
-    zh: "上海地区服务套餐暂未开放",
+    zh: "上海地区服务套餐暂未开放。",
     en: "Shanghai service packages are not available yet."
   },
   comingSoon: {
     zh: "暂未拓展",
     en: "Coming soon"
   },
-  makeupPlaceholder: {
-    zh: "美妆服务暂未拓展",
-    en: "Makeup service is not available yet."
-  },
-  propsPriceNote: {
-    zh: "每个道具 5 AUD，可多选",
-    en: "5 AUD per prop, multiple selections allowed"
-  },
-  makeupPriceNote: {
-    zh: "面妆 20 AUD，头发 5 AUD，可多选",
-    en: "Makeup 20 AUD, hair 5 AUD, multiple selections allowed"
-  },
   availableNow: {
     zh: "当前可选",
     en: "Available now"
+  },
+  pricePendingTitle: {
+    zh: "套餐价格待确认",
+    en: "Package pricing pending"
+  },
+  pricePendingCopy: {
+    zh: "这所学校的毕业照套餐暂未确认。你可以先留下备注，后续预约表单会继续沿用这些信息。",
+    en: "Graduation package pricing for this school is not confirmed yet. You can leave notes here for the future booking flow."
+  },
+  packageDetailsLabel: {
+    zh: "套餐包含",
+    en: "Package includes"
+  },
+  addOnIntro: {
+    zh: "加购项可多选，费用会自动计入预计总价。",
+    en: "You can select multiple add-ons. They will be added to the estimated total."
   },
   notesTitle: {
     zh: "备注",
@@ -217,20 +218,14 @@ export const pricingContent = {
     en: "Delete"
   },
   notesLimit: {
-    zh: "每栏最多可添加 10 条备注",
-    en: "Up to 10 notes per section"
+    zh: "每栏最多可添加 10 条备注。",
+    en: "Up to 10 notes per section."
   },
   notesMaxReached: {
-    zh: "已达到 10 条备注上限",
-    en: "10-note limit reached"
+    zh: "已达到 10 条备注上限。",
+    en: "10-note limit reached."
   }
 } satisfies Record<string, LocalizedText>;
-
-export const pricing = {
-  graduationSpotPriceAud: 25,
-  propPriceAud: 5,
-  weddingDayRateAud: 2000
-};
 
 export const serviceAreas: ServiceArea[] = [
   {
@@ -287,7 +282,7 @@ export const serviceTypesByArea: Record<ServiceAreaId, ServiceType[]> = {
   ]
 };
 
-export const schools: School[] = [
+export const graduationSchools: GraduationSchool[] = [
   {
     id: "unimelb",
     name: {
@@ -311,218 +306,278 @@ export const schools: School[] = [
   }
 ];
 
-export const campusesBySchool: Record<string, Campus[]> = {
+export const sceneTypesBySchool: Partial<Record<GraduationSchoolId, GraduationSceneType[]>> = {
   unimelb: [
     {
-      id: "parkville",
+      id: "unimelb-single",
       name: {
-        zh: "帕克维尔校区",
-        en: "Parkville"
+        zh: "单场景：墨尔本大学",
+        en: "Single scene: University of Melbourne"
+      },
+      description: {
+        zh: "适合在墨尔本大学校园内完成标志性地点打卡。",
+        en: "Designed for iconic graduation portraits around the University of Melbourne campus."
       }
     },
     {
-      id: "southbank",
+      id: "unimelb-carlton-garden",
       name: {
-        zh: "南岸校区",
-        en: "Southbank"
-      }
-    },
-    {
-      id: "burnley",
-      name: {
-        zh: "伯恩利校区",
-        en: "Burnley"
-      }
-    },
-    {
-      id: "werribee",
-      name: {
-        zh: "韦里比校区",
-        en: "Werribee"
-      }
-    }
-  ],
-  monash: [
-    {
-      id: "clayton",
-      name: {
-        zh: "克莱顿校区",
-        en: "Clayton"
-      }
-    },
-    {
-      id: "caulfield",
-      name: {
-        zh: "考菲尔德校区",
-        en: "Caulfield"
-      }
-    },
-    {
-      id: "peninsula",
-      name: {
-        zh: "半岛校区",
-        en: "Peninsula"
-      }
-    },
-    {
-      id: "parkville",
-      name: {
-        zh: "帕克维尔校区",
-        en: "Parkville"
-      }
-    },
-    {
-      id: "alfred",
-      name: {
-        zh: "阿尔弗雷德校区",
-        en: "Alfred"
-      }
-    }
-  ],
-  rmit: [
-    {
-      id: "melbourne-city",
-      name: {
-        zh: "墨尔本市中心校区",
-        en: "Melbourne City"
-      }
-    },
-    {
-      id: "bundoora",
-      name: {
-        zh: "邦多拉校区",
-        en: "Bundoora"
-      }
-    },
-    {
-      id: "brunswick",
-      name: {
-        zh: "布伦瑞克校区",
-        en: "Brunswick"
+        zh: "双场景：墨尔本大学 + Carlton Garden",
+        en: "Two scenes: University of Melbourne + Carlton Garden"
+      },
+      description: {
+        zh: "包含墨尔本大学与 Carlton Garden，适合毕业典礼当天的双场景记录。",
+        en: "Includes the University of Melbourne and Carlton Garden, suitable for graduation ceremony day coverage."
       }
     }
   ]
 };
 
-export const shootPoints = Array.from({ length: 26 }, (_, index) =>
-  String.fromCharCode(65 + index)
-);
+export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
+  "unimelb-single": [
+    {
+      id: "unimelb-single-1",
+      sceneTypeId: "unimelb-single",
+      name: {
+        zh: "套餐 1",
+        en: "Package 1"
+      },
+      priceAud: 198,
+      details: {
+        zh: [
+          "200 张底片，底片全给",
+          "送 9 张精修",
+          "送花絮视频",
+          "5-6 个打卡点",
+          "学校标志性地点打卡点"
+        ],
+        en: [
+          "200 original photos, all originals included",
+          "9 retouched photos included",
+          "Behind-the-scenes video included",
+          "5-6 photo spots",
+          "Iconic campus locations"
+        ]
+      }
+    },
+    {
+      id: "unimelb-single-2",
+      sceneTypeId: "unimelb-single",
+      name: {
+        zh: "套餐 2",
+        en: "Package 2"
+      },
+      priceAud: 298,
+      details: {
+        zh: [
+          "300 张底片，底片全给",
+          "送 13 张精修",
+          "送花絮视频",
+          "8-9 个打卡点",
+          "更细致，更多拍摄点位",
+          "更多动作指导 + 可选地点"
+        ],
+        en: [
+          "300 original photos, all originals included",
+          "13 retouched photos included",
+          "Behind-the-scenes video included",
+          "8-9 photo spots",
+          "More detailed coverage and more locations",
+          "More posing guidance + optional locations"
+        ]
+      }
+    },
+    {
+      id: "unimelb-single-3",
+      sceneTypeId: "unimelb-single",
+      name: {
+        zh: "套餐 3",
+        en: "Package 3"
+      },
+      priceAud: 388,
+      details: {
+        zh: [
+          "400 张底片，底片全给",
+          "送 18 张精修",
+          "送花絮视频",
+          "所有打卡点",
+          "底片多",
+          "适合跟父母朋友合照"
+        ],
+        en: [
+          "400 original photos, all originals included",
+          "18 retouched photos included",
+          "Behind-the-scenes video included",
+          "All photo spots",
+          "More originals",
+          "Suitable for photos with parents and friends"
+        ]
+      }
+    }
+  ],
+  "unimelb-carlton-garden": [
+    {
+      id: "unimelb-dual-1",
+      sceneTypeId: "unimelb-carlton-garden",
+      name: {
+        zh: "套餐 1",
+        en: "Package 1"
+      },
+      priceAud: 388,
+      details: {
+        zh: ["墨尔本大学 + Carlton Garden", "400 张底片，底片全给", "18 张精修"],
+        en: [
+          "University of Melbourne + Carlton Garden",
+          "400 original photos, all originals included",
+          "18 retouched photos"
+        ]
+      }
+    },
+    {
+      id: "unimelb-dual-2",
+      sceneTypeId: "unimelb-carlton-garden",
+      name: {
+        zh: "套餐 2",
+        en: "Package 2"
+      },
+      priceAud: 468,
+      details: {
+        zh: ["墨尔本大学 + Carlton Garden", "600 张底片，底片全给", "25 张精修"],
+        en: [
+          "University of Melbourne + Carlton Garden",
+          "600 original photos, all originals included",
+          "25 retouched photos"
+        ]
+      }
+    },
+    {
+      id: "unimelb-dual-3",
+      sceneTypeId: "unimelb-carlton-garden",
+      name: {
+        zh: "套餐 3",
+        en: "Package 3"
+      },
+      priceAud: 548,
+      details: {
+        zh: ["墨尔本大学 + Carlton Garden", "700 张底片，底片全给", "30 张精修"],
+        en: [
+          "University of Melbourne + Carlton Garden",
+          "700 original photos, all originals included",
+          "30 retouched photos"
+        ]
+      }
+    }
+  ]
+};
 
-export const propOptions: AddOnOption[] = [
-  {
-    id: "graduation-scroll",
-    name: {
-      zh: "毕业卷轴",
-      en: "Graduation Scroll"
+export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
+  clothing: [
+    {
+      id: "graduation-gown-cap",
+      name: {
+        zh: "毕业袍 + 毕业帽",
+        en: "Graduation gown + cap"
+      },
+      priceAud: 35,
+      description: {
+        zh: "各学校各学院都有。",
+        en: "Available for each school and faculty."
+      }
     },
-    priceAud: pricing.propPriceAud
-  },
-  {
-    id: "graduation-bear",
-    name: {
-      zh: "毕业小熊",
-      en: "Graduation Bear"
+    {
+      id: "heels-qipao-dress",
+      name: {
+        zh: "高跟鞋 + 旗袍/裙子",
+        en: "Heels + qipao/dress"
+      },
+      priceAud: 10
     },
-    priceAud: pricing.propPriceAud
-  },
-  {
-    id: "bouquet",
-    name: {
-      zh: "花束",
-      en: "Bouquet"
+    {
+      id: "hanfu",
+      name: {
+        zh: "汉服",
+        en: "Hanfu"
+      },
+      priceAud: 40
+    }
+  ],
+  props: [
+    {
+      id: "bear-cap-bouquet-set",
+      name: {
+        zh: "毕业熊 + 学士帽 + 花束组合",
+        en: "Graduation bear + cap + bouquet set"
+      },
+      priceAud: 10
     },
-    priceAud: pricing.propPriceAud
-  }
-];
-
-export const clothingOptions: AddOnOption[] = [
-  {
-    id: "academic-gown",
-    name: {
-      zh: "学士服",
-      en: "Academic Gown"
+    {
+      id: "bouquet",
+      name: {
+        zh: "花束",
+        en: "Bouquet"
+      },
+      priceAud: 3
     },
-    priceAud: 30
-  }
-];
-
-export const gownColorOptions: AddOnOption[] = [
-  {
-    id: "black",
-    name: {
-      zh: "黑色",
-      en: "Black"
-    }
-  },
-  {
-    id: "white",
-    name: {
-      zh: "白色",
-      en: "White"
-    }
-  },
-  {
-    id: "red",
-    name: {
-      zh: "红色",
-      en: "Red"
-    }
-  },
-  {
-    id: "blue",
-    name: {
-      zh: "蓝色",
-      en: "Blue"
-    }
-  },
-  {
-    id: "green",
-    name: {
-      zh: "绿色",
-      en: "Green"
-    }
-  },
-  {
-    id: "purple",
-    name: {
-      zh: "紫色",
-      en: "Purple"
-    }
-  },
-  {
-    id: "gold",
-    name: {
-      zh: "金色",
-      en: "Gold"
-    }
-  },
-  {
-    id: "other",
-    name: {
-      zh: "其他 / 不确定",
-      en: "Other / Not sure"
-    }
-  }
-];
-
-export const makeupOptions: AddOnOption[] = [
-  {
-    id: "face-makeup",
-    name: {
-      zh: "面妆",
-      en: "Makeup"
+    {
+      id: "academic-cap",
+      name: {
+        zh: "学士帽",
+        en: "Academic cap"
+      },
+      priceAud: 3
     },
-    priceAud: 20
-  },
-  {
-    id: "hair",
-    name: {
-      zh: "头发",
-      en: "Hair"
+    {
+      id: "graduation-bear",
+      name: {
+        zh: "毕业熊",
+        en: "Graduation bear"
+      },
+      priceAud: 5
     },
-    priceAud: 5
-  }
-];
+    {
+      id: "academic-scroll",
+      name: {
+        zh: "学术筒",
+        en: "Academic scroll"
+      },
+      priceAud: 4
+    },
+    {
+      id: "uniform-bear",
+      name: {
+        zh: "校服熊",
+        en: "Uniform bear"
+      },
+      priceAud: 3
+    }
+  ],
+  makeup: [
+    {
+      id: "female-styling",
+      name: {
+        zh: "女生妆造",
+        en: "Female makeup and styling"
+      },
+      priceAud: 149,
+      description: {
+        zh: "含化妆、发型、睫毛、修眉，送跟妆，送 5 张精修。",
+        en: "Includes makeup, hair, lashes, brow shaping, on-site touch-up, and 5 retouched photos."
+      }
+    },
+    {
+      id: "male-styling",
+      name: {
+        zh: "男生妆造",
+        en: "Male makeup and styling"
+      },
+      priceAud: 79,
+      description: {
+        zh: "含化妆、发型、修眉，送跟妆，送 5 张精修；主要修饰五官并增强立体度。",
+        en: "Includes makeup, hair, brow shaping, on-site touch-up, and 5 retouched photos; focused on natural facial definition."
+      }
+    }
+  ]
+};
 
 export const galleryImages: GalleryImage[] = Array.from({ length: 9 }, (_, index) => {
   const paddedIndex = String(index + 1).padStart(2, "0");

@@ -1,24 +1,32 @@
-import { ArrowLeft, Check, GraduationCap, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  Gift,
+  GraduationCap,
+  MapPin,
+  Shirt,
+  Sparkles,
+  type LucideIcon
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { NotesInput } from "../components/NotesInput";
 import {
-  campusesBySchool,
-  clothingOptions,
-  gownColorOptions,
-  makeupOptions,
-  pricing,
+  graduationAddOns,
+  graduationPackages,
+  graduationSchools,
   pricingContent,
-  propOptions,
-  schools,
+  sceneTypesBySchool,
   serviceAreas,
   serviceTypesByArea,
-  shootPoints,
+  type AddOnGroupId,
+  type GraduationAddOn,
   type Language,
+  type SceneTypeId,
   type ServiceAreaId,
   type ServiceTypeId
 } from "../data/siteContent";
 
-type NoteSection = "campus" | "spots" | "props" | "makeup";
+type NoteSection = "schoolScene" | "package" | AddOnGroupId;
 
 type SectionNotes = Record<NoteSection, string[]>;
 
@@ -28,142 +36,131 @@ type PricingPageProps = {
 };
 
 const emptySectionNotes: SectionNotes = {
-  campus: [],
-  spots: [],
+  schoolScene: [],
+  package: [],
+  clothing: [],
   props: [],
   makeup: []
 };
+
+function formatAud(price: number) {
+  return `${price} AUD`;
+}
 
 export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
   const [selectedAreaId, setSelectedAreaId] = useState<ServiceAreaId | "">("");
   const [selectedServiceTypeId, setSelectedServiceTypeId] = useState<ServiceTypeId | "">("");
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
-  const [selectedCampusId, setSelectedCampusId] = useState("");
-  const [selectedPoints, setSelectedPoints] = useState<string[]>([]);
-  const [selectedProps, setSelectedProps] = useState<string[]>([]);
-  const [selectedClothingId, setSelectedClothingId] = useState("");
-  const [selectedGownColorId, setSelectedGownColorId] = useState("");
-  const [selectedMakeup, setSelectedMakeup] = useState<string[]>([]);
+  const [selectedSceneTypeId, setSelectedSceneTypeId] = useState<SceneTypeId | "">("");
+  const [selectedPackageId, setSelectedPackageId] = useState("");
+  const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
   const [sectionNotes, setSectionNotes] = useState<SectionNotes>(emptySectionNotes);
-
-  const selectedArea = useMemo(
-    () => serviceAreas.find((area) => area.id === selectedAreaId),
-    [selectedAreaId]
-  );
 
   const availableServiceTypes = selectedAreaId ? serviceTypesByArea[selectedAreaId] : [];
 
   const selectedSchool = useMemo(
-    () => schools.find((school) => school.id === selectedSchoolId),
+    () => graduationSchools.find((school) => school.id === selectedSchoolId),
     [selectedSchoolId]
   );
 
-  const availableCampuses = selectedSchoolId ? campusesBySchool[selectedSchoolId] ?? [] : [];
+  const availableSceneTypes = selectedSchoolId
+    ? sceneTypesBySchool[selectedSchoolId as keyof typeof sceneTypesBySchool] ?? []
+    : [];
 
-  const selectedCampus = useMemo(
-    () => availableCampuses.find((campus) => campus.id === selectedCampusId),
-    [availableCampuses, selectedCampusId]
+  const selectedSceneType = useMemo(
+    () => availableSceneTypes.find((sceneType) => sceneType.id === selectedSceneTypeId),
+    [availableSceneTypes, selectedSceneTypeId]
   );
 
+  const availablePackages = selectedSceneTypeId
+    ? graduationPackages[selectedSceneTypeId as SceneTypeId] ?? []
+    : [];
+
+  const selectedPackage = useMemo(
+    () => availablePackages.find((graduationPackage) => graduationPackage.id === selectedPackageId),
+    [availablePackages, selectedPackageId]
+  );
+
+  const allAddOns = useMemo(
+    () => Object.values(graduationAddOns).flat(),
+    []
+  );
+
+  const selectedAddOnsTotal = selectedAddOnIds.reduce((sum, addOnId) => {
+    const addOn = allAddOns.find((option) => option.id === addOnId);
+    return sum + (addOn?.priceAud ?? 0);
+  }, 0);
+
+  const totalPrice = (selectedPackage?.priceAud ?? 0) + selectedAddOnsTotal;
   const showServiceTypes = Boolean(selectedAreaId);
   const showSchoolSelect = selectedAreaId === "melbourne" && selectedServiceTypeId === "graduation";
-  const showCampusSelect = showSchoolSelect && Boolean(selectedSchool);
-  const showPhotoSpots = showCampusSelect && Boolean(selectedCampus);
-  const propsTotal = selectedProps.length * pricing.propPriceAud;
-  const clothingTotal =
-    clothingOptions.find((option) => option.id === selectedClothingId)?.priceAud ?? 0;
-  const makeupTotal = selectedMakeup.reduce((sum, makeupId) => {
-    const makeup = makeupOptions.find((option) => option.id === makeupId);
-    return sum + (makeup?.priceAud ?? 0);
-  }, 0);
-  const totalPrice =
-    selectedPoints.length * pricing.graduationSpotPriceAud +
-    propsTotal +
-    clothingTotal +
-    makeupTotal;
+  const isPendingSchool = Boolean(
+    selectedSchool && selectedSchool.id !== "unimelb"
+  );
+  const showSceneTypes = selectedSchool?.id === "unimelb";
+  const showPackages = Boolean(selectedSceneType);
+  const showAddOns = Boolean(selectedPackage);
+  const hasConfirmedTotal = Boolean(selectedPackage);
+  const totalDisplay = isPendingSchool
+    ? pricingContent.pricePendingTotal[language]
+    : hasConfirmedTotal
+      ? formatAud(totalPrice)
+      : pricingContent.choosePackageTotal[language];
+
+  const clearGraduationSelections = () => {
+    setSelectedSchoolId("");
+    setSelectedSceneTypeId("");
+    setSelectedPackageId("");
+    setSelectedAddOnIds([]);
+    setSectionNotes(emptySectionNotes);
+  };
 
   const selectArea = (areaId: ServiceAreaId) => {
     setSelectedAreaId(areaId);
     setSelectedServiceTypeId("");
-    setSelectedSchoolId("");
-    setSelectedCampusId("");
-    setSelectedPoints([]);
-    setSelectedProps([]);
-    setSelectedClothingId("");
-    setSelectedGownColorId("");
-    setSelectedMakeup([]);
-    setSectionNotes(emptySectionNotes);
+    clearGraduationSelections();
   };
 
   const selectServiceType = (serviceTypeId: ServiceTypeId) => {
     setSelectedServiceTypeId(serviceTypeId);
-    setSelectedSchoolId("");
-    setSelectedCampusId("");
-    setSelectedPoints([]);
-    setSelectedProps([]);
-    setSelectedClothingId("");
-    setSelectedGownColorId("");
-    setSelectedMakeup([]);
-    setSectionNotes(emptySectionNotes);
+    clearGraduationSelections();
   };
 
   const selectSchool = (schoolId: string) => {
     setSelectedSchoolId(schoolId);
-    setSelectedCampusId("");
-    setSelectedPoints([]);
-    setSelectedProps([]);
-    setSelectedClothingId("");
-    setSelectedGownColorId("");
-    setSelectedMakeup([]);
+    setSelectedSceneTypeId("");
+    setSelectedPackageId("");
+    setSelectedAddOnIds([]);
     setSectionNotes(emptySectionNotes);
   };
 
-  const selectCampus = (campusId: string) => {
-    setSelectedCampusId(campusId);
-    setSelectedPoints([]);
-    setSelectedProps([]);
-    setSelectedClothingId("");
-    setSelectedGownColorId("");
-    setSelectedMakeup([]);
+  const selectSceneType = (sceneTypeId: SceneTypeId) => {
+    setSelectedSceneTypeId(sceneTypeId);
+    setSelectedPackageId("");
+    setSelectedAddOnIds([]);
     setSectionNotes((currentNotes) => ({
       ...currentNotes,
-      spots: [],
+      package: [],
+      clothing: [],
       props: [],
       makeup: []
     }));
   };
 
-  const togglePoint = (point: string) => {
-    setSelectedPoints((currentPoints) =>
-      currentPoints.includes(point)
-        ? currentPoints.filter((currentPoint) => currentPoint !== point)
-        : [...currentPoints, point]
-    );
+  const selectPackage = (packageId: string) => {
+    setSelectedPackageId(packageId);
+    setSectionNotes((currentNotes) => ({
+      ...currentNotes,
+      package: []
+    }));
   };
 
-  const toggleProp = (propId: string) => {
-    setSelectedProps((currentProps) =>
-      currentProps.includes(propId)
-        ? currentProps.filter((currentProp) => currentProp !== propId)
-        : [...currentProps, propId]
+  const toggleAddOn = (addOnId: string) => {
+    setSelectedAddOnIds((currentAddOns) =>
+      currentAddOns.includes(addOnId)
+        ? currentAddOns.filter((currentAddOn) => currentAddOn !== addOnId)
+        : [...currentAddOns, addOnId]
     );
-  };
-
-  const toggleMakeup = (makeupId: string) => {
-    setSelectedMakeup((currentMakeup) =>
-      currentMakeup.includes(makeupId)
-        ? currentMakeup.filter((currentOption) => currentOption !== makeupId)
-        : [...currentMakeup, makeupId]
-    );
-  };
-
-  const selectClothing = (clothingId: string) => {
-    const nextClothingId = selectedClothingId === clothingId ? "" : clothingId;
-
-    setSelectedClothingId(nextClothingId);
-    if (!nextClothingId) {
-      setSelectedGownColorId("");
-    }
   };
 
   const updateNotes = (section: NoteSection, notes: string[]) => {
@@ -173,11 +170,60 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
     }));
   };
 
+  const renderAddOnSection = (
+    section: AddOnGroupId,
+    title: string,
+    stepLabel: string,
+    Icon: LucideIcon,
+    options: GraduationAddOn[]
+  ) => (
+    <section className="pricing-panel selector-panel" aria-labelledby={`${section}-title`}>
+      <div className="panel-title compact-title">
+        <Icon size={24} aria-hidden="true" />
+        <div>
+          <p>{stepLabel}</p>
+          <h2 id={`${section}-title`}>{title}</h2>
+        </div>
+      </div>
+
+      <div className="option-grid addon-options">
+        {options.map((addOn) => {
+          const isSelected = selectedAddOnIds.includes(addOn.id);
+
+          return (
+            <button
+              className={isSelected ? "choice-button addon-choice is-selected" : "choice-button addon-choice"}
+              type="button"
+              key={addOn.id}
+              onClick={() => toggleAddOn(addOn.id)}
+              aria-pressed={isSelected}
+            >
+              <span>{addOn.name[language]}</span>
+              <strong>{formatAud(addOn.priceAud)}</strong>
+              {addOn.description && (
+                <small className="addon-description">{addOn.description[language]}</small>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <NotesInput
+        idPrefix={section}
+        language={language}
+        notes={sectionNotes[section]}
+        onChange={(notes) => updateNotes(section, notes)}
+      />
+    </section>
+  );
+
   return (
     <section className="pricing-page">
       <aside className="floating-total" aria-live="polite">
         <span>{pricingContent.estimatedTotal[language]}</span>
-        <strong>{totalPrice} AUD</strong>
+        <strong className={hasConfirmedTotal ? undefined : "floating-total-status"}>
+          {totalDisplay}
+        </strong>
       </aside>
 
       <div className="pricing-hero">
@@ -273,7 +319,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
               onChange={(event) => selectSchool(event.target.value)}
             >
               <option value="">{pricingContent.schoolPlaceholder[language]}</option>
-              {schools.map((school) => (
+              {graduationSchools.map((school) => (
                 <option key={school.id} value={school.id}>
                   {school.name[language]}
                 </option>
@@ -282,206 +328,152 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
           </section>
         )}
 
-        {showCampusSelect && selectedSchool && (
-          <section className="pricing-panel selector-panel" aria-labelledby="campus-title">
-            <div className="panel-title">
-              <MapPin size={24} aria-hidden="true" />
+        {isPendingSchool && selectedSchool && (
+          <section className="pricing-panel selector-panel" aria-labelledby="price-pending-title">
+            <div className="panel-title compact-title">
+              <Camera size={24} aria-hidden="true" />
               <div>
                 <p>Step 04</p>
-                <h2 id="campus-title">{pricingContent.campusLabel[language]}</h2>
+                <h2 id="price-pending-title">{pricingContent.pricePendingTitle[language]}</h2>
               </div>
             </div>
 
-            <label className="field-label" htmlFor="campus-select">
-              {pricingContent.campusLabel[language]}
-            </label>
-            <select
-              id="campus-select"
-              value={selectedCampusId}
-              onChange={(event) => selectCampus(event.target.value)}
-            >
-              <option value="">{pricingContent.campusPlaceholder[language]}</option>
-              {availableCampuses.map((campus) => (
-                <option key={campus.id} value={campus.id}>
-                  {campus.name[language]}
-                </option>
-              ))}
-            </select>
+            <div className="empty-state pending-state">
+              <strong>{selectedSchool.name[language]}</strong>
+              <span>{pricingContent.pricePendingCopy[language]}</span>
+            </div>
 
             <NotesInput
-              idPrefix="campus"
+              idPrefix="school-scene"
               language={language}
-              notes={sectionNotes.campus}
-              onChange={(notes) => updateNotes("campus", notes)}
+              notes={sectionNotes.schoolScene}
+              onChange={(notes) => updateNotes("schoolScene", notes)}
             />
           </section>
         )}
 
-        {showPhotoSpots && selectedSchool && selectedCampus && (
-          <>
-            <section className="pricing-panel graduation-panel" aria-labelledby="photo-spots-title">
-              <div className="panel-title compact-title">
-                <div>
-                  <p>Step 05</p>
-                  <h2 id="photo-spots-title">{pricingContent.pointsLabel[language]}</h2>
-                </div>
+        {showSceneTypes && (
+          <section className="pricing-panel selector-panel" aria-labelledby="scene-type-title">
+            <div className="panel-title">
+              <Camera size={24} aria-hidden="true" />
+              <div>
+                <p>Step 04</p>
+                <h2 id="scene-type-title">{pricingContent.sceneTypeLabel[language]}</h2>
               </div>
+            </div>
 
-              <div className="spot-heading">
-                <div>
-                  <p>
-                    <MapPin size={16} aria-hidden="true" />
-                    {selectedArea?.name[language]} · {selectedSchool.name[language]} ·{" "}
-                    {selectedCampus.name[language]}
-                  </p>
-                </div>
-                <strong>
-                  {pricingContent.selectedPrefix[language]} {selectedPoints.length}{" "}
-                  {pricingContent.selectedSuffix[language]}
-                </strong>
+            <div className="option-grid scene-options">
+              {availableSceneTypes.map((sceneType) => (
+                <button
+                  className={
+                    selectedSceneTypeId === sceneType.id
+                      ? "choice-button scene-choice is-selected"
+                      : "choice-button scene-choice"
+                  }
+                  type="button"
+                  key={sceneType.id}
+                  onClick={() => selectSceneType(sceneType.id)}
+                  aria-pressed={selectedSceneTypeId === sceneType.id}
+                >
+                  <span>{sceneType.name[language]}</span>
+                  <small>{sceneType.description[language]}</small>
+                </button>
+              ))}
+            </div>
+
+            <NotesInput
+              idPrefix="school-scene"
+              language={language}
+              notes={sectionNotes.schoolScene}
+              onChange={(notes) => updateNotes("schoolScene", notes)}
+            />
+          </section>
+        )}
+
+        {showPackages && selectedSceneType && (
+          <section className="pricing-panel selector-panel" aria-labelledby="package-title">
+            <div className="panel-title compact-title">
+              <GraduationCap size={24} aria-hidden="true" />
+              <div>
+                <p>Step 05</p>
+                <h2 id="package-title">{pricingContent.packageLabel[language]}</h2>
               </div>
+            </div>
 
-              <p className="price-note">{pricingContent.perPoint[language]}</p>
+            <p className="selection-context">{selectedSceneType.name[language]}</p>
 
-              <div className="spot-grid" aria-label={pricingContent.pointsLabel[language]}>
-                {shootPoints.map((point) => {
-                  const isSelected = selectedPoints.includes(point);
+            <div className="option-grid package-options">
+              {availablePackages.map((graduationPackage) => {
+                const isSelected = selectedPackageId === graduationPackage.id;
 
-                  return (
-                    <button
-                      className={isSelected ? "spot-button is-selected" : "spot-button"}
-                      type="button"
-                      key={point}
-                      onClick={() => togglePoint(point)}
-                      aria-pressed={isSelected}
-                    >
-                      {isSelected && <Check size={16} aria-hidden="true" />}
-                      <span>{point}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <NotesInput
-                idPrefix="spots"
-                language={language}
-                notes={sectionNotes.spots}
-                onChange={(notes) => updateNotes("spots", notes)}
-              />
-            </section>
-
-            <section className="pricing-panel selector-panel" aria-labelledby="props-title">
-              <div className="panel-title compact-title">
-                <div>
-                  <p>Step 06</p>
-                  <h2 id="props-title">{pricingContent.propsLabel[language]}</h2>
-                </div>
-              </div>
-
-              <p className="price-note">{pricingContent.propsPriceNote[language]}</p>
-
-              <div className="option-grid addon-options">
-                {propOptions.map((prop) => (
-                  <button
-                    className={selectedProps.includes(prop.id) ? "choice-button is-selected" : "choice-button"}
-                    type="button"
-                    key={prop.id}
-                    onClick={() => toggleProp(prop.id)}
-                    aria-pressed={selectedProps.includes(prop.id)}
-                  >
-                    <span>{prop.name[language]}</span>
-                    <small>{prop.priceAud} AUD</small>
-                  </button>
-                ))}
-              </div>
-
-              <NotesInput
-                idPrefix="props"
-                language={language}
-                notes={sectionNotes.props}
-                onChange={(notes) => updateNotes("props", notes)}
-              />
-            </section>
-
-            <section className="pricing-panel selector-panel" aria-labelledby="clothing-title">
-              <div className="panel-title compact-title">
-                <div>
-                  <p>Step 07</p>
-                  <h2 id="clothing-title">{pricingContent.clothingLabel[language]}</h2>
-                </div>
-              </div>
-
-              <div className="option-grid addon-options">
-                {clothingOptions.map((clothing) => (
+                return (
                   <button
                     className={
-                      selectedClothingId === clothing.id ? "choice-button is-selected" : "choice-button"
+                      isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
                     }
                     type="button"
-                    key={clothing.id}
-                    onClick={() => selectClothing(clothing.id)}
-                    aria-pressed={selectedClothingId === clothing.id}
+                    key={graduationPackage.id}
+                    onClick={() => selectPackage(graduationPackage.id)}
+                    aria-pressed={isSelected}
                   >
-                    <span>{clothing.name[language]}</span>
-                    <small>{clothing.priceAud} AUD</small>
-                  </button>
-                ))}
-              </div>
-
-              {selectedClothingId === "academic-gown" && (
-                <div className="gown-color-field">
-                  <label className="field-label" htmlFor="gown-color-select">
-                    {pricingContent.gownColorLabel[language]}
-                  </label>
-                  <select
-                    id="gown-color-select"
-                    value={selectedGownColorId}
-                    onChange={(event) => setSelectedGownColorId(event.target.value)}
-                  >
-                    <option value="">{pricingContent.gownColorPlaceholder[language]}</option>
-                    {gownColorOptions.map((color) => (
-                      <option key={color.id} value={color.id}>
-                        {color.name[language]}
-                      </option>
+                    <span>{graduationPackage.name[language]}</span>
+                    <strong className="package-price">{formatAud(graduationPackage.priceAud)}</strong>
+                    <small>{pricingContent.packageDetailsLabel[language]}</small>
+                    {graduationPackage.details[language].map((detail) => (
+                      <span className="package-detail" key={detail}>
+                        {detail}
+                      </span>
                     ))}
-                  </select>
-                  <p className="helper-note">{pricingContent.gownColorNote[language]}</p>
-                </div>
-              )}
-            </section>
-
-            <section className="pricing-panel selector-panel" aria-labelledby="makeup-title">
-              <div className="panel-title compact-title">
-                <div>
-                  <p>Step 08</p>
-                  <h2 id="makeup-title">{pricingContent.makeupLabel[language]}</h2>
-                </div>
-              </div>
-              <p className="price-note">{pricingContent.makeupPriceNote[language]}</p>
-              <div className="option-grid addon-options">
-                {makeupOptions.map((makeup) => (
-                  <button
-                    className={
-                      selectedMakeup.includes(makeup.id) ? "choice-button is-selected" : "choice-button"
-                    }
-                    type="button"
-                    key={makeup.id}
-                    onClick={() => toggleMakeup(makeup.id)}
-                    aria-pressed={selectedMakeup.includes(makeup.id)}
-                  >
-                    <span>{makeup.name[language]}</span>
-                    <small>{makeup.priceAud} AUD</small>
                   </button>
-                ))}
-              </div>
+                );
+              })}
+            </div>
 
-              <NotesInput
-                idPrefix="makeup"
-                language={language}
-                notes={sectionNotes.makeup}
-                onChange={(notes) => updateNotes("makeup", notes)}
-              />
+            <NotesInput
+              idPrefix="package"
+              language={language}
+              notes={sectionNotes.package}
+              onChange={(notes) => updateNotes("package", notes)}
+            />
+          </section>
+        )}
+
+        {showAddOns && (
+          <>
+            <section className="pricing-panel selector-panel add-on-intro-panel">
+              <div className="panel-title compact-title">
+                <Sparkles size={24} aria-hidden="true" />
+                <div>
+                  <p>Step 06-08</p>
+                  <h2>{pricingContent.addOnsLabel[language]}</h2>
+                  <span className="panel-helper-copy">{pricingContent.addOnIntro[language]}</span>
+                </div>
+              </div>
             </section>
+
+            {renderAddOnSection(
+              "clothing",
+              pricingContent.clothingLabel[language],
+              "Step 06",
+              Shirt,
+              graduationAddOns.clothing
+            )}
+
+            {renderAddOnSection(
+              "props",
+              pricingContent.propsLabel[language],
+              "Step 07",
+              Gift,
+              graduationAddOns.props
+            )}
+
+            {renderAddOnSection(
+              "makeup",
+              pricingContent.makeupLabel[language],
+              "Step 08",
+              Sparkles,
+              graduationAddOns.makeup
+            )}
           </>
         )}
       </div>
