@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.vite/
+.env
+.env.*
+npm-debug.log*
+.tmp-edge/
+
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
