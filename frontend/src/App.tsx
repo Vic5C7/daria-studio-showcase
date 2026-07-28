@@ -8,6 +8,7 @@ import { readSavedLanguage, saveLanguage } from "./utils/language";
 type Route = "home" | "pricing";
 
 const basePath = import.meta.env.BASE_URL;
+const usesHashRouting = basePath !== "/";
 
 function getPathInsideBase(pathname: string) {
   if (basePath === "/") {
@@ -31,25 +32,41 @@ function getRouteFromPathname(pathname: string): Route {
   return getPathInsideBase(pathname).startsWith("/pricing") ? "pricing" : "home";
 }
 
+function getRouteFromLocation(location: Location): Route {
+  if (location.hash === "#/pricing") {
+    return "pricing";
+  }
+
+  return getRouteFromPathname(location.pathname);
+}
+
 function getPathForRoute(route: Route) {
+  if (usesHashRouting) {
+    return route === "pricing" ? `${basePath}#/pricing` : basePath;
+  }
+
   return route === "pricing" ? `${basePath}pricing` : basePath;
 }
 
 export function App() {
   const [language, setLanguage] = useState<Language>(() => readSavedLanguage());
-  const [route, setRoute] = useState<Route>(() => getRouteFromPathname(window.location.pathname));
+  const [route, setRoute] = useState<Route>(() => getRouteFromLocation(window.location));
 
   useEffect(() => {
     saveLanguage(language);
   }, [language]);
 
   useEffect(() => {
-    const handlePopState = () => {
-      setRoute(getRouteFromPathname(window.location.pathname));
+    const handleLocationChange = () => {
+      setRoute(getRouteFromLocation(window.location));
     };
 
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    window.addEventListener("popstate", handleLocationChange);
+    window.addEventListener("hashchange", handleLocationChange);
+    return () => {
+      window.removeEventListener("popstate", handleLocationChange);
+      window.removeEventListener("hashchange", handleLocationChange);
+    };
   }, []);
 
   const navigate = useMemo(
