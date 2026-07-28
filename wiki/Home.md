@@ -11,4 +11,6 @@ Use it to collect product thinking before formal implementation begins:
 - Personas and user journeys
 - Data model drafts
 - API contract drafts
+- Content model notes
+- Test plan and test cases
 - Decision records

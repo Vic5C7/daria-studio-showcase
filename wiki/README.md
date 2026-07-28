@@ -11,4 +11,5 @@ Main areas:
 - `prototype/`: prototype artifacts and prototype notes.
 - `product/`: scope, personas, and journeys.
 - `architecture/`: data model and API drafts.
+- `testing/`: test strategy, test cases, and coverage notes.
 - `decisions/`: decision log entries.
