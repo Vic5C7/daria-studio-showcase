@@ -1,15 +1,21 @@
-# DG Melbourne Photography Backend
+# Backend
 
-This folder is reserved for a future Python FastAPI backend.
+This folder is reserved for the future production backend.
 
-No backend service is required for v1. The Docker setup currently runs the frontend only.
+No backend service is implemented yet. The next development phase should start after the
+framework, authentication approach, and database schema are confirmed.
 
 Planned responsibilities:
 
-- Appointment and enquiry form APIs
-- Package and school pricing data APIs
-- Email notifications
-- Payment provider integration
-- Admin tools for gallery, schools and package updates
+- Staff authentication
+- Public content APIs for the customer-facing website
+- Admin content APIs for staff editing
+- Draft and publish workflow
+- Database migrations and seed data
+- Future appointment, enquiry, email, payment, and order APIs
 
-The current v1 website is implemented entirely in the frontend.
+The current high-fidelity prototype has been archived in:
+
+```text
+prototype/high-fidelity/
+```
