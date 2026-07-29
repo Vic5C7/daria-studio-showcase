@@ -1,11 +1,9 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   brand,
-  galleryCategories,
   galleryImages,
   homeContent,
-  type GalleryCategoryId,
   type Language
 } from "../data/siteContent";
 
@@ -18,21 +16,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const resumeTimeoutRef = useRef<number | null>(null);
   const isAutoScrollingRef = useRef(true);
-  const [selectedGalleryCategoryId, setSelectedGalleryCategoryId] =
-    useState<GalleryCategoryId>("all");
-
-  const filteredGalleryImages = useMemo(
-    () =>
-      selectedGalleryCategoryId === "all"
-        ? galleryImages
-        : galleryImages.filter((image) => image.categoryIds.includes(selectedGalleryCategoryId)),
-    [selectedGalleryCategoryId]
-  );
-
-  const scrollingImages = useMemo(
-    () => filteredGalleryImages.length > 0 ? [...filteredGalleryImages, ...filteredGalleryImages] : [],
-    [filteredGalleryImages]
-  );
+  const scrollingImages = useMemo(() => [...galleryImages, ...galleryImages], []);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -64,12 +48,6 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollLeft = 0;
-    }
-  }, [selectedGalleryCategoryId]);
 
   const pauseThenResume = () => {
     isAutoScrollingRef.current = false;
@@ -122,55 +100,33 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
           <span>{homeContent.galleryIntro[language]}</span>
         </div>
 
-        <div className="gallery-category-row" aria-label={language === "zh" ? "作品分类" : "Gallery categories"}>
-          {galleryCategories.map((category) => (
-            <button
-              className={
-                selectedGalleryCategoryId === category.id
-                  ? "gallery-category-button is-selected"
-                  : "gallery-category-button"
-              }
-              type="button"
-              key={category.id}
-              onClick={() => setSelectedGalleryCategoryId(category.id)}
-              aria-pressed={selectedGalleryCategoryId === category.id}
-            >
-              {category.name[language]}
-            </button>
-          ))}
-        </div>
+        <div className="gallery-carousel">
+          <button
+            className="gallery-arrow gallery-arrow-left"
+            type="button"
+            onClick={() => scrollGallery("previous")}
+            aria-label={language === "zh" ? "查看上一张作品" : "View previous work"}
+          >
+            <ArrowLeft size={22} aria-hidden="true" />
+          </button>
 
-        {scrollingImages.length === 0 ? (
-          <div className="gallery-empty-state">{homeContent.galleryEmpty[language]}</div>
-        ) : (
-          <div className="gallery-carousel">
-            <button
-              className="gallery-arrow gallery-arrow-left"
-              type="button"
-              onClick={() => scrollGallery("previous")}
-              aria-label={language === "zh" ? "查看上一张作品" : "View previous work"}
-            >
-              <ArrowLeft size={22} aria-hidden="true" />
-            </button>
-
-            <div className="gallery-track" ref={carouselRef}>
-              {scrollingImages.map((image, index) => (
-                <figure className="gallery-item" key={`${image.src}-${index}`}>
-                  <img src={image.src} alt={image.alt[language]} loading="lazy" />
-                </figure>
-              ))}
-            </div>
-
-            <button
-              className="gallery-arrow gallery-arrow-right"
-              type="button"
-              onClick={() => scrollGallery("next")}
-              aria-label={language === "zh" ? "查看下一张作品" : "View next work"}
-            >
-              <ArrowRight size={22} aria-hidden="true" />
-            </button>
+          <div className="gallery-track" ref={carouselRef}>
+            {scrollingImages.map((image, index) => (
+              <figure className="gallery-item" key={`${image.src}-${index}`}>
+                <img src={image.src} alt={image.alt[language]} loading="lazy" />
+              </figure>
+            ))}
           </div>
-        )}
+
+          <button
+            className="gallery-arrow gallery-arrow-right"
+            type="button"
+            onClick={() => scrollGallery("next")}
+            aria-label={language === "zh" ? "查看下一张作品" : "View next work"}
+          >
+            <ArrowRight size={22} aria-hidden="true" />
+          </button>
+        </div>
       </section>
     </section>
   );

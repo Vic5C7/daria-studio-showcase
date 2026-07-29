@@ -65,8 +65,6 @@ img {
 .back-button,
 .choice-button,
 .note-add-button,
-.gallery-category-button,
-.counter-button,
 .spot-button {
   display: inline-flex;
   align-items: center;
@@ -230,53 +228,6 @@ h1 {
 .wedding-copy {
   color: #675f57;
   line-height: 1.75;
-}
-
-.gallery-category-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 20px;
-}
-
-.gallery-category-button {
-  min-height: 38px;
-  padding: 0 13px;
-  border: 1px solid rgba(30, 28, 26, 0.14);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.62);
-  color: #1e1c1a;
-  font-size: 0.9rem;
-  font-weight: 800;
-  transition:
-    border-color 160ms ease,
-    background 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-.gallery-category-button:hover {
-  border-color: rgba(159, 116, 55, 0.5);
-  background: #ffffff;
-  transform: translateY(-1px);
-}
-
-.gallery-category-button.is-selected {
-  border-color: #1e1c1a;
-  background: #1e1c1a;
-  color: #ffffff;
-}
-
-.gallery-empty-state {
-  min-height: 190px;
-  display: grid;
-  align-items: center;
-  justify-items: center;
-  border: 1px dashed rgba(30, 28, 26, 0.18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.62);
-  color: #675f57;
-  font-weight: 800;
 }
 
 .gallery-carousel {
@@ -486,7 +437,7 @@ h1 {
 }
 
 .service-options {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .addon-options {
@@ -500,14 +451,6 @@ h1 {
 .package-options {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
-}
-
-.registry-package-options {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.background-options {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .choice-button {
@@ -571,18 +514,13 @@ h1 {
 }
 
 .scene-choice,
-.addon-choice,
-.background-choice {
+.addon-choice {
   min-height: 118px;
 }
 
 .package-choice {
   justify-content: flex-start;
   min-height: 280px;
-}
-
-.registry-package-options .package-choice {
-  min-height: 360px;
 }
 
 .package-price {
@@ -632,22 +570,6 @@ h1 {
 
 .pending-state span {
   line-height: 1.65;
-}
-
-.guidance-box {
-  display: grid;
-  gap: 8px;
-  margin-top: 18px;
-  padding: 16px;
-  border: 1px solid rgba(159, 116, 55, 0.18);
-  border-radius: 8px;
-  background: #f5efe4;
-  color: #675f57;
-  line-height: 1.65;
-}
-
-.guidance-box strong {
-  color: #1e1c1a;
 }
 
 .field-label {
@@ -734,89 +656,6 @@ select:disabled {
   color: #675f57;
   font-size: 0.92rem;
   line-height: 1.6;
-}
-
-.location-summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.location-summary div {
-  display: grid;
-  gap: 8px;
-  min-height: 88px;
-  padding: 16px;
-  border: 1px solid rgba(30, 28, 26, 0.1);
-  border-radius: 8px;
-  background: #fbfaf7;
-}
-
-.location-summary span,
-.counter-value span {
-  color: #675f57;
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.location-summary strong {
-  color: #1e1c1a;
-  font-size: 1.6rem;
-  line-height: 1;
-}
-
-.counter-control {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px;
-  gap: 10px;
-  align-items: center;
-}
-
-.counter-button {
-  width: 48px;
-  height: 48px;
-  border: 1px solid rgba(30, 28, 26, 0.14);
-  border-radius: 8px;
-  background: #1e1c1a;
-  color: #ffffff;
-  transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    transform 160ms ease;
-}
-
-.counter-button:hover:not(:disabled) {
-  border-color: #9f7437;
-  background: #9f7437;
-  transform: translateY(-1px);
-}
-
-.counter-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
-}
-
-.counter-value {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 14px;
-  border: 1px solid rgba(30, 28, 26, 0.12);
-  border-radius: 8px;
-  background: #fbfaf7;
-}
-
-.counter-value strong {
-  color: #1e1c1a;
-  font-size: 1.55rem;
-  line-height: 1;
-}
-
-.registry-retouch-summary {
-  margin-top: 16px;
 }
 
 .notes-block {
@@ -1005,9 +844,7 @@ select:disabled {
 
   .service-options,
   .addon-options,
-  .package-options,
-  .registry-package-options,
-  .background-options {
+  .package-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1088,21 +925,14 @@ select:disabled {
   .service-options,
   .scene-options,
   .addon-options,
-  .package-options,
-  .registry-package-options,
-  .background-options {
+  .package-options {
     grid-template-columns: 1fr;
   }
 
   .spot-heading,
-  .total-strip,
-  .location-summary {
+  .total-strip {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .location-summary {
-    grid-template-columns: 1fr;
   }
 
   .notes-input-row {
