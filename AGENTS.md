@@ -1,68 +1,55 @@
 # AGENTS.md
 
-## Project Intent
+## 项目意图
 
-This repository is for the future production DARIA STUDIO website.
+本仓库用于未来正式版 DARIA STUDIO 网站。
 
-The long-term product direction is:
+长期产品方向包括：
 
-- A customer-facing website
-- A staff admin interface
-- A backend API
-- A database-backed content system
+- 面向客户的网站。
+- 面向工作人员的后台。
+- 后端 API。
+- 基于数据库的内容管理系统。
 
-The project is currently before final framework and database design. Do not rush formal
-business implementation before the architecture, database structure, authentication
-approach, and deployment direction are confirmed.
+项目目前仍处在正式框架和数据库设计之前。不要在架构、数据库结构、认证方式和部署方式确定前急着编写正式业务代码。
 
-## Repository State
+## 仓库状态
 
-- `repos/` contains future production code placeholders.
-- `repos/frontend/` is reserved for the future production frontend.
-- `repos/backend/` is reserved for the future production backend.
-- `wiki/` contains product documentation, user stories, acceptance criteria, and prototypes.
-- `wiki/prototype/high-fidelity/` contains the current runnable high-fidelity prototype.
-- `sample_pic/` contains original photo assets.
+- `repos/` 存放未来正式项目代码占位。
+- `repos/frontend/` 预留给未来正式前端。
+- `repos/backend/` 预留给未来正式后端。
+- `wiki/` 存放产品文档、用户故事、验收标准和原型。
+- `wiki/prototype/high-fidelity/` 存放当前可运行的高保真原型。
+- `sample_pic/` 存放原始图片素材。
 
-## Decision Rules
+## 决策规则
 
-- Do not treat the prototype as the production architecture.
-- Avoid adding real admin, database, authentication, or complex business logic to the
-  prototype.
-- Before building production features, confirm the frontend framework, backend framework,
-  database structure, authentication model, and deployment model.
-- Favor maintainable, data-driven content management over hard-coded feature growth.
-- Future pricing, packages, service areas, service types, schools, scene types, clothing,
-  props, and makeup data should be modeled as editable content.
-- Keep customer-facing pages, staff admin pages, API boundaries, and permission boundaries
-  clearly separated.
+- 不要把原型当作正式架构继续堆复杂功能。
+- 不要在原型里加入真实后台、数据库、认证或复杂业务逻辑。
+- 正式开发前，需要先确认前端框架、后端框架、数据库结构、认证模型和部署模型。
+- 优先采用可维护、数据驱动的内容管理方式，而不是继续硬编码功能。
+- 未来价格、套餐、服务地区、服务类型、学校、场景类型、服装、道具和妆造都应建模为可编辑内容。
+- 客户页面、工作人员后台、API 边界和权限边界必须清晰分离。
 
-## Prototype Rules
+## 原型规则
 
-- The prototype may be used for demos, visual reference, interaction reference, and product
-  discussion.
-- Small prototype changes are allowed when they support presentation quality, such as copy,
-  image, layout, or styling fixes.
-- Do not expand the prototype into the real system.
-- When changing the prototype, keep GitHub Pages compatibility in mind.
+- 原型可用于演示、视觉参考、交互参考和产品讨论。
+- 原型允许做小修小补，例如文案、图片、布局或样式调整。
+- 不要把原型扩展成真实系统。
+- 修改原型时需要考虑 GitHub Pages 兼容性。
 
-## Development Rules
+## 开发规则
 
-- Before modifying a directory, read the closest `AGENTS.md` files from the repository root
-  down to that directory.
-- Preserve the frontend/backend separation.
-- Do not delete or overwrite user-provided assets or existing work unless explicitly asked.
-- Keep changes scoped to the current request.
-- Prefer clear, boring structure over clever abstractions until the real framework choices
-  are locked.
-- Use English for code identifiers and commit messages. User-facing Chinese and English copy
-  should both be preserved where the product requires bilingual content.
+- 修改任何目录前，先阅读从仓库根目录到目标目录之间最近的 `AGENTS.md`。
+- 保持前后端分离思路。
+- 不要删除或覆盖用户提供的素材和已有工作，除非用户明确要求。
+- 改动范围应聚焦当前请求。
+- 在真实框架选择确定前，优先使用清楚、朴素的结构，避免聪明但过早的抽象。
+- 代码标识符和 commit message 使用英文。产品需要双语时，面向用户的中文和英文文案都应保留。
 
-## Git And Verification Rules
+## Git 与验证规则
 
-- Check Git status before making changes and before finalizing work.
-- If a change affects `wiki/prototype/high-fidelity/`, verify that its build still passes.
-- GitHub Pages currently deploys `wiki/prototype/high-fidelity/`; if deployment configuration
-  changes, keep the working directory, cache path, and artifact path aligned.
-- Do not commit generated dependency folders or build output such as `node_modules/` or
-  `dist/`.
+- 修改前和结束前都要检查 Git 状态。
+- 如果改动影响 `wiki/prototype/high-fidelity/`，需要验证构建通过。
+- GitHub Pages 当前部署 `wiki/prototype/high-fidelity/`；如果修改部署配置，必须保持工作目录、缓存路径和产物路径一致。
+- 不要提交生成的依赖目录或构建产物，例如 `node_modules/` 或 `dist/`。
