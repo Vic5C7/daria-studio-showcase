@@ -22,10 +22,17 @@ export type ServiceTypeId =
   | "id-photo"
   | "graduation";
 
+export type GalleryServiceTypeId = ServiceTypeId | "studio-shoot";
+
 export type ServiceType = {
   id: ServiceTypeId;
   name: LocalizedText;
   isAvailable: boolean;
+};
+
+export type GalleryServiceType = {
+  id: GalleryServiceTypeId;
+  name: LocalizedText;
 };
 
 export type GraduationSchoolId = "unimelb" | "monash" | "rmit";
@@ -125,10 +132,6 @@ export const homeContent = {
   galleryTitle: {
     zh: "作品展示",
     en: "Selected Work"
-  },
-  galleryIntro: {
-    zh: "首版使用当前样片展示，后续可以继续加入更多学校、情侣和活动作品。",
-    en: "This first version uses the current sample images and can grow with more campus, couple and event work."
   }
 } satisfies Record<string, LocalizedText>;
 
@@ -960,14 +963,86 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
   ]
 };
 
-export const galleryImages: GalleryImage[] = Array.from({ length: 9 }, (_, index) => {
+const galleryTypeNames: Record<GalleryServiceTypeId, LocalizedText> = {
+  "wedding-portrait": {
+    zh: "婚纱照",
+    en: "Wedding Portraits"
+  },
+  "registry-wedding": {
+    zh: "注册/求婚跟拍",
+    en: "Registry / Proposal Coverage"
+  },
+  "daily-portrait": {
+    zh: "日常写真",
+    en: "Lifestyle Portraits"
+  },
+  "id-photo": {
+    zh: "证件照",
+    en: "ID Photo"
+  },
+  graduation: {
+    zh: "毕业照",
+    en: "Graduation Photography"
+  },
+  "studio-shoot": {
+    zh: "棚拍",
+    en: "Studio Shoot"
+  }
+};
+
+export const galleryServiceTypes: GalleryServiceType[] = [
+  {
+    id: "wedding-portrait",
+    name: galleryTypeNames["wedding-portrait"]
+  },
+  {
+    id: "registry-wedding",
+    name: galleryTypeNames["registry-wedding"]
+  },
+  {
+    id: "daily-portrait",
+    name: galleryTypeNames["daily-portrait"]
+  },
+  {
+    id: "id-photo",
+    name: galleryTypeNames["id-photo"]
+  },
+  {
+    id: "graduation",
+    name: galleryTypeNames.graduation
+  },
+  {
+    id: "studio-shoot",
+    name: galleryTypeNames["studio-shoot"]
+  }
+];
+
+const galleryImageSources = Array.from({ length: 9 }, (_, index) => {
   const paddedIndex = String(index + 1).padStart(2, "0");
 
   return {
     src: `images/models/model-${paddedIndex}.jpg`,
-    alt: {
-      zh: `DG墨尔本摄影毕业照作品 ${index + 1}`,
-      en: `DG Melbourne Photography graduation portrait ${index + 1}`
-    }
+    index: index + 1
   };
 });
+
+function createGalleryImagesForService(serviceName: LocalizedText): GalleryImage[] {
+  return galleryImageSources.map((image) => ({
+    src: image.src,
+    alt: {
+      zh: `DARIA STUDIO ${serviceName.zh}样片 ${image.index}`,
+      en: `DARIA STUDIO ${serviceName.en} sample ${image.index}`
+    }
+  }));
+}
+
+export const galleryImages: GalleryImage[] = createGalleryImagesForService(galleryTypeNames.graduation);
+
+export const galleryImagesByServiceType: Record<GalleryServiceTypeId, GalleryImage[]> = {
+  "wedding-portrait": createGalleryImagesForService(galleryTypeNames["wedding-portrait"]),
+  "registry-wedding": createGalleryImagesForService(galleryTypeNames["registry-wedding"]),
+  "daily-portrait": createGalleryImagesForService(galleryTypeNames["daily-portrait"]),
+  "id-photo": createGalleryImagesForService(galleryTypeNames["id-photo"]),
+  graduation: galleryImages,
+  "studio-shoot": createGalleryImagesForService(galleryTypeNames["studio-shoot"])
+};

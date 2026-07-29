@@ -63,6 +63,7 @@ img {
 .nav-button,
 .primary-action,
 .back-button,
+.gallery-filter-button,
 .choice-button,
 .note-add-button,
 .spot-button {
@@ -228,6 +229,50 @@ h1 {
 .wedding-copy {
   color: #675f57;
   line-height: 1.75;
+}
+
+.gallery-filter {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 24px;
+  padding: 2px 0 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gallery-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.gallery-filter-button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(30, 28, 26, 0.14);
+  border-radius: 8px;
+  background: #fbfaf7;
+  color: #1e1c1a;
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.gallery-filter-button:hover {
+  border-color: #9f7437;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.gallery-filter-button.is-selected {
+  border-color: #1e1c1a;
+  background: #1e1c1a;
+  color: #ffffff;
 }
 
 .gallery-carousel {
@@ -898,6 +943,16 @@ select:disabled {
 
   .primary-action {
     width: 100%;
+  }
+
+  .gallery-filter {
+    margin-bottom: 18px;
+  }
+
+  .gallery-filter-button {
+    min-height: 40px;
+    padding: 0 13px;
+    font-size: 0.88rem;
   }
 
   .gallery-carousel {

@@ -1,9 +1,11 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   brand,
-  galleryImages,
+  galleryImagesByServiceType,
+  galleryServiceTypes,
   homeContent,
+  type GalleryServiceTypeId,
   type Language
 } from "../data/siteContent";
 
@@ -13,10 +15,15 @@ type HomePageProps = {
 };
 
 export function HomePage({ language, onNavigatePricing }: HomePageProps) {
+  const [selectedGalleryTypeId, setSelectedGalleryTypeId] = useState<GalleryServiceTypeId>("graduation");
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const resumeTimeoutRef = useRef<number | null>(null);
   const isAutoScrollingRef = useRef(true);
-  const scrollingImages = useMemo(() => [...galleryImages, ...galleryImages], []);
+  const selectedGalleryImages = galleryImagesByServiceType[selectedGalleryTypeId];
+  const scrollingImages = useMemo(
+    () => [...selectedGalleryImages, ...selectedGalleryImages],
+    [selectedGalleryImages]
+  );
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -48,6 +55,14 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollLeft = 0;
+    }
+
+    isAutoScrollingRef.current = true;
+  }, [selectedGalleryTypeId]);
 
   const pauseThenResume = () => {
     isAutoScrollingRef.current = false;
@@ -97,7 +112,33 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
         <div className="section-heading">
           <p>{brand.tagline[language]}</p>
           <h2 id="gallery-title">{homeContent.galleryTitle[language]}</h2>
-          <span>{homeContent.galleryIntro[language]}</span>
+        </div>
+
+        <div
+          className="gallery-filter"
+          role="tablist"
+          aria-label={language === "zh" ? "选择作品服务类型" : "Choose gallery service type"}
+        >
+          {galleryServiceTypes.map((serviceType) => {
+            const isSelected = selectedGalleryTypeId === serviceType.id;
+
+            return (
+              <button
+                className={
+                  isSelected
+                    ? "gallery-filter-button is-selected"
+                    : "gallery-filter-button"
+                }
+                type="button"
+                role="tab"
+                key={serviceType.id}
+                onClick={() => setSelectedGalleryTypeId(serviceType.id)}
+                aria-selected={isSelected}
+              >
+                <span>{serviceType.name[language]}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="gallery-carousel">
