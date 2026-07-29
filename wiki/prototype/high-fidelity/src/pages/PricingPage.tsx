@@ -4,6 +4,8 @@ import {
   Gift,
   GraduationCap,
   MapPin,
+  Minus,
+  Plus,
   Shirt,
   Sparkles,
   type LucideIcon
@@ -15,135 +17,275 @@ import {
   graduationPackages,
   graduationSchools,
   pricingContent,
+  registryAddOns,
+  registryPackages,
   sceneTypesBySchool,
   serviceAreas,
   serviceTypesByArea,
+  studioBackgroundTemplates,
   type AddOnGroupId,
   type GraduationAddOn,
+  type GraduationSchoolId,
   type Language,
+  type RegistryAddOn,
+  type RegistryAddOnGroupId,
   type SceneTypeId,
   type ServiceAreaId,
-  type ServiceTypeId
+  type ServiceTypeId,
+  type ServiceTypeStatus
 } from "../data/siteContent";
 
-type NoteSection = "schoolScene" | "package" | AddOnGroupId;
+type NoteSection =
+  | "schoolScene"
+  | "package"
+  | "clothing"
+  | "props"
+  | "makeup"
+  | "studio"
+  | "studioBackground"
+  | "registryPackage"
+  | "registryLocations"
+  | "registryStyling"
+  | "registryProps"
+  | "registryWardrobe"
+  | "pendingService";
 
 type SectionNotes = Record<NoteSection, string[]>;
+type AddOnOption = GraduationAddOn | RegistryAddOn;
 
 type PricingPageProps = {
   language: Language;
   onNavigateHome: () => void;
 };
 
-const emptySectionNotes: SectionNotes = {
-  schoolScene: [],
-  package: [],
-  clothing: [],
-  props: [],
-  makeup: []
-};
+function createEmptySectionNotes(): SectionNotes {
+  return {
+    schoolScene: [],
+    package: [],
+    clothing: [],
+    props: [],
+    makeup: [],
+    studio: [],
+    studioBackground: [],
+    registryPackage: [],
+    registryLocations: [],
+    registryStyling: [],
+    registryProps: [],
+    registryWardrobe: [],
+    pendingService: []
+  };
+}
 
 function formatAud(price: number) {
   return `${price} AUD`;
 }
 
+function getServiceStatusLabel(status: ServiceTypeStatus, language: Language) {
+  if (status === "available") {
+    return pricingContent.availableNow[language];
+  }
+
+  if (status === "detailsPending") {
+    return pricingContent.detailsPending[language];
+  }
+
+  return pricingContent.comingSoon[language];
+}
+
 export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
   const [selectedAreaId, setSelectedAreaId] = useState<ServiceAreaId | "">("");
   const [selectedServiceTypeId, setSelectedServiceTypeId] = useState<ServiceTypeId | "">("");
-  const [selectedSchoolId, setSelectedSchoolId] = useState("");
+  const [selectedSchoolId, setSelectedSchoolId] = useState<GraduationSchoolId | "">("");
   const [selectedSceneTypeId, setSelectedSceneTypeId] = useState<SceneTypeId | "">("");
   const [selectedPackageId, setSelectedPackageId] = useState("");
-  const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
-  const [sectionNotes, setSectionNotes] = useState<SectionNotes>(emptySectionNotes);
+  const [selectedGraduationAddOnIds, setSelectedGraduationAddOnIds] = useState<string[]>([]);
+  const [selectedStudioBackgroundId, setSelectedStudioBackgroundId] = useState("");
+  const [selectedRegistryPackageId, setSelectedRegistryPackageId] = useState("");
+  const [registryExtraLocationCount, setRegistryExtraLocationCount] = useState(0);
+  const [selectedRegistryAddOnIds, setSelectedRegistryAddOnIds] = useState<string[]>([]);
+  const [sectionNotes, setSectionNotes] = useState<SectionNotes>(() => createEmptySectionNotes());
 
   const availableServiceTypes = selectedAreaId ? serviceTypesByArea[selectedAreaId] : [];
+
+  const selectedServiceType = useMemo(
+    () => availableServiceTypes.find((serviceType) => serviceType.id === selectedServiceTypeId),
+    [availableServiceTypes, selectedServiceTypeId]
+  );
 
   const selectedSchool = useMemo(
     () => graduationSchools.find((school) => school.id === selectedSchoolId),
     [selectedSchoolId]
   );
 
-  const availableSceneTypes = selectedSchoolId
-    ? sceneTypesBySchool[selectedSchoolId as keyof typeof sceneTypesBySchool] ?? []
-    : [];
+  const availableSceneTypes = selectedSchoolId ? sceneTypesBySchool[selectedSchoolId] : [];
 
   const selectedSceneType = useMemo(
     () => availableSceneTypes.find((sceneType) => sceneType.id === selectedSceneTypeId),
     [availableSceneTypes, selectedSceneTypeId]
   );
 
-  const availablePackages = selectedSceneTypeId
-    ? graduationPackages[selectedSceneTypeId as SceneTypeId] ?? []
-    : [];
+  const availablePackages = selectedSceneTypeId ? graduationPackages[selectedSceneTypeId] ?? [] : [];
 
   const selectedPackage = useMemo(
     () => availablePackages.find((graduationPackage) => graduationPackage.id === selectedPackageId),
     [availablePackages, selectedPackageId]
   );
 
-  const allAddOns = useMemo(
-    () => Object.values(graduationAddOns).flat(),
-    []
-  );
+  const allGraduationAddOns = useMemo(() => Object.values(graduationAddOns).flat(), []);
+  const allRegistryAddOns = useMemo(() => Object.values(registryAddOns).flat(), []);
 
-  const selectedAddOnsTotal = selectedAddOnIds.reduce((sum, addOnId) => {
-    const addOn = allAddOns.find((option) => option.id === addOnId);
+  const selectedGraduationAddOnsTotal = selectedGraduationAddOnIds.reduce((sum, addOnId) => {
+    const addOn = allGraduationAddOns.find((option) => option.id === addOnId);
     return sum + (addOn?.priceAud ?? 0);
   }, 0);
 
-  const totalPrice = (selectedPackage?.priceAud ?? 0) + selectedAddOnsTotal;
-  const showServiceTypes = Boolean(selectedAreaId);
-  const showSchoolSelect = selectedAreaId === "melbourne" && selectedServiceTypeId === "graduation";
-  const isPendingSchool = Boolean(
-    selectedSchool && selectedSchool.id !== "unimelb"
+  const selectedRegistryPackage = useMemo(
+    () => registryPackages.find((registryPackage) => registryPackage.id === selectedRegistryPackageId),
+    [selectedRegistryPackageId]
   );
-  const showSceneTypes = selectedSchool?.id === "unimelb";
-  const showPackages = Boolean(selectedSceneType);
-  const showAddOns = Boolean(selectedPackage);
-  const hasConfirmedTotal = Boolean(selectedPackage);
-  const totalDisplay = isPendingSchool
-    ? pricingContent.pricePendingTotal[language]
-    : hasConfirmedTotal
-      ? formatAud(totalPrice)
-      : pricingContent.choosePackageTotal[language];
 
-  const clearGraduationSelections = () => {
+  const selectedRegistryAddOns = selectedRegistryAddOnIds
+    .map((addOnId) => allRegistryAddOns.find((option) => option.id === addOnId))
+    .filter((addOn): addOn is RegistryAddOn => Boolean(addOn));
+
+  const selectedRegistryAddOnsTotal = selectedRegistryAddOns.reduce(
+    (sum, addOn) => sum + addOn.priceAud,
+    0
+  );
+
+  const graduationTotalPrice = (selectedPackage?.priceAud ?? 0) + selectedGraduationAddOnsTotal;
+  const registryTotalPrice =
+    (selectedRegistryPackage?.priceAud ?? 0) +
+    registryExtraLocationCount * 100 +
+    selectedRegistryAddOnsTotal;
+  const registryRetouchedTotal = selectedRegistryPackage
+    ? selectedRegistryPackage.retouchedPhotos +
+      registryExtraLocationCount * 4 +
+      selectedRegistryAddOns.reduce((sum, addOn) => sum + (addOn.retouchedBonus ?? 0), 0)
+    : 0;
+
+  const showServiceTypes = Boolean(selectedAreaId);
+  const isGraduationService = selectedAreaId === "melbourne" && selectedServiceTypeId === "graduation";
+  const isRegistryService = selectedAreaId === "melbourne" && selectedServiceTypeId === "registry-wedding";
+  const isDetailsPendingService = selectedServiceType?.status === "detailsPending";
+  const showSchoolSelect = isGraduationService;
+  const showSceneTypes = Boolean(selectedSchool);
+  const showPackages = Boolean(selectedSceneType);
+  const showStudioBackground = selectedSceneTypeId === "graduation-studio" && Boolean(selectedPackage);
+  const showGraduationAddOns = Boolean(selectedPackage);
+  const showRegistryLocations = Boolean(selectedRegistryPackage);
+  const showRegistryAddOns = Boolean(selectedRegistryPackage);
+  const hasConfirmedTotal =
+    (isGraduationService && Boolean(selectedPackage)) ||
+    (isRegistryService && Boolean(selectedRegistryPackage));
+
+  const totalDisplay = isDetailsPendingService
+    ? pricingContent.detailsPendingTotal[language]
+    : isRegistryService
+      ? selectedRegistryPackage
+        ? formatAud(registryTotalPrice)
+        : pricingContent.choosePackageTotal[language]
+      : isGraduationService && selectedPackage
+        ? formatAud(graduationTotalPrice)
+        : pricingContent.choosePackageTotal[language];
+
+  const graduationAddOnGroups: AddOnGroupId[] =
+    selectedSceneTypeId === "graduation-studio" ? ["studio"] : ["clothing", "props", "makeup"];
+
+  const graduationAddOnMeta: Record<AddOnGroupId, { title: string; stepLabel: string; Icon: LucideIcon }> = {
+    clothing: {
+      title: pricingContent.clothingLabel[language],
+      stepLabel: "Step 06",
+      Icon: Shirt
+    },
+    props: {
+      title: pricingContent.propsLabel[language],
+      stepLabel: "Step 07",
+      Icon: Gift
+    },
+    makeup: {
+      title: pricingContent.makeupLabel[language],
+      stepLabel: "Step 08",
+      Icon: Sparkles
+    },
+    studio: {
+      title: pricingContent.studioAddOnsLabel[language],
+      stepLabel: "Step 07",
+      Icon: Sparkles
+    }
+  };
+
+  const registryAddOnMeta: Record<
+    RegistryAddOnGroupId,
+    { title: string; stepLabel: string; Icon: LucideIcon; noteSection: NoteSection }
+  > = {
+    styling: {
+      title: pricingContent.registryStylingLabel[language],
+      stepLabel: "Step 05",
+      Icon: Sparkles,
+      noteSection: "registryStyling"
+    },
+    "registry-props": {
+      title: pricingContent.registryPropsLabel[language],
+      stepLabel: "Step 06",
+      Icon: Gift,
+      noteSection: "registryProps"
+    },
+    wardrobe: {
+      title: pricingContent.registryWardrobeLabel[language],
+      stepLabel: "Step 07",
+      Icon: Shirt,
+      noteSection: "registryWardrobe"
+    }
+  };
+
+  const clearFlowSelections = () => {
     setSelectedSchoolId("");
     setSelectedSceneTypeId("");
     setSelectedPackageId("");
-    setSelectedAddOnIds([]);
-    setSectionNotes(emptySectionNotes);
+    setSelectedGraduationAddOnIds([]);
+    setSelectedStudioBackgroundId("");
+    setSelectedRegistryPackageId("");
+    setRegistryExtraLocationCount(0);
+    setSelectedRegistryAddOnIds([]);
+    setSectionNotes(createEmptySectionNotes());
   };
 
   const selectArea = (areaId: ServiceAreaId) => {
     setSelectedAreaId(areaId);
     setSelectedServiceTypeId("");
-    clearGraduationSelections();
+    clearFlowSelections();
   };
 
   const selectServiceType = (serviceTypeId: ServiceTypeId) => {
     setSelectedServiceTypeId(serviceTypeId);
-    clearGraduationSelections();
+    clearFlowSelections();
   };
 
-  const selectSchool = (schoolId: string) => {
+  const selectSchool = (schoolId: GraduationSchoolId | "") => {
     setSelectedSchoolId(schoolId);
     setSelectedSceneTypeId("");
     setSelectedPackageId("");
-    setSelectedAddOnIds([]);
-    setSectionNotes(emptySectionNotes);
+    setSelectedGraduationAddOnIds([]);
+    setSelectedStudioBackgroundId("");
+    setSectionNotes(createEmptySectionNotes());
   };
 
   const selectSceneType = (sceneTypeId: SceneTypeId) => {
     setSelectedSceneTypeId(sceneTypeId);
     setSelectedPackageId("");
-    setSelectedAddOnIds([]);
+    setSelectedGraduationAddOnIds([]);
+    setSelectedStudioBackgroundId(
+      sceneTypeId === "graduation-studio" ? studioBackgroundTemplates[0]?.id ?? "" : ""
+    );
     setSectionNotes((currentNotes) => ({
       ...currentNotes,
       package: [],
       clothing: [],
       props: [],
-      makeup: []
+      makeup: [],
+      studio: [],
+      studioBackground: []
     }));
   };
 
@@ -155,12 +297,32 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
     }));
   };
 
-  const toggleAddOn = (addOnId: string) => {
-    setSelectedAddOnIds((currentAddOns) =>
+  const selectRegistryPackage = (packageId: string) => {
+    setSelectedRegistryPackageId(packageId);
+    setSectionNotes((currentNotes) => ({
+      ...currentNotes,
+      registryPackage: []
+    }));
+  };
+
+  const toggleGraduationAddOn = (addOnId: string) => {
+    setSelectedGraduationAddOnIds((currentAddOns) =>
       currentAddOns.includes(addOnId)
         ? currentAddOns.filter((currentAddOn) => currentAddOn !== addOnId)
         : [...currentAddOns, addOnId]
     );
+  };
+
+  const toggleRegistryAddOn = (addOnId: string) => {
+    setSelectedRegistryAddOnIds((currentAddOns) =>
+      currentAddOns.includes(addOnId)
+        ? currentAddOns.filter((currentAddOn) => currentAddOn !== addOnId)
+        : [...currentAddOns, addOnId]
+    );
+  };
+
+  const adjustRegistryExtraLocations = (delta: number) => {
+    setRegistryExtraLocationCount((currentCount) => Math.min(4, Math.max(0, currentCount + delta)));
   };
 
   const updateNotes = (section: NoteSection, notes: string[]) => {
@@ -170,12 +332,30 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
     }));
   };
 
+  const getAvailableGraduationAddOns = (section: AddOnGroupId) =>
+    graduationAddOns[section].filter((addOn) => {
+      if (addOn.availableSchoolIds && (!selectedSchoolId || !addOn.availableSchoolIds.includes(selectedSchoolId))) {
+        return false;
+      }
+
+      if (
+        addOn.availableSceneTypeIds &&
+        (!selectedSceneTypeId || !addOn.availableSceneTypeIds.includes(selectedSceneTypeId))
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
   const renderAddOnSection = (
-    section: AddOnGroupId,
+    section: NoteSection,
     title: string,
     stepLabel: string,
     Icon: LucideIcon,
-    options: GraduationAddOn[]
+    options: AddOnOption[],
+    selectedAddOnIds: string[],
+    onToggle: (addOnId: string) => void
   ) => (
     <section className="pricing-panel selector-panel" aria-labelledby={`${section}-title`}>
       <div className="panel-title compact-title">
@@ -195,7 +375,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
               className={isSelected ? "choice-button addon-choice is-selected" : "choice-button addon-choice"}
               type="button"
               key={addOn.id}
-              onClick={() => toggleAddOn(addOn.id)}
+              onClick={() => onToggle(addOn.id)}
               aria-pressed={isSelected}
             >
               <span>{addOn.name[language]}</span>
@@ -274,29 +454,54 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
               <div className="empty-state">{pricingContent.shanghaiEmpty[language]}</div>
             ) : (
               <div className="option-grid service-options">
-                {availableServiceTypes.map((serviceType) => (
-                  <button
-                    className={
-                      selectedServiceTypeId === serviceType.id
-                        ? "choice-button service-choice is-selected"
-                        : "choice-button service-choice"
-                    }
-                    type="button"
-                    key={serviceType.id}
-                    onClick={() => selectServiceType(serviceType.id)}
-                    aria-pressed={selectedServiceTypeId === serviceType.id}
-                    disabled={!serviceType.isAvailable}
-                  >
-                    <span>{serviceType.name[language]}</span>
-                    <small>
-                      {serviceType.isAvailable
-                        ? pricingContent.availableNow[language]
-                        : pricingContent.comingSoon[language]}
-                    </small>
-                  </button>
-                ))}
+                {availableServiceTypes.map((serviceType) => {
+                  const isSelected = selectedServiceTypeId === serviceType.id;
+                  const isSelectable = serviceType.status !== "comingSoon";
+
+                  return (
+                    <button
+                      className={
+                        isSelected
+                          ? "choice-button service-choice is-selected"
+                          : "choice-button service-choice"
+                      }
+                      type="button"
+                      key={serviceType.id}
+                      onClick={() => selectServiceType(serviceType.id)}
+                      aria-pressed={isSelected}
+                      disabled={!isSelectable}
+                    >
+                      <span>{serviceType.name[language]}</span>
+                      <small>{getServiceStatusLabel(serviceType.status, language)}</small>
+                    </button>
+                  );
+                })}
               </div>
             )}
+          </section>
+        )}
+
+        {isDetailsPendingService && selectedServiceType && (
+          <section className="pricing-panel selector-panel" aria-labelledby="details-pending-title">
+            <div className="panel-title compact-title">
+              <Camera size={24} aria-hidden="true" />
+              <div>
+                <p>Step 03</p>
+                <h2 id="details-pending-title">{pricingContent.detailsPendingTitle[language]}</h2>
+              </div>
+            </div>
+
+            <div className="empty-state pending-state">
+              <strong>{selectedServiceType.name[language]}</strong>
+              <span>{pricingContent.idPhotoPendingCopy[language]}</span>
+            </div>
+
+            <NotesInput
+              idPrefix="pending-service"
+              language={language}
+              notes={sectionNotes.pendingService}
+              onChange={(notes) => updateNotes("pendingService", notes)}
+            />
           </section>
         )}
 
@@ -316,7 +521,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
             <select
               id="school-select"
               value={selectedSchoolId}
-              onChange={(event) => selectSchool(event.target.value)}
+              onChange={(event) => selectSchool(event.target.value as GraduationSchoolId | "")}
             >
               <option value="">{pricingContent.schoolPlaceholder[language]}</option>
               {graduationSchools.map((school) => (
@@ -325,30 +530,6 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                 </option>
               ))}
             </select>
-          </section>
-        )}
-
-        {isPendingSchool && selectedSchool && (
-          <section className="pricing-panel selector-panel" aria-labelledby="price-pending-title">
-            <div className="panel-title compact-title">
-              <Camera size={24} aria-hidden="true" />
-              <div>
-                <p>Step 04</p>
-                <h2 id="price-pending-title">{pricingContent.pricePendingTitle[language]}</h2>
-              </div>
-            </div>
-
-            <div className="empty-state pending-state">
-              <strong>{selectedSchool.name[language]}</strong>
-              <span>{pricingContent.pricePendingCopy[language]}</span>
-            </div>
-
-            <NotesInput
-              idPrefix="school-scene"
-              language={language}
-              notes={sectionNotes.schoolScene}
-              onChange={(notes) => updateNotes("schoolScene", notes)}
-            />
           </section>
         )}
 
@@ -429,6 +610,13 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
               })}
             </div>
 
+            {selectedSceneTypeId !== "graduation-studio" && (
+              <div className="guidance-box">
+                <strong>{pricingContent.photoSpotGuidanceTitle[language]}</strong>
+                <span>{pricingContent.photoSpotGuidanceCopy[language]}</span>
+              </div>
+            )}
+
             <NotesInput
               idPrefix="package"
               language={language}
@@ -438,41 +626,216 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
           </section>
         )}
 
-        {showAddOns && (
+        {showStudioBackground && (
+          <section className="pricing-panel selector-panel" aria-labelledby="studio-background-title">
+            <div className="panel-title compact-title">
+              <Camera size={24} aria-hidden="true" />
+              <div>
+                <p>Step 06</p>
+                <h2 id="studio-background-title">{pricingContent.studioBackgroundLabel[language]}</h2>
+              </div>
+            </div>
+
+            <div className="option-grid background-options">
+              {studioBackgroundTemplates.map((template) => {
+                const isSelected = selectedStudioBackgroundId === template.id;
+
+                return (
+                  <button
+                    className={
+                      isSelected
+                        ? "choice-button background-choice is-selected"
+                        : "choice-button background-choice"
+                    }
+                    type="button"
+                    key={template.id}
+                    onClick={() => setSelectedStudioBackgroundId(template.id)}
+                    aria-pressed={isSelected}
+                  >
+                    <span>{template.name[language]}</span>
+                    <small>{template.description[language]}</small>
+                  </button>
+                );
+              })}
+            </div>
+
+            <NotesInput
+              idPrefix="studio-background"
+              language={language}
+              notes={sectionNotes.studioBackground}
+              onChange={(notes) => updateNotes("studioBackground", notes)}
+            />
+          </section>
+        )}
+
+        {showGraduationAddOns && (
           <>
             <section className="pricing-panel selector-panel add-on-intro-panel">
               <div className="panel-title compact-title">
                 <Sparkles size={24} aria-hidden="true" />
                 <div>
-                  <p>Step 06-08</p>
+                  <p>{selectedSceneTypeId === "graduation-studio" ? "Step 07" : "Step 06-08"}</p>
                   <h2>{pricingContent.addOnsLabel[language]}</h2>
                   <span className="panel-helper-copy">{pricingContent.addOnIntro[language]}</span>
                 </div>
               </div>
             </section>
 
-            {renderAddOnSection(
-              "clothing",
-              pricingContent.clothingLabel[language],
-              "Step 06",
-              Shirt,
-              graduationAddOns.clothing
+            {graduationAddOnGroups.map((group) => {
+              const meta = graduationAddOnMeta[group];
+
+              return renderAddOnSection(
+                group,
+                meta.title,
+                meta.stepLabel,
+                meta.Icon,
+                getAvailableGraduationAddOns(group),
+                selectedGraduationAddOnIds,
+                toggleGraduationAddOn
+              );
+            })}
+          </>
+        )}
+
+        {isRegistryService && (
+          <>
+            <section className="pricing-panel selector-panel" aria-labelledby="registry-package-title">
+              <div className="panel-title compact-title">
+                <Camera size={24} aria-hidden="true" />
+                <div>
+                  <p>Step 03</p>
+                  <h2 id="registry-package-title">{pricingContent.registryPackageLabel[language]}</h2>
+                </div>
+              </div>
+
+              <div className="option-grid package-options registry-package-options">
+                {registryPackages.map((registryPackage) => {
+                  const isSelected = selectedRegistryPackageId === registryPackage.id;
+
+                  return (
+                    <button
+                      className={
+                        isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
+                      }
+                      type="button"
+                      key={registryPackage.id}
+                      onClick={() => selectRegistryPackage(registryPackage.id)}
+                      aria-pressed={isSelected}
+                    >
+                      <span>{registryPackage.name[language]}</span>
+                      <strong className="package-price">{formatAud(registryPackage.priceAud)}</strong>
+                      <small>{pricingContent.packageDetailsLabel[language]}</small>
+                      {registryPackage.details[language].map((detail) => (
+                        <span className="package-detail" key={detail}>
+                          {detail}
+                        </span>
+                      ))}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <NotesInput
+                idPrefix="registry-package"
+                language={language}
+                notes={sectionNotes.registryPackage}
+                onChange={(notes) => updateNotes("registryPackage", notes)}
+              />
+            </section>
+
+            {showRegistryLocations && selectedRegistryPackage && (
+              <section className="pricing-panel selector-panel" aria-labelledby="registry-locations-title">
+                <div className="panel-title compact-title">
+                  <MapPin size={24} aria-hidden="true" />
+                  <div>
+                    <p>Step 04</p>
+                    <h2 id="registry-locations-title">{pricingContent.registryLocationsLabel[language]}</h2>
+                    <span className="panel-helper-copy">
+                      {pricingContent.registryExtraLocationsIntro[language]}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="location-summary">
+                  <div>
+                    <span>{pricingContent.includedLocationsLabel[language]}</span>
+                    <strong>{selectedRegistryPackage.includedExtraLocations}</strong>
+                  </div>
+                  <div>
+                    <span>{pricingContent.paidExtraLocationsLabel[language]}</span>
+                    <strong>{registryExtraLocationCount}</strong>
+                  </div>
+                </div>
+
+                <div className="counter-control">
+                  <button
+                    className="counter-button"
+                    type="button"
+                    onClick={() => adjustRegistryExtraLocations(-1)}
+                    disabled={registryExtraLocationCount === 0}
+                    aria-label={pricingContent.decreaseExtraLocation[language]}
+                    title={pricingContent.decreaseExtraLocation[language]}
+                  >
+                    <Minus size={18} aria-hidden="true" />
+                  </button>
+                  <div className="counter-value">
+                    <strong>{registryExtraLocationCount}</strong>
+                    <span>{pricingContent.extraLocationUnit[language]}</span>
+                  </div>
+                  <button
+                    className="counter-button"
+                    type="button"
+                    onClick={() => adjustRegistryExtraLocations(1)}
+                    aria-label={pricingContent.increaseExtraLocation[language]}
+                    title={pricingContent.increaseExtraLocation[language]}
+                  >
+                    <Plus size={18} aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="total-strip registry-retouch-summary">
+                  <span>{pricingContent.retouchedPhotosLabel[language]}</span>
+                  <strong>
+                    {registryRetouchedTotal} {pricingContent.retouchedPhotoUnit[language]}
+                  </strong>
+                </div>
+
+                <NotesInput
+                  idPrefix="registry-locations"
+                  language={language}
+                  notes={sectionNotes.registryLocations}
+                  onChange={(notes) => updateNotes("registryLocations", notes)}
+                />
+              </section>
             )}
 
-            {renderAddOnSection(
-              "props",
-              pricingContent.propsLabel[language],
-              "Step 07",
-              Gift,
-              graduationAddOns.props
-            )}
+            {showRegistryAddOns && (
+              <>
+                <section className="pricing-panel selector-panel add-on-intro-panel">
+                  <div className="panel-title compact-title">
+                    <Sparkles size={24} aria-hidden="true" />
+                    <div>
+                      <p>Step 05-07</p>
+                      <h2>{pricingContent.registryAddOnsLabel[language]}</h2>
+                      <span className="panel-helper-copy">{pricingContent.addOnIntro[language]}</span>
+                    </div>
+                  </div>
+                </section>
 
-            {renderAddOnSection(
-              "makeup",
-              pricingContent.makeupLabel[language],
-              "Step 08",
-              Sparkles,
-              graduationAddOns.makeup
+                {(Object.keys(registryAddOns) as RegistryAddOnGroupId[]).map((group) => {
+                  const meta = registryAddOnMeta[group];
+
+                  return renderAddOnSection(
+                    meta.noteSection,
+                    meta.title,
+                    meta.stepLabel,
+                    meta.Icon,
+                    registryAddOns[group],
+                    selectedRegistryAddOnIds,
+                    toggleRegistryAddOn
+                  );
+                })}
+              </>
             )}
           </>
         )}

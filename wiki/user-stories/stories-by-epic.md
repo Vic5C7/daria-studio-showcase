@@ -214,10 +214,10 @@ Status: `Active`, `Prototype`
 Notes:
 说明：
 
-- Melbourne service types currently include wedding portraits, registry wedding coverage, lifestyle portraits, and graduation photography.
-- 墨尔本当前服务类型包括婚纱照、注册结婚跟拍、日常写真和毕业照。
-- Only graduation photography is expanded in the current prototype.
-- 当前原型只展开毕业照。
+- Required Melbourne service types include wedding portraits, registry wedding coverage, lifestyle portraits, graduation photography, and ID photos.
+- 墨尔本所需服务类型包括婚纱照、注册结婚跟拍、日常写真、毕业照和证件照。
+- In the current prototype, only graduation photography is expanded; registry wedding and ID photos now have new requirements that are not yet reflected in the prototype.
+- 当前原型只展开毕业照；注册结婚跟拍和证件照已有新需求，但尚未体现在原型中。
 
 ### US-012: Understand unavailable service types
 中文标题：理解暂未展开的服务类型
@@ -231,8 +231,10 @@ Status: `Active`, `Prototype`
 Notes:
 说明：
 
-- Wedding portraits, registry wedding coverage, and lifestyle portraits are currently displayed as not expanded.
-- 婚纱照、注册结婚跟拍和日常写真当前显示为暂未拓展。
+- Wedding portraits and lifestyle portraits are currently displayed as not expanded.
+- 婚纱照和日常写真当前显示为暂未拓展。
+- Registry wedding coverage now has package requirements in `US-057` and should no longer be treated as an unavailable service once the pricing flow is updated.
+- 注册结婚跟拍已有 `US-057` 中的新套餐需求，价格流程更新后不应再被视为暂未开放服务。
 
 ### US-013: Reconfirm registry wedding pricing direction
 中文标题：重新确认注册结婚跟拍价格方向
@@ -240,18 +242,18 @@ Notes:
 As the studio owner, I want the registry wedding service pricing decision to be clarified, so that production content does not contradict earlier package information.
 作为工作室负责人，我希望确认注册结婚跟拍的价格展示方向，以便正式内容不与早期套餐信息冲突。
 
-Status: `Decision needed`
-状态：`Decision needed`
+Status: `Superseded`
+状态：`Superseded`
 
 Notes:
 说明：
 
 - Earlier requirement: registry wedding coverage had one fixed package at `2000 AUD / day`.
 - 早期需求：注册结婚跟拍只有一个固定套餐，价格为 `2000 AUD / day`。
-- Later pricing-flow requirement: non-graduation service types are not expanded yet.
-- 后续价格流程需求：非毕业照服务类型暂不展开。
-- Before production implementation, decide whether registry wedding should show the fixed daily price immediately or stay hidden as coming soon.
-- 正式实现前，需要决定注册结婚跟拍是立即显示固定日价，还是继续显示为暂未开放。
+- Later pricing-flow requirement: non-graduation service types were not expanded yet.
+- 后续价格流程需求：非毕业照服务类型曾暂不展开。
+- Current replacement: registry wedding package tiers are recorded in `US-057`, additional-location pricing in `US-058`, and add-ons in `US-059`.
+- 当前替代方案：注册结婚跟拍套餐记录在 `US-057`，加地点价格记录在 `US-058`，加购项记录在 `US-059`。
 
 ## Epic 4: Graduation School And Pricing Availability
 ## Epic 4：毕业照学校与价格可用性
@@ -279,16 +281,18 @@ Notes:
 As a graduation photography customer interested in Monash or RMIT, I want the website to tell me that package pricing is pending, so that I do not mistake missing packages for a broken page.
 作为关注莫纳什大学或 RMIT 的毕业照客户，我希望网站告知套餐价格待确认，以免误以为页面损坏。
 
-Status: `Active`, `Prototype`
-状态：`Active`，`Prototype`
+Status: `Superseded`, `Prototype`
+状态：`Superseded`，`Prototype`
 
 Notes:
 说明：
 
-- Monash University and RMIT currently do not show package prices.
-- 莫纳什大学和 RMIT 当前不展示套餐价格。
-- They may still allow notes for future enquiry or booking flows.
-- 它们仍可允许用户填写备注，供未来咨询或预约流程使用。
+- Earlier prototype behavior: Monash University and RMIT did not show package prices.
+- 早期原型行为：莫纳什大学和 RMIT 不展示套餐价格。
+- Current replacement: the other two schools should use the same graduation package structure as the University of Melbourne; see `US-053`.
+- 当前替代方案：另外两所学校应使用与墨尔本大学相同的毕业照套餐结构；见 `US-053`。
+- A pending-pricing message may still be useful for future schools whose packages are not published yet.
+- 对于未来尚未发布套餐的学校，价格待确认提示仍可能有用。
 
 ### US-016: Select University of Melbourne scene type
 中文标题：选择墨尔本大学场景类型
@@ -447,8 +451,8 @@ Notes:
 - 总价计算方式：已选套餐价格加已选加购项价格。
 - When no package is selected, the total area should prompt the customer to choose a package.
 - 未选择套餐时，总价区域应提示客户选择套餐。
-- When a school's package pricing is pending, the total area should show that pricing is pending.
-- 当学校套餐价格待确认时，总价区域应显示价格待确认。
+- When a selected school's package pricing is not published, the total area should show that pricing is pending.
+- 当所选学校的套餐价格尚未发布时，总价区域应显示价格待确认。
 
 ## Epic 7: Customer Notes And Future Enquiry Payload
 ## Epic 7：客户备注与未来咨询数据
@@ -940,6 +944,209 @@ Notes:
 
 - Current planning area: `wiki/`.
 - 当前规划区域：`wiki/`。
+
+## Epic 13: Latest Graduation Package Clarifications
+## Epic 13：最新毕业照套餐补充
+
+### US-053: Reuse base graduation packages across supported schools
+中文标题：支持学校共用基础毕业照套餐
+
+As a graduation photography customer at a supported school, I want to see the same base package tiers when the studio offers the same package structure for my school, so that I can choose a package without seeing a pending-pricing state.
+作为受支持学校的毕业照客户，我希望在工作室为我的学校提供相同套餐结构时看到同样的基础套餐档位，以便不用停留在价格待确认状态。
+
+Status: `Active`
+状态：`Active`
+
+Notes:
+说明：
+
+- Current chat requirement: the other two schools use the same base graduation package structure as the University of Melbourne.
+- 当前聊天需求：另外两所学校使用与墨尔本大学相同的基础毕业照套餐结构。
+- The base package data is the `198 AUD`, `298 AUD`, and `388 AUD` tier set recorded in `US-017`.
+- 基础套餐数据为 `US-017` 记录的 `198 AUD`、`298 AUD`、`388 AUD` 三档。
+- This does not automatically make University of Melbourne + Carlton Garden dual-scene packages available to every school.
+- 这不代表墨尔本大学 + Carlton Garden 双场景套餐自动适用于所有学校。
+
+### US-054: Show school-specific prop availability
+中文标题：展示按学校区分的道具可用性
+
+As a graduation photography customer, I want prop options to reflect my selected school's availability, so that I do not choose a prop the studio cannot provide for that school.
+作为毕业照客户，我希望道具选项能根据我选择的学校显示可用状态，以免选到该学校无法提供的道具。
+
+Status: `Active`, `Next`
+状态：`Active`，`Next`
+
+Notes:
+说明：
+
+- Current chat requirement: props are mostly the same across the other two schools.
+- 当前聊天需求：另外两所学校的道具大体相同。
+- Monash University and RMIT do not have the graduation scroll or tube prop.
+- 莫纳什大学和 RMIT 没有毕业筒/毕业卷轴道具。
+- Future content management should model prop availability by school instead of hard-coding one global list.
+- 未来内容管理应按学校建模道具可用性，而不是硬编码一份全局列表。
+
+### US-055: Explain photo spot coverage and substitution rules
+中文标题：解释打卡点覆盖与替代规则
+
+As a graduation photography customer, I want package copy to explain that photo spots may be adjusted because of weather, lighting, crowds, closures, or other sudden conditions, so that I understand why the final route may differ from the ideal list.
+作为毕业照客户，我希望套餐文案解释打卡点可能因天气、光线、人流、封闭或其他突发情况调整，以便理解实际路线为什么可能不同于理想清单。
+
+Status: `Active`
+状态：`Active`
+
+Notes:
+说明：
+
+- The phrase `all photo spots` should be supported by explanatory copy rather than promising every listed spot under every condition.
+- `所有打卡点` 这类表述应配套解释文案，而不是承诺任何情况下都能拍到每个点位。
+- If a spot is too crowded, closed, poorly lit, or unsuitable in bad weather, the photographer may use another angle or another nearby spot.
+- 如果某个点位人太多、封闭、光线不好或天气不适合，摄影师可以选择其他角度或附近替代点位。
+- Final image effects may vary by weather, light, photographer, and shoot time.
+- 最终图像效果可能受天气、光线、摄影师和拍摄时间影响。
+
+### US-056: Browse portfolio images by service and location category
+中文标题：按服务和地点分类浏览作品图
+
+As a photography customer, I want the Works or Gallery section to include images for each service, school, scene, or photo spot category, so that I can see examples that match the shoot I am considering.
+作为摄影客户，我希望作品栏目能按服务、学校、场景或打卡点分类展示图片，以便看到与自己想拍内容匹配的样片。
+
+Status: `Active`, `Next`
+状态：`Active`，`Next`
+
+Notes:
+说明：
+
+- Current chat requirement: every photo spot has its own images, and the Works section should be able to show images under each category.
+- 当前聊天需求：每个打卡点都有各自的图片，作品栏目也应能展示每个分类下的图片。
+- Category examples include graduation schools, registry wedding, indoor studio shoots, ID photos, scene types, and individual photo spots.
+- 分类示例包括毕业照学校、注册结婚跟拍、棚拍、证件照、场景类型和单个打卡点。
+- Media records should support category tags or relationships so future galleries can be data-driven.
+- 媒体记录应支持分类标签或关联关系，以便未来作品展示可以数据驱动。
+
+## Epic 14: Registry Wedding Package Pricing
+## Epic 14：注册结婚跟拍套餐价格
+
+### US-057: Choose a registry wedding package tier
+中文标题：选择注册结婚跟拍套餐档位
+
+As a registry wedding customer, I want to compare registry wedding package tiers, so that I can choose the amount of coverage, locations, and retouching I need.
+作为注册结婚跟拍客户，我希望比较注册套餐档位，以便选择所需拍摄覆盖、地点数量和精修数量。
+
+Status: `Active`
+状态：`Active`
+
+Reference package data:
+参考套餐数据：
+
+- Package 1: `249 AUD`; registry or proposal coverage plus family and friend group photos; 200 original photos; behind-the-scenes video; 5 retouched photos.
+- 套餐 1：`249 AUD`；注册（求婚）+ 亲朋合影；200 张底片；送花絮视频；5 张精修。
+- Package 2: `349 AUD`; Package 1 plus couple portraits after registry, including posed moments such as ring exchange, kiss, certificate display, and certificate signing; 300 original photos; behind-the-scenes video; 9 retouched photos.
+- 套餐 2：`349 AUD`；套餐 1 + 双人注册后情侣照，包括交换戒指、亲吻、展示证书、证书签字等注册摆拍；300 张底片；送花絮视频；9 张精修。
+- Package 3: `449 AUD`; Package 2 plus couple portraits at one additional location; 400 original photos; behind-the-scenes video; 13 retouched photos.
+- 套餐 3：`449 AUD`；套餐 2 + 另一个地点情侣照；400 张底片；送花絮视频；13 张精修。
+- Package 4: `549 AUD`; Package 2 plus couple portraits at two additional locations; 500 original photos; behind-the-scenes video; 17 retouched photos.
+- 套餐 4：`549 AUD`；套餐 2 + 另两个地点情侣照；500 张底片；送花絮视频；17 张精修。
+
+### US-058: Add extra registry wedding locations
+中文标题：注册跟拍加拍额外地点
+
+As a registry wedding customer, I want to add extra shoot locations to a registry package, so that the package can grow when I want more couple portraits.
+作为注册结婚跟拍客户，我希望能在注册套餐中加拍额外地点，以便需要更多情侣照时扩展套餐。
+
+Status: `Active`
+状态：`Active`
+
+Notes:
+说明：
+
+- Each additional location adds `100 AUD`.
+- 每增加一个地点加 `100 AUD`。
+- Each additional location also adds 4 retouched photos.
+- 每增加一个地点同时增加 4 张精修。
+- The estimated total should update when extra locations are selected.
+- 选择额外地点时，预计总价应随之更新。
+
+### US-059: Select registry wedding styling, wardrobe, and props
+中文标题：选择注册跟拍妆造、服装和道具
+
+As a registry wedding customer, I want to select optional styling, wardrobe, and props, so that I can estimate the complete shoot cost.
+作为注册结婚跟拍客户，我希望选择可选妆造、服装和道具，以便估算完整拍摄费用。
+
+Status: `Active`
+状态：`Active`
+
+Reference add-on data:
+参考加购项数据：
+
+- Female hair, makeup, and lashes: `149 AUD`; includes 5 retouched photos.
+- 女生发型 + 妆容 + 睫毛：`149 AUD`；送 5 张精修。
+- Male hair and makeup: `79 AUD`.
+- 男生发型 + 妆容：`79 AUD`。
+- Props: bouquet `10 AUD`, white veil gloves `10 AUD`, veil `10 AUD`, accessories `10 AUD`.
+- 道具：花束 `10 AUD`，白纱手套 `10 AUD`，头纱 `10 AUD`，配饰 `10 AUD`。
+- Wardrobe: wedding dress `40 AUD`, suit `40 AUD`.
+- 服装：女婚纱 `40 AUD`，西装 `40 AUD`。
+
+## Epic 15: Studio Shoot And ID Photo Services
+## Epic 15：棚拍与证件照服务
+
+### US-060: Add a graduation studio shoot option
+中文标题：增加毕业照棚拍选项
+
+As a graduation photography customer, I want an indoor studio shoot option under graduation photography, so that I can choose a controlled-background graduation photo session in addition to campus outdoor shoots.
+作为毕业照客户，我希望毕业照分类下有棚拍选项，以便除了校园外景，也能选择可控背景的室内毕业照拍摄。
+
+Status: `Active`, `Decision needed`
+状态：`Active`，`Decision needed`
+
+Reference package data:
+参考套餐数据：
+
+- Draft early-bird price: `79 AUD`.
+- 草稿早鸟价：`79 AUD`。
+- Includes 80 original photos, all originals included, behind-the-scenes video, instant photo, and 9 retouched photos.
+- 包含 80 张底片，底片全部给，送花絮视频、拍立得和 9 张精修。
+- Multiple background templates should be selectable.
+- 可选择多种背景模板。
+- The latest chat draft mentions included clothing or props and the option for customers to bring their own clothes; the final included wardrobe list still needs confirmation.
+- 最新聊天草稿提到包含服装或道具，也允许客户自带衣服；最终包含的服装清单仍需确认。
+- The chat draft also mentions an optional specialty prop add-on at `8 AUD`; public wording and availability need confirmation.
+- 聊天草稿还提到一个可选特殊道具加购为 `8 AUD`；公开文案和可用性需确认。
+
+### US-061: Add simple indoor styling for studio shoots
+中文标题：增加棚内简单妆造
+
+As a studio shoot customer, I want to add simple indoor styling, so that I can prepare for the shoot without arranging separate makeup or hair service.
+作为棚拍客户，我希望可以加购棚内简单妆造，以便不用另行安排妆发服务。
+
+Status: `Active`
+状态：`Active`
+
+Notes:
+说明：
+
+- Current chat requirement: simple indoor styling is `79 AUD`.
+- 当前聊天需求：棚内简单妆造为 `79 AUD`。
+- This add-on should be separate from the larger graduation or registry styling packages unless the owner later decides to merge them.
+- 该加购项应与毕业照或注册跟拍的大型妆造套餐分开，除非负责人后续决定合并。
+
+### US-062: Add an ID photo service category
+中文标题：增加证件照服务分类
+
+As a photography customer, I want ID photos to appear as their own service category, so that I can find them separately from graduation, registry wedding, wedding portraits, and lifestyle portraits.
+作为摄影客户，我希望证件照作为独立服务分类出现，以便与毕业照、注册跟拍、婚纱照和日常写真分开查找。
+
+Status: `Active`, `Decision needed`
+状态：`Active`，`Decision needed`
+
+Notes:
+说明：
+
+- Current chat requirement: add an ID photo category to the overall service classification.
+- 当前聊天需求：在整体服务分类中增加证件照。
+- Package tiers, prices, included deliverables, retouching count, and customer copy for ID photos have not been provided yet.
+- 证件照的套餐档位、价格、包含内容、精修数量和客户可见文案尚未提供。
 
 ## Superseded Requirements
 ## 已被替代的需求

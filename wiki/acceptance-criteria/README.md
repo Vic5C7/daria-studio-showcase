@@ -22,3 +22,9 @@ then [expected result].
 
 Acceptance criteria should be specific enough to guide implementation and QA.
 验收标准应足够具体，能够指导实现和测试。
+
+Current criteria:
+当前验收标准：
+
+- [Latest Package And Service Criteria](latest-package-and-service-criteria.md)
+- [最新套餐与服务验收标准](latest-package-and-service-criteria.md)
