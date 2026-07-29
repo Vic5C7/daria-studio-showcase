@@ -3,6 +3,7 @@ import {
   Camera,
   Gift,
   GraduationCap,
+  Heart,
   MapPin,
   Shirt,
   Sparkles,
@@ -14,19 +15,31 @@ import {
   graduationAddOns,
   graduationPackages,
   graduationSchools,
+  graduationStudioPackage,
+  graduationStudioProps,
+  idPhotoAddOns,
+  idPhotoPackage,
   pricingContent,
+  registryAddOns,
+  registryPackages,
   sceneTypesBySchool,
   serviceAreas,
   serviceTypesByArea,
   type AddOnGroupId,
   type GraduationAddOn,
+  type IdPhotoAddOn,
+  type IdPhotoAddOnGroupId,
   type Language,
+  type RegistryAddOn,
+  type RegistryAddOnGroupId,
   type SceneTypeId,
   type ServiceAreaId,
   type ServiceTypeId
 } from "../data/siteContent";
 
-type NoteSection = "schoolScene" | "package" | AddOnGroupId;
+type AddOnNoteSection = AddOnGroupId | RegistryAddOnGroupId | IdPhotoAddOnGroupId;
+type AddOnOption = GraduationAddOn | RegistryAddOn | IdPhotoAddOn;
+type NoteSection = "schoolScene" | "package" | "registryExtraLocations" | AddOnNoteSection;
 
 type SectionNotes = Record<NoteSection, string[]>;
 
@@ -40,7 +53,13 @@ const emptySectionNotes: SectionNotes = {
   package: [],
   clothing: [],
   props: [],
-  makeup: []
+  makeup: [],
+  registryExtraLocations: [],
+  registryStyling: [],
+  registryProps: [],
+  registryClothing: [],
+  idPhotoStyling: [],
+  idPhotoProps: []
 };
 
 function formatAud(price: number) {
@@ -81,9 +100,32 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
     [availablePackages, selectedPackageId]
   );
 
+  const selectedRegistryPackage = useMemo(
+    () => registryPackages.find((registryPackage) => registryPackage.id === selectedPackageId),
+    [selectedPackageId]
+  );
+
   const allAddOns = useMemo(
-    () => Object.values(graduationAddOns).flat(),
+    () => [
+      ...Object.values(graduationAddOns).flat(),
+      ...graduationStudioProps,
+      ...Object.values(registryAddOns).flat(),
+      ...Object.values(idPhotoAddOns).flat()
+    ],
     []
+  );
+
+  const availablePropsAddOns = useMemo(
+    () => {
+      if (selectedSceneTypeId === "graduation-studio") {
+        return graduationStudioProps;
+      }
+
+      return selectedSchoolId === "monash" || selectedSchoolId === "rmit"
+        ? graduationAddOns.props.filter((addOn) => addOn.id !== "academic-scroll")
+        : graduationAddOns.props;
+    },
+    [selectedSceneTypeId, selectedSchoolId]
   );
 
   const selectedAddOnsTotal = selectedAddOnIds.reduce((sum, addOnId) => {
@@ -91,21 +133,41 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
     return sum + (addOn?.priceAud ?? 0);
   }, 0);
 
-  const totalPrice = (selectedPackage?.priceAud ?? 0) + selectedAddOnsTotal;
+  const isGraduationService = selectedAreaId === "melbourne" && selectedServiceTypeId === "graduation";
+  const isRegistryService = selectedAreaId === "melbourne" && selectedServiceTypeId === "registry-wedding";
+  const isIdPhotoService = selectedAreaId === "melbourne" && selectedServiceTypeId === "id-photo";
+  const isStudioGraduation = isGraduationService && selectedSceneTypeId === "graduation-studio";
+  const registryExtraLocationsTotal = isRegistryService ? sectionNotes.registryExtraLocations.length * 100 : 0;
+  const graduationBasePrice = isStudioGraduation
+    ? graduationStudioPackage.priceAud
+    : selectedPackage?.priceAud ?? 0;
+  const totalPrice = isRegistryService
+    ? (selectedRegistryPackage?.priceAud ?? 0) + selectedAddOnsTotal + registryExtraLocationsTotal
+    : isIdPhotoService
+      ? idPhotoPackage.priceAud + selectedAddOnsTotal
+    : graduationBasePrice + selectedAddOnsTotal;
   const showServiceTypes = Boolean(selectedAreaId);
-  const showSchoolSelect = selectedAreaId === "melbourne" && selectedServiceTypeId === "graduation";
-  const isPendingSchool = Boolean(
-    selectedSchool && selectedSchool.id !== "unimelb"
-  );
-  const showSceneTypes = selectedSchool?.id === "unimelb";
-  const showPackages = Boolean(selectedSceneType);
-  const showAddOns = Boolean(selectedPackage);
-  const hasConfirmedTotal = Boolean(selectedPackage);
-  const totalDisplay = isPendingSchool
-    ? pricingContent.pricePendingTotal[language]
-    : hasConfirmedTotal
-      ? formatAud(totalPrice)
-      : pricingContent.choosePackageTotal[language];
+  const showSchoolSelect = isGraduationService;
+  const showSceneTypes = isGraduationService && Boolean(selectedSchool);
+  const showGraduationPackages = isGraduationService && Boolean(selectedSceneType) && !isStudioGraduation;
+  const showRegistryPackages = isRegistryService;
+  const showIdPhotoPackage = isIdPhotoService;
+  const showAddOns = isRegistryService
+    ? Boolean(selectedRegistryPackage)
+    : isIdPhotoService || isStudioGraduation || Boolean(selectedPackage);
+  const hasConfirmedTotal = isRegistryService
+    ? Boolean(selectedRegistryPackage)
+    : isIdPhotoService || isStudioGraduation || Boolean(selectedPackage);
+  const addOnsStepLabel = isRegistryService
+    ? "Step 05-07"
+    : isIdPhotoService
+      ? "Step 04-05"
+      : isStudioGraduation
+        ? "Step 06-07"
+        : "Step 06-08";
+  const totalDisplay = hasConfirmedTotal
+    ? formatAud(totalPrice)
+    : pricingContent.choosePackageTotal[language];
 
   const clearGraduationSelections = () => {
     setSelectedSchoolId("");
@@ -171,11 +233,11 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
   };
 
   const renderAddOnSection = (
-    section: AddOnGroupId,
+    section: AddOnNoteSection,
     title: string,
     stepLabel: string,
     Icon: LucideIcon,
-    options: GraduationAddOn[]
+    options: AddOnOption[]
   ) => (
     <section className="pricing-panel selector-panel" aria-labelledby={`${section}-title`}>
       <div className="panel-title compact-title">
@@ -328,30 +390,6 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
           </section>
         )}
 
-        {isPendingSchool && selectedSchool && (
-          <section className="pricing-panel selector-panel" aria-labelledby="price-pending-title">
-            <div className="panel-title compact-title">
-              <Camera size={24} aria-hidden="true" />
-              <div>
-                <p>Step 04</p>
-                <h2 id="price-pending-title">{pricingContent.pricePendingTitle[language]}</h2>
-              </div>
-            </div>
-
-            <div className="empty-state pending-state">
-              <strong>{selectedSchool.name[language]}</strong>
-              <span>{pricingContent.pricePendingCopy[language]}</span>
-            </div>
-
-            <NotesInput
-              idPrefix="school-scene"
-              language={language}
-              notes={sectionNotes.schoolScene}
-              onChange={(notes) => updateNotes("schoolScene", notes)}
-            />
-          </section>
-        )}
-
         {showSceneTypes && (
           <section className="pricing-panel selector-panel" aria-labelledby="scene-type-title">
             <div className="panel-title">
@@ -390,7 +428,32 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
           </section>
         )}
 
-        {showPackages && selectedSceneType && (
+        {isStudioGraduation && (
+          <section className="pricing-panel selector-panel" aria-labelledby="studio-package-title">
+            <div className="panel-title compact-title">
+              <Camera size={24} aria-hidden="true" />
+              <div>
+                <p>Step 05</p>
+                <h2 id="studio-package-title">{graduationStudioPackage.title[language]}</h2>
+              </div>
+            </div>
+
+            <div className="option-grid package-options">
+              <div className="choice-button package-choice is-selected">
+                <span>{graduationStudioPackage.title[language]}</span>
+                <strong className="package-price">{formatAud(graduationStudioPackage.priceAud)}</strong>
+                <small>{pricingContent.packageDetailsLabel[language]}</small>
+                {graduationStudioPackage.details[language].map((detail) => (
+                  <span className="package-detail" key={detail}>
+                    {detail}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {showGraduationPackages && selectedSceneType && (
           <section className="pricing-panel selector-panel" aria-labelledby="package-title">
             <div className="panel-title compact-title">
               <GraduationCap size={24} aria-hidden="true" />
@@ -401,6 +464,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
             </div>
 
             <p className="selection-context">{selectedSceneType.name[language]}</p>
+            <p className="selection-context">{pricingContent.packageSpotNote[language]}</p>
 
             <div className="option-grid package-options">
               {availablePackages.map((graduationPackage) => {
@@ -438,41 +502,205 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
           </section>
         )}
 
+        {showRegistryPackages && (
+          <section className="pricing-panel selector-panel" aria-labelledby="registry-package-title">
+            <div className="panel-title compact-title">
+              <Heart size={24} aria-hidden="true" />
+              <div>
+                <p>Step 03</p>
+                <h2 id="registry-package-title">{pricingContent.registryPackageLabel[language]}</h2>
+              </div>
+            </div>
+
+            <div className="option-grid package-options">
+              {registryPackages.map((registryPackage) => {
+                const isSelected = selectedPackageId === registryPackage.id;
+
+                return (
+                  <button
+                    className={
+                      isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
+                    }
+                    type="button"
+                    key={registryPackage.id}
+                    onClick={() => selectPackage(registryPackage.id)}
+                    aria-pressed={isSelected}
+                  >
+                    <span>{registryPackage.name[language]}</span>
+                    <strong className="package-price">{formatAud(registryPackage.priceAud)}</strong>
+                    <small>{pricingContent.packageDetailsLabel[language]}</small>
+                    {registryPackage.details[language].map((detail) => (
+                      <span className="package-detail" key={detail}>
+                        {detail}
+                      </span>
+                    ))}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {showIdPhotoPackage && (
+          <section className="pricing-panel selector-panel" aria-labelledby="id-photo-package-title">
+            <div className="panel-title compact-title">
+              <Camera size={24} aria-hidden="true" />
+              <div>
+                <p>Step 03</p>
+                <h2 id="id-photo-package-title">{idPhotoPackage.title[language]}</h2>
+              </div>
+            </div>
+
+            <div className="option-grid package-options">
+              <div className="choice-button package-choice is-selected">
+                <span>{idPhotoPackage.title[language]}</span>
+                <strong className="package-price">{formatAud(idPhotoPackage.priceAud)}</strong>
+                <small>{pricingContent.packageDetailsLabel[language]}</small>
+                {idPhotoPackage.details[language].map((detail) => (
+                  <span className="package-detail" key={detail}>
+                    {detail}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {isRegistryService && selectedRegistryPackage && (
+          <section className="pricing-panel selector-panel" aria-labelledby="registry-extra-locations-title">
+            <div className="panel-title compact-title">
+              <MapPin size={24} aria-hidden="true" />
+              <div>
+                <p>Step 04</p>
+                <h2 id="registry-extra-locations-title">
+                  {pricingContent.registryExtraLocationLabel[language]}
+                </h2>
+              </div>
+            </div>
+
+            <p className="selection-context">{pricingContent.registryExtraLocationIntro[language]}</p>
+
+            <NotesInput
+              idPrefix="registry-extra-locations"
+              language={language}
+              notes={sectionNotes.registryExtraLocations}
+              onChange={(notes) => updateNotes("registryExtraLocations", notes)}
+              title={pricingContent.registryExtraLocationLabel[language]}
+              placeholder={pricingContent.registryExtraLocationPlaceholder[language]}
+              addLabel={pricingContent.registryAddLocation[language]}
+              helperText={pricingContent.registryExtraLocationIntro[language]}
+              maxReachedText={pricingContent.registryExtraLocationMaxReached[language]}
+            />
+          </section>
+        )}
+
         {showAddOns && (
           <>
             <section className="pricing-panel selector-panel add-on-intro-panel">
               <div className="panel-title compact-title">
                 <Sparkles size={24} aria-hidden="true" />
                 <div>
-                  <p>Step 06-08</p>
+                  <p>{addOnsStepLabel}</p>
                   <h2>{pricingContent.addOnsLabel[language]}</h2>
                   <span className="panel-helper-copy">{pricingContent.addOnIntro[language]}</span>
                 </div>
               </div>
             </section>
 
-            {renderAddOnSection(
-              "clothing",
-              pricingContent.clothingLabel[language],
-              "Step 06",
-              Shirt,
-              graduationAddOns.clothing
+            {isGraduationService && (
+              isStudioGraduation ? (
+                <>
+                  {renderAddOnSection(
+                    "makeup",
+                    pricingContent.makeupLabel[language],
+                    "Step 06",
+                    Sparkles,
+                    graduationAddOns.makeup
+                  )}
+
+                  {renderAddOnSection(
+                    "props",
+                    pricingContent.propsLabel[language],
+                    "Step 07",
+                    Gift,
+                    availablePropsAddOns
+                  )}
+                </>
+              ) : (
+                <>
+                  {renderAddOnSection(
+                    "clothing",
+                    pricingContent.clothingLabel[language],
+                    "Step 06",
+                    Shirt,
+                    graduationAddOns.clothing
+                  )}
+
+                  {renderAddOnSection(
+                    "props",
+                    pricingContent.propsLabel[language],
+                    "Step 07",
+                    Gift,
+                    availablePropsAddOns
+                  )}
+
+                  {renderAddOnSection(
+                    "makeup",
+                    pricingContent.makeupLabel[language],
+                    "Step 08",
+                    Sparkles,
+                    graduationAddOns.makeup
+                  )}
+                </>
+              )
             )}
 
-            {renderAddOnSection(
-              "props",
-              pricingContent.propsLabel[language],
-              "Step 07",
-              Gift,
-              graduationAddOns.props
+            {isRegistryService && (
+              <>
+                {renderAddOnSection(
+                  "registryStyling",
+                  pricingContent.makeupLabel[language],
+                  "Step 05",
+                  Sparkles,
+                  registryAddOns.registryStyling
+                )}
+
+                {renderAddOnSection(
+                  "registryProps",
+                  pricingContent.propsLabel[language],
+                  "Step 06",
+                  Gift,
+                  registryAddOns.registryProps
+                )}
+
+                {renderAddOnSection(
+                  "registryClothing",
+                  pricingContent.clothingLabel[language],
+                  "Step 07",
+                  Shirt,
+                  registryAddOns.registryClothing
+                )}
+              </>
             )}
 
-            {renderAddOnSection(
-              "makeup",
-              pricingContent.makeupLabel[language],
-              "Step 08",
-              Sparkles,
-              graduationAddOns.makeup
+            {isIdPhotoService && (
+              <>
+                {renderAddOnSection(
+                  "idPhotoStyling",
+                  pricingContent.makeupLabel[language],
+                  "Step 04",
+                  Sparkles,
+                  idPhotoAddOns.idPhotoStyling
+                )}
+
+                {renderAddOnSection(
+                  "idPhotoProps",
+                  pricingContent.propsLabel[language],
+                  "Step 05",
+                  Gift,
+                  idPhotoAddOns.idPhotoProps
+                )}
+              </>
             )}
           </>
         )}

@@ -9,9 +9,24 @@ type NotesInputProps = {
   language: Language;
   notes: string[];
   onChange: (notes: string[]) => void;
+  title?: string;
+  placeholder?: string;
+  addLabel?: string;
+  helperText?: string;
+  maxReachedText?: string;
 };
 
-export function NotesInput({ idPrefix, language, notes, onChange }: NotesInputProps) {
+export function NotesInput({
+  idPrefix,
+  language,
+  notes,
+  onChange,
+  title,
+  placeholder,
+  addLabel,
+  helperText,
+  maxReachedText
+}: NotesInputProps) {
   const [draftNote, setDraftNote] = useState("");
   const hasReachedLimit = notes.length >= maxNotes;
 
@@ -33,7 +48,7 @@ export function NotesInput({ idPrefix, language, notes, onChange }: NotesInputPr
   return (
     <div className="notes-block">
       <label className="field-label" htmlFor={`${idPrefix}-note-input`}>
-        {pricingContent.notesTitle[language]}
+        {title ?? pricingContent.notesTitle[language]}
       </label>
 
       <div className="notes-input-row">
@@ -48,7 +63,7 @@ export function NotesInput({ idPrefix, language, notes, onChange }: NotesInputPr
               addNote();
             }
           }}
-          placeholder={pricingContent.notesPlaceholder[language]}
+          placeholder={placeholder ?? pricingContent.notesPlaceholder[language]}
           disabled={hasReachedLimit}
         />
         <button
@@ -58,14 +73,14 @@ export function NotesInput({ idPrefix, language, notes, onChange }: NotesInputPr
           disabled={!draftNote.trim() || hasReachedLimit}
         >
           <Plus size={16} aria-hidden="true" />
-          <span>{pricingContent.addNote[language]}</span>
+          <span>{addLabel ?? pricingContent.addNote[language]}</span>
         </button>
       </div>
 
       <p className="helper-note">
         {hasReachedLimit
-          ? pricingContent.notesMaxReached[language]
-          : pricingContent.notesLimit[language]}
+          ? maxReachedText ?? pricingContent.notesMaxReached[language]
+          : helperText ?? pricingContent.notesLimit[language]}
       </p>
 
       {notes.length > 0 && (

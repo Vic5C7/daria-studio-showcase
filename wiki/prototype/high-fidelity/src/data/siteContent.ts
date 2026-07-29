@@ -19,6 +19,7 @@ export type ServiceTypeId =
   | "wedding-portrait"
   | "registry-wedding"
   | "daily-portrait"
+  | "id-photo"
   | "graduation";
 
 export type ServiceType = {
@@ -34,7 +35,7 @@ export type GraduationSchool = {
   name: LocalizedText;
 };
 
-export type SceneTypeId = "unimelb-single" | "unimelb-carlton-garden";
+export type SceneTypeId = "unimelb-single" | "unimelb-carlton-garden" | "graduation-studio";
 
 export type GraduationSceneType = {
   id: SceneTypeId;
@@ -50,9 +51,32 @@ export type GraduationPackage = {
   details: LocalizedList;
 };
 
+export type RegistryPackage = {
+  id: string;
+  name: LocalizedText;
+  priceAud: number;
+  details: LocalizedList;
+};
+
 export type AddOnGroupId = "clothing" | "props" | "makeup";
+export type RegistryAddOnGroupId = "registryStyling" | "registryProps" | "registryClothing";
+export type IdPhotoAddOnGroupId = "idPhotoStyling" | "idPhotoProps";
 
 export type GraduationAddOn = {
+  id: string;
+  name: LocalizedText;
+  priceAud: number;
+  description?: LocalizedText;
+};
+
+export type RegistryAddOn = {
+  id: string;
+  name: LocalizedText;
+  priceAud: number;
+  description?: LocalizedText;
+};
+
+export type IdPhotoAddOn = {
   id: string;
   name: LocalizedText;
   priceAud: number;
@@ -145,6 +169,10 @@ export const pricingContent = {
     zh: "选择毕业照套餐",
     en: "Choose graduation package"
   },
+  registryPackageLabel: {
+    zh: "选择注册/求婚套餐",
+    en: "Choose registry/proposal package"
+  },
   clothingLabel: {
     zh: "服装",
     en: "Clothing"
@@ -196,6 +224,30 @@ export const pricingContent = {
   packageDetailsLabel: {
     zh: "套餐包含",
     en: "Package includes"
+  },
+  packageSpotNote: {
+    zh: "打卡点会根据当天实际情况灵活调整。若遇到天气、光线、人流、临时管制等因素，部分点位可能不适合拍摄或无法完成，我们会选择同校区内更合适的替代点位，尽量保证整体成片效果和拍摄体验。",
+    en: "Photo spots may be adjusted based on the conditions on the day. If weather, lighting, crowds, temporary access limits, or other on-site factors make certain spots unsuitable or unavailable, we will choose suitable alternative locations on campus to help maintain the overall photo quality and shooting experience."
+  },
+  registryExtraLocationLabel: {
+    zh: "额外地点备注",
+    en: "Extra location notes"
+  },
+  registryExtraLocationIntro: {
+    zh: "每添加 1 条地点备注，费用增加 100 AUD，并增加 4 张精修。",
+    en: "Each location note adds 100 AUD and 4 retouched photos."
+  },
+  registryExtraLocationPlaceholder: {
+    zh: "请输入额外地点，例如 Carlton Garden",
+    en: "Add an extra location, e.g. Carlton Garden"
+  },
+  registryAddLocation: {
+    zh: "添加地点",
+    en: "Add location"
+  },
+  registryExtraLocationMaxReached: {
+    zh: "已达到 10 个额外地点上限。",
+    en: "10 extra-location limit reached."
   },
   addOnIntro: {
     zh: "加购项可多选，费用会自动计入预计总价。",
@@ -258,10 +310,10 @@ export const serviceTypesByArea: Record<ServiceAreaId, ServiceType[]> = {
     {
       id: "registry-wedding",
       name: {
-        zh: "注册结婚跟拍",
-        en: "Registry Wedding Coverage"
+        zh: "注册/求婚跟拍",
+        en: "Registry / Proposal Coverage"
       },
-      isAvailable: false
+      isAvailable: true
     },
     {
       id: "daily-portrait",
@@ -270,6 +322,14 @@ export const serviceTypesByArea: Record<ServiceAreaId, ServiceType[]> = {
         en: "Lifestyle Portraits"
       },
       isAvailable: false
+    },
+    {
+      id: "id-photo",
+      name: {
+        zh: "证件照",
+        en: "ID Photo"
+      },
+      isAvailable: true
     },
     {
       id: "graduation",
@@ -306,34 +366,53 @@ export const graduationSchools: GraduationSchool[] = [
   }
 ];
 
-export const sceneTypesBySchool: Partial<Record<GraduationSchoolId, GraduationSceneType[]>> = {
-  unimelb: [
-    {
-      id: "unimelb-single",
-      name: {
-        zh: "单场景：墨尔本大学",
-        en: "Single scene: University of Melbourne"
-      },
-      description: {
-        zh: "适合在墨尔本大学校园内完成标志性地点打卡。",
-        en: "Designed for iconic graduation portraits around the University of Melbourne campus."
-      }
-    },
-    {
-      id: "unimelb-carlton-garden",
-      name: {
-        zh: "双场景：墨尔本大学 + Carlton Garden",
-        en: "Two scenes: University of Melbourne + Carlton Garden"
-      },
-      description: {
-        zh: "包含墨尔本大学与 Carlton Garden，适合毕业典礼当天的双场景记录。",
-        en: "Includes the University of Melbourne and Carlton Garden, suitable for graduation ceremony day coverage."
-      }
-    }
-  ]
+const sharedSingleGraduationSceneType: GraduationSceneType = {
+  id: "unimelb-single",
+  name: {
+    zh: "单场景：学校校园",
+    en: "Single scene: campus"
+  },
+  description: {
+    zh: "适合在所选学校校园内完成标志性地点打卡。",
+    en: "Designed for iconic graduation portraits around the selected campus."
+  }
 };
 
-export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
+const graduationStudioSceneType: GraduationSceneType = {
+  id: "graduation-studio",
+  name: {
+    zh: "棚拍",
+    en: "Studio Shoot"
+  },
+  description: {
+    zh: "适合想要快速完成棚内毕业照，并选择多种背景模板的拍摄。",
+    en: "Designed for a quick in-studio graduation shoot with multiple background templates."
+  }
+};
+
+const unimelbGraduationSceneTypes: GraduationSceneType[] = [
+  sharedSingleGraduationSceneType,
+  {
+    id: "unimelb-carlton-garden",
+    name: {
+      zh: "双场景：学校校园 + Carlton Garden",
+      en: "Two scenes: campus + Carlton Garden"
+    },
+    description: {
+      zh: "包含所选学校校园与 Carlton Garden，适合毕业典礼当天的双场景记录。",
+      en: "Includes the selected campus and Carlton Garden, suitable for graduation ceremony day coverage."
+    }
+  },
+  graduationStudioSceneType
+];
+
+export const sceneTypesBySchool: Partial<Record<GraduationSchoolId, GraduationSceneType[]>> = {
+  unimelb: unimelbGraduationSceneTypes,
+  monash: [sharedSingleGraduationSceneType, graduationStudioSceneType],
+  rmit: [sharedSingleGraduationSceneType, graduationStudioSceneType]
+};
+
+export const graduationPackages: Partial<Record<SceneTypeId, GraduationPackage[]>> = {
   "unimelb-single": [
     {
       id: "unimelb-single-1",
@@ -400,7 +479,7 @@ export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
           "400 张底片，底片全给",
           "送 18 张精修",
           "送花絮视频",
-          "所有打卡点",
+          "基本所有打卡点",
           "底片多",
           "适合跟父母朋友合照"
         ],
@@ -408,7 +487,7 @@ export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
           "400 original photos, all originals included",
           "18 retouched photos included",
           "Behind-the-scenes video included",
-          "All photo spots",
+          "Most photo spots",
           "More originals",
           "Suitable for photos with parents and friends"
         ]
@@ -425,9 +504,9 @@ export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
       },
       priceAud: 388,
       details: {
-        zh: ["墨尔本大学 + Carlton Garden", "400 张底片，底片全给", "18 张精修"],
+        zh: ["学校校园 + Carlton Garden", "400 张底片，底片全给", "18 张精修"],
         en: [
-          "University of Melbourne + Carlton Garden",
+          "Campus + Carlton Garden",
           "400 original photos, all originals included",
           "18 retouched photos"
         ]
@@ -442,9 +521,9 @@ export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
       },
       priceAud: 468,
       details: {
-        zh: ["墨尔本大学 + Carlton Garden", "600 张底片，底片全给", "25 张精修"],
+        zh: ["学校校园 + Carlton Garden", "600 张底片，底片全给", "25 张精修"],
         en: [
-          "University of Melbourne + Carlton Garden",
+          "Campus + Carlton Garden",
           "600 original photos, all originals included",
           "25 retouched photos"
         ]
@@ -459,9 +538,9 @@ export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
       },
       priceAud: 548,
       details: {
-        zh: ["墨尔本大学 + Carlton Garden", "700 张底片，底片全给", "30 张精修"],
+        zh: ["学校校园 + Carlton Garden", "700 张底片，底片全给", "30 张精修"],
         en: [
-          "University of Melbourne + Carlton Garden",
+          "Campus + Carlton Garden",
           "700 original photos, all originals included",
           "30 retouched photos"
         ]
@@ -469,6 +548,185 @@ export const graduationPackages: Record<SceneTypeId, GraduationPackage[]> = {
     }
   ]
 };
+
+export const graduationStudioPackage = {
+  title: {
+    zh: "早鸟棚拍套餐",
+    en: "Early Bird Studio Package"
+  },
+  priceAud: 79,
+  details: {
+    zh: [
+      "早鸟价仅需 79 AUD",
+      "棚拍毕业照",
+      "80 张底片，底片全给",
+      "送花絮视频",
+      "送拍立得",
+      "包含内搭、学士服、基础道具",
+      "9 张精修",
+      "多种背景模板皆可选"
+    ],
+    en: [
+      "Early bird price: 79 AUD",
+      "Studio graduation portraits",
+      "80 original photos, all originals included",
+      "Behind-the-scenes video included",
+      "Polaroid included",
+      "Inner outfit, graduation gown, and basic props included",
+      "9 retouched photos",
+      "Multiple background templates available"
+    ]
+  }
+} satisfies {
+  title: LocalizedText;
+  priceAud: number;
+  details: LocalizedList;
+};
+
+export const idPhotoPackage = {
+  title: {
+    zh: "早鸟证件照套餐",
+    en: "Early Bird ID Photo Package"
+  },
+  priceAud: 79,
+  details: {
+    zh: [
+      "早鸟价仅需 79 AUD",
+      "证件照拍摄",
+      "80 张底片，底片全给",
+      "送花絮视频",
+      "送拍立得",
+      "包含内搭、裙子、衬衫、西装",
+      "也可以自带服装",
+      "9 张精修",
+      "多种背景模板皆可选"
+    ],
+    en: [
+      "Early bird price: 79 AUD",
+      "ID photo shoot",
+      "80 original photos, all originals included",
+      "Behind-the-scenes video included",
+      "Polaroid included",
+      "Inner outfit, skirt, shirt, and suit included",
+      "You can also bring your own outfit",
+      "9 retouched photos",
+      "Multiple background templates available"
+    ]
+  }
+} satisfies {
+  title: LocalizedText;
+  priceAud: number;
+  details: LocalizedList;
+};
+
+export const registryPackages: RegistryPackage[] = [
+  {
+    id: "registry-1",
+    name: {
+      zh: "套餐 1",
+      en: "Package 1"
+    },
+    priceAud: 249,
+    details: {
+      zh: ["注册/求婚拍摄", "亲朋合影", "200 张底片，底片全给", "送花絮视频", "5 张精修"],
+      en: [
+        "Registry/proposal coverage",
+        "Family and friend group photos",
+        "200 original photos, all originals included",
+        "Behind-the-scenes video included",
+        "5 retouched photos"
+      ]
+    }
+  },
+  {
+    id: "registry-2",
+    name: {
+      zh: "套餐 2",
+      en: "Package 2"
+    },
+    priceAud: 349,
+    details: {
+      zh: [
+        "注册/求婚拍摄",
+        "亲朋合影",
+        "双人注册后情侣照",
+        "注册摆拍：交换戒指、亲吻、展示证书、证书签字等",
+        "300 张底片，底片全给",
+        "送花絮视频",
+        "9 张精修"
+      ],
+      en: [
+        "Registry/proposal coverage",
+        "Family and friend group photos",
+        "Post-registry couple portraits",
+        "Directed registry poses: ring exchange, kiss, certificate display, certificate signing, and more",
+        "300 original photos, all originals included",
+        "Behind-the-scenes video included",
+        "9 retouched photos"
+      ]
+    }
+  },
+  {
+    id: "registry-3",
+    name: {
+      zh: "套餐 3",
+      en: "Package 3"
+    },
+    priceAud: 449,
+    details: {
+      zh: [
+        "注册/求婚拍摄",
+        "亲朋合影",
+        "双人注册后情侣照",
+        "注册摆拍：交换戒指、亲吻、展示证书、证书签字等",
+        "另一地点情侣照",
+        "400 张底片，底片全给",
+        "送花絮视频",
+        "13 张精修"
+      ],
+      en: [
+        "Registry/proposal coverage",
+        "Family and friend group photos",
+        "Post-registry couple portraits",
+        "Directed registry poses: ring exchange, kiss, certificate display, certificate signing, and more",
+        "Couple portraits at one additional location",
+        "400 original photos, all originals included",
+        "Behind-the-scenes video included",
+        "13 retouched photos"
+      ]
+    }
+  },
+  {
+    id: "registry-4",
+    name: {
+      zh: "套餐 4",
+      en: "Package 4"
+    },
+    priceAud: 549,
+    details: {
+      zh: [
+        "注册/求婚拍摄",
+        "亲朋合影",
+        "双人注册后情侣照",
+        "注册摆拍：交换戒指、亲吻、展示证书、证书签字等",
+        "另两地点情侣照",
+        "500 张底片，底片全给",
+        "送花絮视频",
+        "17 张精修"
+      ],
+      en: [
+        "Registry/proposal coverage",
+        "Family and friend group photos",
+        "Post-registry couple portraits",
+        "Directed registry poses: ring exchange, kiss, certificate display, certificate signing, and more",
+        "Couple portraits at two additional locations",
+        "500 original photos, all originals included",
+        "Behind-the-scenes video included",
+        "17 retouched photos"
+      ]
+    }
+  }
+];
 
 export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
   clothing: [
@@ -575,6 +833,129 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "含化妆、发型、修眉，送跟妆，送 5 张精修；主要修饰五官并增强立体度。",
         en: "Includes makeup, hair, brow shaping, on-site touch-up, and 5 retouched photos; focused on natural facial definition."
       }
+    }
+  ]
+};
+
+export const graduationStudioProps: GraduationAddOn[] = [
+  {
+    id: "studio-corgi-model",
+    name: {
+      zh: "半岁小柯基模特",
+      en: "6-month-old Corgi model"
+    },
+    priceAud: 8,
+    description: {
+      zh: "小狗赚狗粮！",
+      en: "Puppy food fund!"
+    }
+  }
+];
+
+export const idPhotoAddOns: Record<IdPhotoAddOnGroupId, IdPhotoAddOn[]> = {
+  idPhotoStyling: [
+    {
+      id: "id-photo-studio-styling",
+      name: {
+        zh: "棚内简单妆造",
+        en: "Simple in-studio makeup and styling"
+      },
+      priceAud: 79
+    }
+  ],
+  idPhotoProps: [
+    {
+      id: "id-photo-dog-model",
+      name: {
+        zh: "小狗模特",
+        en: "Dog model"
+      },
+      priceAud: 8,
+      description: {
+        zh: "小狗赚狗粮！",
+        en: "Puppy food fund!"
+      }
+    }
+  ]
+};
+
+export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
+  registryStyling: [
+    {
+      id: "registry-female-styling",
+      name: {
+        zh: "女妆造",
+        en: "Female styling"
+      },
+      priceAud: 149,
+      description: {
+        zh: "发型 + 妆容 + 睫毛，送 5 张精修。",
+        en: "Hair, makeup, lashes, and 5 retouched photos included."
+      }
+    },
+    {
+      id: "registry-male-styling",
+      name: {
+        zh: "男妆造",
+        en: "Male styling"
+      },
+      priceAud: 79,
+      description: {
+        zh: "发型 + 妆容。",
+        en: "Hair and makeup."
+      }
+    }
+  ],
+  registryProps: [
+    {
+      id: "registry-bouquet",
+      name: {
+        zh: "花束",
+        en: "Bouquet"
+      },
+      priceAud: 10
+    },
+    {
+      id: "registry-white-gloves",
+      name: {
+        zh: "白纱手套",
+        en: "White tulle gloves"
+      },
+      priceAud: 10
+    },
+    {
+      id: "registry-veil",
+      name: {
+        zh: "头纱",
+        en: "Veil"
+      },
+      priceAud: 10
+    },
+    {
+      id: "registry-accessories",
+      name: {
+        zh: "配饰",
+        en: "Accessories"
+      },
+      priceAud: 10
+    }
+  ],
+  registryClothing: [
+    {
+      id: "registry-wedding-dress",
+      name: {
+        zh: "女婚纱",
+        en: "Wedding dress"
+      },
+      priceAud: 40
+    },
+    {
+      id: "registry-suit",
+      name: {
+        zh: "西装",
+        en: "Suit"
+      },
+      priceAud: 40
     }
   ]
 };
