@@ -836,20 +836,7 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
   ]
 };
 
-export const graduationStudioProps: GraduationAddOn[] = [
-  {
-    id: "studio-corgi-model",
-    name: {
-      zh: "半岁小柯基模特",
-      en: "6-month-old Corgi model"
-    },
-    priceAud: 8,
-    description: {
-      zh: "小狗赚狗粮！",
-      en: "Puppy food fund!"
-    }
-  }
-];
+export const graduationStudioProps: GraduationAddOn[] = [];
 
 export const idPhotoAddOns: Record<IdPhotoAddOnGroupId, IdPhotoAddOn[]> = {
   idPhotoStyling: [
@@ -862,20 +849,7 @@ export const idPhotoAddOns: Record<IdPhotoAddOnGroupId, IdPhotoAddOn[]> = {
       priceAud: 79
     }
   ],
-  idPhotoProps: [
-    {
-      id: "id-photo-dog-model",
-      name: {
-        zh: "小狗模特",
-        en: "Dog model"
-      },
-      priceAud: 8,
-      description: {
-        zh: "小狗赚狗粮！",
-        en: "Puppy food fund!"
-      }
-    }
-  ]
+  idPhotoProps: []
 };
 
 export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {

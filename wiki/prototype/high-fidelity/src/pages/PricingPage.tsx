@@ -161,9 +161,9 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
   const addOnsStepLabel = isRegistryService
     ? "Step 05-07"
     : isIdPhotoService
-      ? "Step 04-05"
+      ? "Step 04"
       : isStudioGraduation
-        ? "Step 06-07"
+        ? "Step 06"
         : "Step 06-08";
   const totalDisplay = hasConfirmedTotal
     ? formatAud(totalPrice)
@@ -238,46 +238,52 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
     stepLabel: string,
     Icon: LucideIcon,
     options: AddOnOption[]
-  ) => (
-    <section className="pricing-panel selector-panel" aria-labelledby={`${section}-title`}>
-      <div className="panel-title compact-title">
-        <Icon size={24} aria-hidden="true" />
-        <div>
-          <p>{stepLabel}</p>
-          <h2 id={`${section}-title`}>{title}</h2>
+  ) => {
+    if (options.length === 0) {
+      return null;
+    }
+
+    return (
+      <section className="pricing-panel selector-panel" aria-labelledby={`${section}-title`}>
+        <div className="panel-title compact-title">
+          <Icon size={24} aria-hidden="true" />
+          <div>
+            <p>{stepLabel}</p>
+            <h2 id={`${section}-title`}>{title}</h2>
+          </div>
         </div>
-      </div>
 
-      <div className="option-grid addon-options">
-        {options.map((addOn) => {
-          const isSelected = selectedAddOnIds.includes(addOn.id);
+        <div className="option-grid addon-options">
+          {options.map((addOn) => {
+            const isSelected = selectedAddOnIds.includes(addOn.id);
 
-          return (
-            <button
-              className={isSelected ? "choice-button addon-choice is-selected" : "choice-button addon-choice"}
-              type="button"
-              key={addOn.id}
-              onClick={() => toggleAddOn(addOn.id)}
-              aria-pressed={isSelected}
-            >
-              <span>{addOn.name[language]}</span>
-              <strong>{formatAud(addOn.priceAud)}</strong>
-              {addOn.description && (
-                <small className="addon-description">{addOn.description[language]}</small>
-              )}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                className={isSelected ? "choice-button addon-choice is-selected" : "choice-button addon-choice"}
+                type="button"
+                key={addOn.id}
+                onClick={() => toggleAddOn(addOn.id)}
+                aria-pressed={isSelected}
+              >
+                <span>{addOn.name[language]}</span>
+                <strong>{formatAud(addOn.priceAud)}</strong>
+                {addOn.description && (
+                  <small className="addon-description">{addOn.description[language]}</small>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-      <NotesInput
-        idPrefix={section}
-        language={language}
-        notes={sectionNotes[section]}
-        onChange={(notes) => updateNotes(section, notes)}
-      />
-    </section>
-  );
+        <NotesInput
+          idPrefix={section}
+          language={language}
+          notes={sectionNotes[section]}
+          onChange={(notes) => updateNotes(section, notes)}
+        />
+      </section>
+    );
+  };
 
   return (
     <section className="pricing-page">
