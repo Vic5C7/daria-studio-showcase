@@ -560,22 +560,18 @@ export const graduationStudioPackage = {
   priceAud: 79,
   details: {
     zh: [
-      "早鸟价仅需 79 AUD",
-      "棚拍毕业照",
       "80 张底片，底片全给",
       "送花絮视频",
       "送拍立得",
-      "包含内搭、学士服、基础道具",
+      "包含内搭、毕业服、衬衫、基础道具",
       "9 张精修",
       "多种背景模板皆可选"
     ],
     en: [
-      "Early bird price: 79 AUD",
-      "Studio graduation portraits",
       "80 original photos, all originals included",
       "Behind-the-scenes video included",
       "Polaroid included",
-      "Inner outfit, graduation gown, and basic props included",
+      "Inner outfit, graduation outfit, shirt, and basic props included",
       "9 retouched photos",
       "Multiple background templates available"
     ]
