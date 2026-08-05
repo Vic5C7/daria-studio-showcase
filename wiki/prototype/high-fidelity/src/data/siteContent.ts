@@ -23,7 +23,16 @@ export type ServiceTypeId =
   | "graduation";
 
 export type GalleryServiceTypeId = ServiceTypeId | "studio-shoot";
-export type StudioModelId = "model-1" | "model-2" | "model-3" | "model-4" | "model-5";
+export type StudioModelId =
+  | "model-1"
+  | "model-2"
+  | "model-3"
+  | "model-4"
+  | "model-5"
+  | "model-6"
+  | "model-7"
+  | "model-8"
+  | "model-9";
 
 export type ServiceType = {
   id: ServiceTypeId;
@@ -145,8 +154,8 @@ export const homeContent = {
     en: "Selected Work"
   },
   studioModelLabel: {
-    zh: "选择模特",
-    en: "Choose model"
+    zh: "棚拍影集",
+    en: "Studio Albums"
   }
 } satisfies Record<string, LocalizedText>;
 
@@ -1050,88 +1059,38 @@ function createGalleryImagesForService(
   }));
 }
 
-function createStudioModelImages(modelName: LocalizedText, imageIndexes: number[]): GalleryImage[] {
-  const sources = imageIndexes
-    .map((imageIndex) => galleryImageSources.find((image) => image.index === imageIndex))
-    .filter((image): image is (typeof galleryImageSources)[number] => Boolean(image));
+function createStudioModelImages(modelName: LocalizedText, coverImageIndex: number): GalleryImage[] {
+  const coverImageSource = galleryImageSources.find((image) => image.index === coverImageIndex);
+  const orderedSources = coverImageSource
+    ? [
+        coverImageSource,
+        ...galleryImageSources.filter((image) => image.index !== coverImageIndex)
+      ]
+    : galleryImageSources;
 
-  return createGalleryImagesForService(modelName, sources);
+  return createGalleryImagesForService(modelName, orderedSources.slice(0, 5));
 }
 
 export const galleryImages: GalleryImage[] = createGalleryImagesForService(galleryTypeNames.graduation);
 
-export const studioModelGalleries: StudioModelGallery[] = [
-  {
-    id: "model-1",
+export const studioModelGalleries: StudioModelGallery[] = galleryImageSources.map((image) => {
+  const modelNumber = String(image.index).padStart(2, "0");
+
+  return {
+    id: `model-${image.index}` as StudioModelId,
     name: {
-      zh: "模特 1",
-      en: "Model 1"
+      zh: `模特 ${modelNumber}`,
+      en: `Model ${modelNumber}`
     },
     images: createStudioModelImages(
       {
-        zh: "棚拍模特 1",
-        en: "Studio model 1"
+        zh: `棚拍模特 ${image.index}`,
+        en: `Studio model ${image.index}`
       },
-      [1, 2, 3]
+      image.index
     )
-  },
-  {
-    id: "model-2",
-    name: {
-      zh: "模特 2",
-      en: "Model 2"
-    },
-    images: createStudioModelImages(
-      {
-        zh: "棚拍模特 2",
-        en: "Studio model 2"
-      },
-      [4, 5]
-    )
-  },
-  {
-    id: "model-3",
-    name: {
-      zh: "模特 3",
-      en: "Model 3"
-    },
-    images: createStudioModelImages(
-      {
-        zh: "棚拍模特 3",
-        en: "Studio model 3"
-      },
-      [6, 7]
-    )
-  },
-  {
-    id: "model-4",
-    name: {
-      zh: "模特 4",
-      en: "Model 4"
-    },
-    images: createStudioModelImages(
-      {
-        zh: "棚拍模特 4",
-        en: "Studio model 4"
-      },
-      [8]
-    )
-  },
-  {
-    id: "model-5",
-    name: {
-      zh: "模特 5",
-      en: "Model 5"
-    },
-    images: createStudioModelImages(
-      {
-        zh: "棚拍模特 5",
-        en: "Studio model 5"
-      },
-      [9]
-    )
-  }
-];
+  };
+});
 
 export const galleryImagesByServiceType: Record<GalleryServiceTypeId, GalleryImage[]> = {
   "wedding-portrait": createGalleryImagesForService(galleryTypeNames["wedding-portrait"]),

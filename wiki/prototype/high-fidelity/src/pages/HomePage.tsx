@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   brand,
@@ -18,28 +18,24 @@ type HomePageProps = {
 
 export function HomePage({ language, onNavigatePricing }: HomePageProps) {
   const [selectedGalleryTypeId, setSelectedGalleryTypeId] = useState<GalleryServiceTypeId>("graduation");
-  const [selectedStudioModelId, setSelectedStudioModelId] = useState<StudioModelId>("model-1");
+  const [expandedStudioAlbumId, setExpandedStudioAlbumId] = useState<StudioModelId | null>(null);
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const resumeTimeoutRef = useRef<number | null>(null);
   const isAutoScrollingRef = useRef(true);
-  const selectedStudioModel =
-    studioModelGalleries.find((studioModel) => studioModel.id === selectedStudioModelId) ??
-    studioModelGalleries[0];
-  const selectedGalleryImages =
-    selectedGalleryTypeId === "studio-shoot"
-      ? selectedStudioModel.images
-      : galleryImagesByServiceType[selectedGalleryTypeId];
+  const isStudioGallery = selectedGalleryTypeId === "studio-shoot";
+  const expandedStudioAlbum =
+    studioModelGalleries.find((studioAlbum) => studioAlbum.id === expandedStudioAlbumId) ?? null;
+  const selectedGalleryImages = galleryImagesByServiceType[selectedGalleryTypeId];
   const scrollingImages = useMemo(
     () => [...selectedGalleryImages, ...selectedGalleryImages],
     [selectedGalleryImages]
   );
-  const showStudioModelOptions = selectedGalleryTypeId === "studio-shoot";
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       const carousel = carouselRef.current;
 
-      if (!carousel || !isAutoScrollingRef.current) {
+      if (!carousel || !isAutoScrollingRef.current || isStudioGallery) {
         return;
       }
 
@@ -56,7 +52,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
     }, 16);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [isStudioGallery]);
 
   useEffect(() => {
     return () => {
@@ -72,7 +68,39 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
     }
 
     isAutoScrollingRef.current = true;
-  }, [selectedGalleryTypeId, selectedStudioModelId]);
+  }, [selectedGalleryTypeId]);
+
+  useEffect(() => {
+    if (!expandedStudioAlbum) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExpandedStudioAlbumId(null);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [expandedStudioAlbum]);
+
+  const selectGalleryType = (galleryTypeId: GalleryServiceTypeId) => {
+    setSelectedGalleryTypeId(galleryTypeId);
+    setExpandedStudioAlbumId(null);
+  };
+
+  const toggleStudioAlbum = (studioAlbumId: StudioModelId) => {
+    setExpandedStudioAlbumId((currentAlbumId) =>
+      currentAlbumId === studioAlbumId ? null : studioAlbumId
+    );
+  };
 
   const pauseThenResume = () => {
     isAutoScrollingRef.current = false;
@@ -143,7 +171,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
                   type="button"
                   role="tab"
                   key={serviceType.id}
-                  onClick={() => setSelectedGalleryTypeId(serviceType.id)}
+                  onClick={() => selectGalleryType(serviceType.id)}
                   aria-selected={isSelected}
                 >
                   <span>{serviceType.name[language]}</span>
@@ -152,64 +180,122 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
             })}
           </div>
 
-          {showStudioModelOptions && (
-            <div
-              className="studio-model-filter"
-              role="tablist"
-              aria-label={homeContent.studioModelLabel[language]}
-            >
-              {studioModelGalleries.map((studioModel) => {
-                const isSelected = selectedStudioModelId === studioModel.id;
+        </div>
+
+        {isStudioGallery ? (
+          <div className="studio-gallery-view">
+            <div className="studio-album-grid" aria-label={homeContent.studioModelLabel[language]}>
+              {studioModelGalleries.map((studioAlbum) => {
+                const isExpanded = expandedStudioAlbumId === studioAlbum.id;
+                const coverImage = studioAlbum.images[0];
+                const photoCount =
+                  language === "zh"
+                    ? `${studioAlbum.images.length} 张`
+                    : `${studioAlbum.images.length} photos`;
 
                 return (
                   <button
-                    className={
-                      isSelected
-                        ? "gallery-filter-button studio-model-button is-selected"
-                        : "gallery-filter-button studio-model-button"
-                    }
+                    className={isExpanded ? "studio-album-card is-expanded" : "studio-album-card"}
                     type="button"
-                    role="tab"
-                    key={studioModel.id}
-                    onClick={() => setSelectedStudioModelId(studioModel.id)}
-                    aria-selected={isSelected}
+                    key={studioAlbum.id}
+                    onClick={() => toggleStudioAlbum(studioAlbum.id)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`${studioAlbum.id}-gallery`}
                   >
-                    <span>{studioModel.name[language]}</span>
+                    {studioAlbum.images.slice(1, 4).map((image, stackIndex) => (
+                      <span
+                        className={`studio-album-stack studio-album-stack-${stackIndex + 1}`}
+                        key={`stack-${image.src}`}
+                        aria-hidden="true"
+                      >
+                        <img src={image.src} alt="" loading="lazy" />
+                      </span>
+                    ))}
+                    <span className="studio-album-cover">
+                      <img src={coverImage.src} alt={coverImage.alt[language]} loading="lazy" />
+                    </span>
+                    <span className="studio-album-meta">
+                      <span>{studioAlbum.name[language]}</span>
+                      <small>{photoCount}</small>
+                    </span>
                   </button>
                 );
               })}
             </div>
-          )}
-        </div>
 
-        <div className="gallery-carousel">
-          <button
-            className="gallery-arrow gallery-arrow-left"
-            type="button"
-            onClick={() => scrollGallery("previous")}
-            aria-label={language === "zh" ? "查看上一张作品" : "View previous work"}
-          >
-            <ArrowLeft size={22} aria-hidden="true" />
-          </button>
-
-          <div className="gallery-track" ref={carouselRef}>
-            {scrollingImages.map((image, index) => (
-              <figure className="gallery-item" key={`${image.src}-${index}`}>
-                <img src={image.src} alt={image.alt[language]} loading="lazy" />
-              </figure>
-            ))}
           </div>
+        ) : (
+          <div className="gallery-carousel">
+            <button
+              className="gallery-arrow gallery-arrow-left"
+              type="button"
+              onClick={() => scrollGallery("previous")}
+              aria-label={language === "zh" ? "查看上一张作品" : "View previous work"}
+            >
+              <ArrowLeft size={22} aria-hidden="true" />
+            </button>
 
-          <button
-            className="gallery-arrow gallery-arrow-right"
-            type="button"
-            onClick={() => scrollGallery("next")}
-            aria-label={language === "zh" ? "查看下一张作品" : "View next work"}
-          >
-            <ArrowRight size={22} aria-hidden="true" />
-          </button>
-        </div>
+            <div className="gallery-track" ref={carouselRef}>
+              {scrollingImages.map((image, index) => (
+                <figure className="gallery-item" key={`${image.src}-${index}`}>
+                  <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+
+            <button
+              className="gallery-arrow gallery-arrow-right"
+              type="button"
+              onClick={() => scrollGallery("next")}
+              aria-label={language === "zh" ? "查看下一张作品" : "View next work"}
+            >
+              <ArrowRight size={22} aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </section>
+
+      {expandedStudioAlbum && (
+        <div
+          className="studio-album-overlay"
+          onClick={() => setExpandedStudioAlbumId(null)}
+          role="presentation"
+        >
+          <div
+            className="studio-album-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`${expandedStudioAlbum.id}-title`}
+            id={`${expandedStudioAlbum.id}-gallery`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="studio-album-modal-header">
+              <div>
+                <p>{homeContent.studioModelLabel[language]}</p>
+                <h3 id={`${expandedStudioAlbum.id}-title`}>
+                  {expandedStudioAlbum.name[language]}
+                </h3>
+              </div>
+              <button
+                className="studio-album-close"
+                type="button"
+                onClick={() => setExpandedStudioAlbumId(null)}
+                aria-label={language === "zh" ? "关闭影集" : "Close album"}
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="studio-album-modal-grid">
+              {expandedStudioAlbum.images.map((image) => (
+                <figure className="studio-album-modal-photo" key={image.src}>
+                  <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
