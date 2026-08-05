@@ -1,12 +1,18 @@
 import {
+  Aperture,
   ArrowLeft,
-  Camera,
+  BadgePlus,
   Gift,
-  GraduationCap,
-  Heart,
-  MapPin,
+  HeartHandshake,
+  Images,
+  ListChecks,
+  MapPinPlus,
+  MapPinned,
+  PackageCheck,
+  ScanFace,
+  School,
   Shirt,
-  Sparkles,
+  WandSparkles,
   type LucideIcon
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -316,7 +322,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
       <div className="pricing-layout flow-layout">
         <section className="pricing-panel selector-panel" aria-labelledby="area-title">
           <div className="panel-title">
-            <MapPin size={24} aria-hidden="true" />
+            <MapPinned size={24} aria-hidden="true" />
             <div>
               <p>Step 01</p>
               <h2 id="area-title">{pricingContent.areaLabel[language]}</h2>
@@ -341,7 +347,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {showServiceTypes && (
           <section className="pricing-panel selector-panel" aria-labelledby="service-type-title">
             <div className="panel-title">
-              <GraduationCap size={24} aria-hidden="true" />
+              <ListChecks size={24} aria-hidden="true" />
               <div>
                 <p>Step 02</p>
                 <h2 id="service-type-title">{pricingContent.serviceTypeLabel[language]}</h2>
@@ -381,7 +387,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {showSchoolSelect && (
           <section className="pricing-panel selector-panel" aria-labelledby="school-title">
             <div className="panel-title">
-              <GraduationCap size={24} aria-hidden="true" />
+              <School size={24} aria-hidden="true" />
               <div>
                 <p>Step 03</p>
                 <h2 id="school-title">{pricingContent.schoolLabel[language]}</h2>
@@ -409,7 +415,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {showSceneTypes && (
           <section className="pricing-panel selector-panel" aria-labelledby="scene-type-title">
             <div className="panel-title">
-              <Camera size={24} aria-hidden="true" />
+              <Images size={24} aria-hidden="true" />
               <div>
                 <p>Step 04</p>
                 <h2 id="scene-type-title">{pricingContent.sceneTypeLabel[language]}</h2>
@@ -448,7 +454,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {isStudioGraduation && (
           <section className="pricing-panel selector-panel" aria-labelledby="studio-package-title">
             <div className="panel-title compact-title">
-              <Camera size={24} aria-hidden="true" />
+              <Aperture size={24} aria-hidden="true" />
               <div>
                 <p>Step 05</p>
                 <h2 id="studio-package-title">{graduationStudioPackage.title[language]}</h2>
@@ -473,7 +479,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {showGraduationPackages && selectedSceneType && (
           <section className="pricing-panel selector-panel" aria-labelledby="package-title">
             <div className="panel-title compact-title">
-              <GraduationCap size={24} aria-hidden="true" />
+              <PackageCheck size={24} aria-hidden="true" />
               <div>
                 <p>Step 05</p>
                 <h2 id="package-title">{pricingContent.packageLabel[language]}</h2>
@@ -522,7 +528,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {showRegistryPackages && (
           <section className="pricing-panel selector-panel" aria-labelledby="registry-package-title">
             <div className="panel-title compact-title">
-              <Heart size={24} aria-hidden="true" />
+              <HeartHandshake size={24} aria-hidden="true" />
               <div>
                 <p>Step 03</p>
                 <h2 id="registry-package-title">{pricingContent.registryPackageLabel[language]}</h2>
@@ -561,7 +567,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {showIdPhotoPackage && (
           <section className="pricing-panel selector-panel" aria-labelledby="id-photo-package-title">
             <div className="panel-title compact-title">
-              <Camera size={24} aria-hidden="true" />
+              <ScanFace size={24} aria-hidden="true" />
               <div>
                 <p>Step 03</p>
                 <h2 id="id-photo-package-title">{idPhotoPackage.title[language]}</h2>
@@ -586,7 +592,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
         {isRegistryService && selectedRegistryPackage && (
           <section className="pricing-panel selector-panel" aria-labelledby="registry-extra-locations-title">
             <div className="panel-title compact-title">
-              <MapPin size={24} aria-hidden="true" />
+              <MapPinPlus size={24} aria-hidden="true" />
               <div>
                 <p>Step 04</p>
                 <h2 id="registry-extra-locations-title">
@@ -615,7 +621,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
           <>
             <section className="pricing-panel selector-panel add-on-intro-panel">
               <div className="panel-title compact-title">
-                <Sparkles size={24} aria-hidden="true" />
+                <BadgePlus size={24} aria-hidden="true" />
                 <div>
                   <p>{addOnsStepLabel}</p>
                   <h2>{pricingContent.addOnsLabel[language]}</h2>
@@ -631,7 +637,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                     "makeup",
                     pricingContent.makeupLabel[language],
                     "Step 06",
-                    Sparkles,
+                    WandSparkles,
                     graduationAddOns.makeup
                   )}
 
@@ -665,7 +671,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                     "makeup",
                     pricingContent.makeupLabel[language],
                     "Step 08",
-                    Sparkles,
+                    WandSparkles,
                     graduationAddOns.makeup
                   )}
                 </>
@@ -678,7 +684,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                   "registryStyling",
                   pricingContent.makeupLabel[language],
                   "Step 05",
-                  Sparkles,
+                  WandSparkles,
                   registryAddOns.registryStyling
                 )}
 
@@ -706,7 +712,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                   "idPhotoStyling",
                   pricingContent.makeupLabel[language],
                   "Step 04",
-                  Sparkles,
+                  WandSparkles,
                   idPhotoAddOns.idPhotoStyling
                 )}
 

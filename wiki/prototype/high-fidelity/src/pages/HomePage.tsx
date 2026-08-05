@@ -5,8 +5,10 @@ import {
   galleryImagesByServiceType,
   galleryServiceTypes,
   homeContent,
+  studioModelGalleries,
   type GalleryServiceTypeId,
-  type Language
+  type Language,
+  type StudioModelId
 } from "../data/siteContent";
 
 type HomePageProps = {
@@ -16,14 +18,22 @@ type HomePageProps = {
 
 export function HomePage({ language, onNavigatePricing }: HomePageProps) {
   const [selectedGalleryTypeId, setSelectedGalleryTypeId] = useState<GalleryServiceTypeId>("graduation");
+  const [selectedStudioModelId, setSelectedStudioModelId] = useState<StudioModelId>("model-1");
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const resumeTimeoutRef = useRef<number | null>(null);
   const isAutoScrollingRef = useRef(true);
-  const selectedGalleryImages = galleryImagesByServiceType[selectedGalleryTypeId];
+  const selectedStudioModel =
+    studioModelGalleries.find((studioModel) => studioModel.id === selectedStudioModelId) ??
+    studioModelGalleries[0];
+  const selectedGalleryImages =
+    selectedGalleryTypeId === "studio-shoot"
+      ? selectedStudioModel.images
+      : galleryImagesByServiceType[selectedGalleryTypeId];
   const scrollingImages = useMemo(
     () => [...selectedGalleryImages, ...selectedGalleryImages],
     [selectedGalleryImages]
   );
+  const showStudioModelOptions = selectedGalleryTypeId === "studio-shoot";
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -62,7 +72,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
     }
 
     isAutoScrollingRef.current = true;
-  }, [selectedGalleryTypeId]);
+  }, [selectedGalleryTypeId, selectedStudioModelId]);
 
   const pauseThenResume = () => {
     isAutoScrollingRef.current = false;
@@ -114,31 +124,62 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
           <h2 id="gallery-title">{homeContent.galleryTitle[language]}</h2>
         </div>
 
-        <div
-          className="gallery-filter"
-          role="tablist"
-          aria-label={language === "zh" ? "选择作品服务类型" : "Choose gallery service type"}
-        >
-          {galleryServiceTypes.map((serviceType) => {
-            const isSelected = selectedGalleryTypeId === serviceType.id;
+        <div className="gallery-controls">
+          <div
+            className="gallery-filter"
+            role="tablist"
+            aria-label={language === "zh" ? "选择作品服务类型" : "Choose gallery service type"}
+          >
+            {galleryServiceTypes.map((serviceType) => {
+              const isSelected = selectedGalleryTypeId === serviceType.id;
 
-            return (
-              <button
-                className={
-                  isSelected
-                    ? "gallery-filter-button is-selected"
-                    : "gallery-filter-button"
-                }
-                type="button"
-                role="tab"
-                key={serviceType.id}
-                onClick={() => setSelectedGalleryTypeId(serviceType.id)}
-                aria-selected={isSelected}
-              >
-                <span>{serviceType.name[language]}</span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  className={
+                    isSelected
+                      ? "gallery-filter-button is-selected"
+                      : "gallery-filter-button"
+                  }
+                  type="button"
+                  role="tab"
+                  key={serviceType.id}
+                  onClick={() => setSelectedGalleryTypeId(serviceType.id)}
+                  aria-selected={isSelected}
+                >
+                  <span>{serviceType.name[language]}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {showStudioModelOptions && (
+            <div
+              className="studio-model-filter"
+              role="tablist"
+              aria-label={homeContent.studioModelLabel[language]}
+            >
+              {studioModelGalleries.map((studioModel) => {
+                const isSelected = selectedStudioModelId === studioModel.id;
+
+                return (
+                  <button
+                    className={
+                      isSelected
+                        ? "gallery-filter-button studio-model-button is-selected"
+                        : "gallery-filter-button studio-model-button"
+                    }
+                    type="button"
+                    role="tab"
+                    key={studioModel.id}
+                    onClick={() => setSelectedStudioModelId(studioModel.id)}
+                    aria-selected={isSelected}
+                  >
+                    <span>{studioModel.name[language]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="gallery-carousel">
