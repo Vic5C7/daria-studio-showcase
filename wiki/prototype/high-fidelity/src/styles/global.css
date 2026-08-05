@@ -514,6 +514,10 @@ h1 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.school-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .addon-options {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -591,6 +595,10 @@ h1 {
 .addon-choice {
   justify-content: flex-start;
   min-height: 246px;
+}
+
+.school-choice {
+  min-height: 88px;
 }
 
 .option-preview {
@@ -942,6 +950,7 @@ select:disabled {
   }
 
   .service-options,
+  .school-options,
   .addon-options,
   .package-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1036,6 +1045,7 @@ select:disabled {
 
   .two-options,
   .service-options,
+  .school-options,
   .scene-options,
   .addon-options,
   .package-options {

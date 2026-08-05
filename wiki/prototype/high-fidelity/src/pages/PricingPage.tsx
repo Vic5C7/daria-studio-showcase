@@ -394,21 +394,23 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
               </div>
             </div>
 
-            <label className="field-label" htmlFor="school-select">
-              {pricingContent.schoolLabel[language]}
-            </label>
-            <select
-              id="school-select"
-              value={selectedSchoolId}
-              onChange={(event) => selectSchool(event.target.value)}
-            >
-              <option value="">{pricingContent.schoolPlaceholder[language]}</option>
-              {graduationSchools.map((school) => (
-                <option key={school.id} value={school.id}>
-                  {school.name[language]}
-                </option>
-              ))}
-            </select>
+            <div className="option-grid school-options">
+              {graduationSchools.map((school) => {
+                const isSelected = selectedSchoolId === school.id;
+
+                return (
+                  <button
+                    className={isSelected ? "choice-button school-choice is-selected" : "choice-button school-choice"}
+                    type="button"
+                    key={school.id}
+                    onClick={() => selectSchool(school.id)}
+                    aria-pressed={isSelected}
+                  >
+                    <span>{school.name[language]}</span>
+                  </button>
+                );
+              })}
+            </div>
           </section>
         )}
 
