@@ -26,6 +26,7 @@ import {
   serviceAreas,
   serviceTypesByArea,
   type AddOnGroupId,
+  type GalleryImage,
   type GraduationAddOn,
   type IdPhotoAddOn,
   type IdPhotoAddOnGroupId,
@@ -64,6 +65,14 @@ const emptySectionNotes: SectionNotes = {
 
 function formatAud(price: number) {
   return `${price} AUD`;
+}
+
+function renderOptionPreview(previewImage: GalleryImage, language: Language) {
+  return (
+    <span className="option-preview">
+      <img src={previewImage.src} alt={previewImage.alt[language]} />
+    </span>
+  );
 }
 
 export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
@@ -265,6 +274,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                 onClick={() => toggleAddOn(addOn.id)}
                 aria-pressed={isSelected}
               >
+                {addOn.previewImage && renderOptionPreview(addOn.previewImage, language)}
                 <span>{addOn.name[language]}</span>
                 <strong>{formatAud(addOn.priceAud)}</strong>
                 {addOn.description && (
@@ -419,6 +429,7 @@ export function PricingPage({ language, onNavigateHome }: PricingPageProps) {
                   onClick={() => selectSceneType(sceneType.id)}
                   aria-pressed={selectedSceneTypeId === sceneType.id}
                 >
+                  {renderOptionPreview(sceneType.previewImage, language)}
                   <span>{sceneType.name[language]}</span>
                   <small>{sceneType.description[language]}</small>
                 </button>

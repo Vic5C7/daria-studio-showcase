@@ -560,7 +560,32 @@ h1 {
 
 .scene-choice,
 .addon-choice {
-  min-height: 118px;
+  justify-content: flex-start;
+  min-height: 246px;
+}
+
+.option-preview {
+  width: 100%;
+  height: 132px;
+  overflow: hidden;
+  border: 1px solid rgba(30, 28, 26, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.scene-choice .option-preview {
+  height: 156px;
+}
+
+.option-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.choice-button.is-selected .option-preview {
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .package-choice {
@@ -982,6 +1007,16 @@ select:disabled {
   .addon-options,
   .package-options {
     grid-template-columns: 1fr;
+  }
+
+  .scene-choice,
+  .addon-choice {
+    min-height: 238px;
+  }
+
+  .scene-choice .option-preview,
+  .addon-choice .option-preview {
+    height: 150px;
   }
 
   .spot-heading,

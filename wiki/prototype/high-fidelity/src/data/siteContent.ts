@@ -48,6 +48,7 @@ export type GraduationSceneType = {
   id: SceneTypeId;
   name: LocalizedText;
   description: LocalizedText;
+  previewImage: GalleryImage;
 };
 
 export type GraduationPackage = {
@@ -74,6 +75,7 @@ export type GraduationAddOn = {
   name: LocalizedText;
   priceAud: number;
   description?: LocalizedText;
+  previewImage?: GalleryImage;
 };
 
 export type RegistryAddOn = {
@@ -81,6 +83,7 @@ export type RegistryAddOn = {
   name: LocalizedText;
   priceAud: number;
   description?: LocalizedText;
+  previewImage?: GalleryImage;
 };
 
 export type IdPhotoAddOn = {
@@ -88,6 +91,7 @@ export type IdPhotoAddOn = {
   name: LocalizedText;
   priceAud: number;
   description?: LocalizedText;
+  previewImage?: GalleryImage;
 };
 
 export const brand = {
@@ -369,6 +373,14 @@ export const graduationSchools: GraduationSchool[] = [
   }
 ];
 
+const optionPreviewImage: GalleryImage = {
+  src: "images/options/option-preview-placeholder.jpg",
+  alt: {
+    zh: "DARIA STUDIO 选项预览占位图",
+    en: "DARIA STUDIO option preview placeholder"
+  }
+};
+
 const sharedSingleGraduationSceneType: GraduationSceneType = {
   id: "unimelb-single",
   name: {
@@ -378,7 +390,8 @@ const sharedSingleGraduationSceneType: GraduationSceneType = {
   description: {
     zh: "适合在所选学校校园内完成标志性地点打卡。",
     en: "Designed for iconic graduation portraits around the selected campus."
-  }
+  },
+  previewImage: optionPreviewImage
 };
 
 const graduationStudioSceneType: GraduationSceneType = {
@@ -390,7 +403,8 @@ const graduationStudioSceneType: GraduationSceneType = {
   description: {
     zh: "适合想要快速完成棚内毕业照，并选择多种背景模板的拍摄。",
     en: "Designed for a quick in-studio graduation shoot with multiple background templates."
-  }
+  },
+  previewImage: optionPreviewImage
 };
 
 const unimelbGraduationSceneTypes: GraduationSceneType[] = [
@@ -404,7 +418,8 @@ const unimelbGraduationSceneTypes: GraduationSceneType[] = [
     description: {
       zh: "包含所选学校校园与 Carlton Garden，适合毕业典礼当天的双场景记录。",
       en: "Includes the selected campus and Carlton Garden, suitable for graduation ceremony day coverage."
-    }
+    },
+    previewImage: optionPreviewImage
   },
   graduationStudioSceneType
 ];
@@ -739,7 +754,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
       description: {
         zh: "各学校各学院都有。",
         en: "Available for each school and faculty."
-      }
+      },
+      previewImage: optionPreviewImage
     },
     {
       id: "heels-qipao-dress",
@@ -747,7 +763,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "高跟鞋 + 旗袍/裙子",
         en: "Heels + qipao/dress"
       },
-      priceAud: 10
+      priceAud: 10,
+      previewImage: optionPreviewImage
     },
     {
       id: "hanfu",
@@ -755,7 +772,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "汉服",
         en: "Hanfu"
       },
-      priceAud: 40
+      priceAud: 40,
+      previewImage: optionPreviewImage
     }
   ],
   props: [
@@ -765,7 +783,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "毕业熊 + 学士帽 + 花束组合",
         en: "Graduation bear + cap + bouquet set"
       },
-      priceAud: 10
+      priceAud: 10,
+      previewImage: optionPreviewImage
     },
     {
       id: "bouquet",
@@ -773,7 +792,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "花束",
         en: "Bouquet"
       },
-      priceAud: 3
+      priceAud: 3,
+      previewImage: optionPreviewImage
     },
     {
       id: "academic-cap",
@@ -781,7 +801,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "学士帽",
         en: "Academic cap"
       },
-      priceAud: 3
+      priceAud: 3,
+      previewImage: optionPreviewImage
     },
     {
       id: "graduation-bear",
@@ -789,7 +810,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "毕业熊",
         en: "Graduation bear"
       },
-      priceAud: 5
+      priceAud: 5,
+      previewImage: optionPreviewImage
     },
     {
       id: "academic-scroll",
@@ -797,7 +819,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "学术筒",
         en: "Academic scroll"
       },
-      priceAud: 4
+      priceAud: 4,
+      previewImage: optionPreviewImage
     },
     {
       id: "uniform-bear",
@@ -805,7 +828,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
         zh: "校服熊",
         en: "Uniform bear"
       },
-      priceAud: 3
+      priceAud: 3,
+      previewImage: optionPreviewImage
     }
   ],
   makeup: [
@@ -886,7 +910,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
         zh: "花束",
         en: "Bouquet"
       },
-      priceAud: 10
+      priceAud: 10,
+      previewImage: optionPreviewImage
     },
     {
       id: "registry-white-gloves",
@@ -894,7 +919,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
         zh: "白纱手套",
         en: "White tulle gloves"
       },
-      priceAud: 10
+      priceAud: 10,
+      previewImage: optionPreviewImage
     },
     {
       id: "registry-veil",
@@ -902,7 +928,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
         zh: "头纱",
         en: "Veil"
       },
-      priceAud: 10
+      priceAud: 10,
+      previewImage: optionPreviewImage
     },
     {
       id: "registry-accessories",
@@ -910,7 +937,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
         zh: "配饰",
         en: "Accessories"
       },
-      priceAud: 10
+      priceAud: 10,
+      previewImage: optionPreviewImage
     }
   ],
   registryClothing: [
@@ -920,7 +948,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
         zh: "女婚纱",
         en: "Wedding dress"
       },
-      priceAud: 40
+      priceAud: 40,
+      previewImage: optionPreviewImage
     },
     {
       id: "registry-suit",
@@ -928,7 +957,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
         zh: "西装",
         en: "Suit"
       },
-      priceAud: 40
+      priceAud: 40,
+      previewImage: optionPreviewImage
     }
   ]
 };
