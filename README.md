@@ -1,18 +1,21 @@
-# DARIA STUDIO Website
-# DARIA STUDIO 网站
+# DARIA STUDIO Showcase
+# DARIA STUDIO 公开展示仓库
 
-This repository is being prepared for the future production DARIA STUDIO website.
-本仓库正在为未来正式版 DARIA STUDIO 网站做准备。
+This public repository stores the DARIA STUDIO wiki, high-fidelity prototype, public sample assets, and GitHub Pages deployment.
+本公开仓库用于保存 DARIA STUDIO 的 wiki、高保真原型、公开样片素材和 GitHub Pages 部署。
+
+Production application code belongs in the private repository `daria-studio-platform`.
+正式应用代码应放在私有仓库 `daria-studio-platform` 中。
 
 The repository is organized into:
 仓库目前分为以下区域：
 
-- `repos/` for future production code.
-- `repos/` 用于未来正式项目代码。
 - `wiki/` for product documentation, user stories, acceptance criteria, and prototypes.
 - `wiki/` 用于产品文档、用户故事、验收标准和原型。
-- `sample_pic/` for original photo assets.
-- `sample_pic/` 用于保存原始图片素材。
+- `wiki/prototype/high-fidelity/` for the runnable React + TypeScript + Vite prototype.
+- `wiki/prototype/high-fidelity/` 用于保存当前可运行的 React + TypeScript + Vite 高保真原型。
+- `sample_pic/` for temporary public sample photos pending future asset review.
+- `sample_pic/` 用于临时保存公开样片，后续上线前需要复核授权、隐私和资产存放方式。
 
 ## Live Site
 ## 线上站点
@@ -21,7 +24,7 @@ GitHub Pages currently deploys the high-fidelity prototype.
 GitHub Pages 当前部署的是高保真原型。
 
 ```text
-https://vic5c7.github.io/dg-melbourne-photography/
+https://vic5c7.github.io/daria-studio-showcase/
 ```
 
 ## Run The Prototype With Docker
@@ -52,12 +55,9 @@ http://localhost:5173
 ## 项目结构
 
 ```text
-repos/                         Future production code / 未来正式代码
-repos/frontend/                Reserved production frontend / 预留正式前端
-repos/backend/                 Reserved production backend / 预留正式后端
 wiki/                          Product docs and prototype artifacts / 产品文档和原型
 wiki/prototype/high-fidelity/  React + TypeScript + Vite prototype / 高保真原型
-sample_pic/                    Original sample photos / 原始样片
+sample_pic/                    Temporary public sample photos / 临时公开样片
 ```
 
 ## Deployment
