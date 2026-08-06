@@ -17,6 +17,8 @@ This is a product document, not an implementation document. It should guide user
 - Staff permissions are not configurable in the first product scope.
 - The owner is also the website administrator.
 - Employees can handle original photo upload and related client gallery delivery operations.
+- Employees can edit original photo galleries at any time for delivery operations.
+- Employees can see the full client list, but only with the minimum client information needed for delivery.
 - Employees cannot edit customer-facing website content.
 - Client accounts are created through client self-registration by email.
 - Staff accounts are separate from client accounts.
@@ -27,6 +29,8 @@ This is a product document, not an implementation document. It should guide user
 - 第一阶段不做可配置员工权限。
 - 老板同时是网站管理员。
 - 员工可以处理底片上传及相关客户相册交付操作。
+- 员工可以为了交付工作随时编辑底片相册。
+- 员工可以看到完整客户列表，但只能看到交付所需的最少客户信息。
 - 员工不可编辑客户可见的网站内容。
 - 客户账号通过邮箱自主注册创建。
 - 工作人员账号与客户账号分离。
@@ -143,23 +147,27 @@ Allowed:
 允许：
 
 - Log in to the staff workspace.
-- View assigned client galleries.
-- Upload original photos for assigned client galleries.
+- View the full client list with minimum delivery-needed client information.
+- View client galleries for delivery work.
+- Upload original photos to client galleries.
+- Edit original photo galleries at any time, including adding, replacing, removing, and reordering original photos.
 - Review uploaded original photos before making them available to the client.
 - View client retouch selections after submission.
 - View per-photo client retouching notes after submission.
 - Upload final retouched photos corresponding to selected originals.
-- View delivery status for assigned client galleries.
+- View delivery status for client galleries.
 - Use the staff workspace in Simplified Chinese or English.
 
 - 登录工作人员端。
-- 查看被分配的客户相册。
-- 为被分配的客户相册上传底片。
+- 查看完整客户列表，但只显示交付所需的最少客户信息。
+- 为交付工作查看客户相册。
+- 向客户相册上传底片。
+- 随时编辑底片相册，包括新增、替换、移除和调整底片顺序。
 - 在向客户开放前检查已上传底片。
 - 在客户提交后查看精修选择。
 - 在客户提交后查看每张照片的修图备注。
 - 上传与客户已选底片对应的最终精修图。
-- 查看被分配客户相册的交付状态。
+- 查看客户相册的交付状态。
 - 使用简体中文或英文的工作人员端界面。
 
 Not allowed:
@@ -175,7 +183,7 @@ Not allowed:
 - Manage employee accounts.
 - Change role permissions.
 - Unlock submitted client retouch selections.
-- Access client galleries that are not assigned to them, unless the owner later defines a broader operational rule.
+- View client information that is not needed for delivery work.
 
 - 编辑客户可见的网站文案。
 - 新增、编辑、删除、排序、发布或隐藏作品分类。
@@ -186,7 +194,7 @@ Not allowed:
 - 管理员工账号。
 - 修改角色权限。
 - 解锁客户已提交的精修选择。
-- 访问未分配给自己的客户相册，除非后续由老板定义更宽的运营规则。
+- 查看交付工作不需要的客户信息。
 
 ### Owner / 老板
 
@@ -208,7 +216,7 @@ Allowed:
 - Manage bilingual customer-facing content fields.
 - See missing translation warnings before publishing.
 - Manage employee accounts.
-- Assign client galleries to employees.
+- Coordinate client gallery work among employees if needed.
 - Disable employee access when needed.
 
 - 登录工作人员端。
@@ -221,7 +229,7 @@ Allowed:
 - 管理客户可见内容的中英双语字段。
 - 发布前查看缺失翻译提醒。
 - 管理员工账号。
-- 将客户相册分配给员工。
+- 在需要时协调员工之间的客户相册工作。
 - 在需要时禁用员工访问。
 
 Not allowed:
@@ -243,15 +251,17 @@ Not allowed:
 | Browse public website | Yes | Yes | Yes | Yes |
 | Select pricing options and copy inquiry summary | Yes | Yes | Yes | Yes |
 | Self-register client account | Yes | Not needed | No | No |
-| Access client galleries | No | Own galleries only, later scope | Assigned galleries only | All galleries |
+| Access client galleries | No | Own galleries only, later scope | All galleries for delivery | All galleries |
 | Download original photos | No | Own galleries only, later scope | No | All galleries |
 | Select free retouched photos | No | Yes, later scope | No | No |
 | Submit per-photo retouch notes | No | Yes, later scope | No | No |
 | Download final retouched photos | No | Own galleries only, later scope | No | All galleries |
 | Access staff workspace | No | No | Yes | Yes |
-| Upload original photos | No | No | Assigned galleries only | All galleries |
-| View submitted retouch selections and notes | No | Own submissions only | Assigned galleries only | All galleries |
-| Upload final retouched photos | No | No | Assigned galleries only | All galleries |
+| View client list | No | No | All clients, minimum delivery info only | All clients |
+| Upload original photos | No | No | All galleries for delivery | All galleries |
+| Edit original photo galleries | No | No | All galleries for delivery | All galleries |
+| View submitted retouch selections and notes | No | Own submissions only | All galleries for delivery | All galleries |
+| Upload final retouched photos | No | No | All galleries for delivery | All galleries |
 | Edit public website content | No | No | No | Yes |
 | Manage gallery categories and public gallery images | No | No | No | Yes |
 | Manage packages, add-ons, and prices | No | No | No | Yes |
@@ -264,15 +274,17 @@ Not allowed:
 | 浏览公开网站 | 可以 | 可以 | 可以 | 可以 |
 | 选择价格选项并复制咨询信息 | 可以 | 可以 | 可以 | 可以 |
 | 自主注册客户账号 | 可以 | 不需要 | 不可以 | 不可以 |
-| 访问客户相册 | 不可以 | 仅自己的相册，后续范围 | 仅被分配相册 | 全部相册 |
+| 访问客户相册 | 不可以 | 仅自己的相册，后续范围 | 全部交付相关相册 | 全部相册 |
 | 下载底片 | 不可以 | 仅自己的相册，后续范围 | 不可以 | 全部相册 |
 | 选择免费精修照片 | 不可以 | 可以，后续范围 | 不可以 | 不可以 |
 | 提交每张照片的修图备注 | 不可以 | 可以，后续范围 | 不可以 | 不可以 |
 | 下载最终精修图 | 不可以 | 仅自己的相册，后续范围 | 不可以 | 全部相册 |
 | 访问工作人员端 | 不可以 | 不可以 | 可以 | 可以 |
-| 上传底片 | 不可以 | 不可以 | 仅被分配相册 | 全部相册 |
-| 查看已提交的精修选择和备注 | 不可以 | 仅自己的提交 | 仅被分配相册 | 全部相册 |
-| 上传最终精修图 | 不可以 | 不可以 | 仅被分配相册 | 全部相册 |
+| 查看客户列表 | 不可以 | 不可以 | 全部客户，仅最少交付信息 | 全部客户 |
+| 上传底片 | 不可以 | 不可以 | 全部交付相关相册 | 全部相册 |
+| 编辑底片相册 | 不可以 | 不可以 | 全部交付相关相册 | 全部相册 |
+| 查看已提交的精修选择和备注 | 不可以 | 仅自己的提交 | 全部交付相关相册 | 全部相册 |
+| 上传最终精修图 | 不可以 | 不可以 | 全部交付相关相册 | 全部相册 |
 | 编辑公开网站内容 | 不可以 | 不可以 | 不可以 | 可以 |
 | 管理作品分类和公开作品图片 | 不可以 | 不可以 | 不可以 | 可以 |
 | 管理套餐、加购项和价格 | 不可以 | 不可以 | 不可以 | 可以 |
@@ -302,21 +314,43 @@ Not allowed:
 - 访问工作人员端必须登录。
 - 客户可见公开页面保持无需登录即可访问。
 
-## Client Gallery Assignment Rules / 客户相册分配规则
+## Client List and Gallery Access Rules / 客户列表与相册访问规则
 
 - Owner can see all client galleries.
-- Employee can only see assigned client galleries by default.
-- Owner can assign a client gallery to an employee.
-- Employee delivery actions should be tied to assigned galleries.
+- Employees can see the full client list.
+- Employees should only see the minimum client information needed for delivery work.
+- Employees can access client galleries for delivery work.
+- Employees can edit original photo galleries at any time.
+- Editing original photo galleries includes adding, replacing, removing, and reordering original photos.
+- Employee access to the client list does not mean employees can edit customer-facing website content.
+- If the product later shows employee responsibility or assignment, it should be treated as an operational coordination label, not as the first-stage permission boundary.
 - Client can only see galleries connected to their own client account.
 - Visitor cannot see client galleries.
 
 - 老板可以查看全部客户相册。
-- 员工默认只能查看被分配的客户相册。
-- 老板可以将客户相册分配给员工。
-- 员工交付操作应绑定到被分配的相册。
+- 员工可以看到完整客户列表。
+- 员工只能看到交付工作所需的最少客户信息。
+- 员工可以为了交付工作访问客户相册。
+- 员工可以随时编辑底片相册。
+- 编辑底片相册包括新增、替换、移除和调整底片顺序。
+- 员工可以访问客户列表，不代表员工可以编辑客户可见的网站内容。
+- 如果产品后续显示员工负责人或相册分配关系，该关系应视为运营协作标签，而不是第一阶段权限边界。
 - 客户只能查看与自己客户账号关联的相册。
 - 访客不能查看客户相册。
+
+## Client Information Visibility Rules / 客户信息可见性规则
+
+- Employees should see only the minimum client information needed for delivery.
+- Minimum delivery-needed information may include client display name or identifier, client account email, client gallery list, package or retouch quota, gallery delivery status, upload status, retouch selection status, deadlines, and submitted retouch notes.
+- Employees should not see information that is unrelated to delivery work.
+- Sensitive account, authentication, internal business, or private customer information should be hidden from employees unless it becomes necessary for delivery and is explicitly included in a later policy.
+- Owner can see and manage broader client and operational information as needed for administration.
+
+- 员工只应看到交付工作所需的最少客户信息。
+- 最少交付信息可以包括客户显示名称或识别信息、客户账号邮箱、客户相册列表、套餐或精修数量、相册交付状态、上传状态、精修选择状态、截止时间和已提交修图备注。
+- 员工不应看到与交付工作无关的信息。
+- 敏感账号信息、认证信息、内部经营信息或客户隐私信息应对员工隐藏，除非后续明确纳入交付所需信息政策。
+- 老板可以根据管理需要查看和管理更完整的客户与运营信息。
 
 ## Retouch Selection Locking Rules / 精修选择锁定规则
 
@@ -341,14 +375,18 @@ Not allowed:
 - Original photo upload also starts the 3-month download and storage window.
 - Final retouched photos use the same 3-month timing rule as original photos.
 - Client download access should expire after the valid download window.
-- Staff delivery access after expiration should be defined in later operational and storage policy documents.
+- After the 3-month window expires, original photos should be deleted from all product storage locations.
+- Generated original-photo download packages should also be deleted after the 3-month window expires.
+- The normal product should not retain owner-only manual archive access to expired original photos.
 
 - 底片上传会开始计算 7 天免费精修选择期。
 - 如果客户 7 天内未提交精修选择，则失去套餐包含的免费精修选择权。
 - 底片上传同时开始计算 3 个月下载和存储期。
 - 最终精修图与底片使用同一套 3 个月计时规则。
 - 有效下载期结束后，客户下载权限应失效。
-- 过期后工作人员交付访问权限应在后续运营和存储策略文档中定义。
+- 3 个月期限结束后，底片应从产品内所有存储位置删除。
+- 已生成的底片下载压缩包也应在 3 个月期限结束后删除。
+- 正常产品流程中不应保留仅老板可用的过期底片人工归档访问权限。
 
 ## Out of Scope / 当前不做
 
@@ -370,14 +408,22 @@ Not allowed:
 - 已提交精修选择的解锁流程。
 - 在公开展示仓库中实现生产级认证、数据库、文件存储或后端。
 
-## Open Questions / 待确认问题
+## Resolved Decisions / 已确认补充决策
 
-- Can employees replace or remove uploaded original photos before the gallery is released to the client?
-- Should employees see all client contact details, or only the minimum information needed for delivery?
-- Should more than one employee be assignable to the same client gallery?
-- After the 3-month window expires, should the owner retain any manual archive access outside the client download flow?
+The following items were previously open questions and are now confirmed:
 
-- 员工是否可以在相册向客户开放前替换或移除已上传底片？
-- 员工应看到全部客户联系方式，还是只看到交付所需的最少信息？
-- 同一个客户相册是否可以分配给多个员工？
-- 3 个月期限过后，老板是否在客户下载流程之外保留人工归档访问权限？
+以下内容此前是待确认问题，现已确认：
+
+- Employees can edit original photo galleries at any time for delivery operations.
+- Employees can see the full client list.
+- Employees should only see the minimum client information needed for delivery.
+- Employee responsibility or assignment, if shown later, is an operational coordination label rather than a first-stage permission boundary.
+- After the 3-month window expires, original photos should be deleted from all product storage locations.
+- The normal product should not retain owner-only manual archive access to expired original photos.
+
+- 员工可以为了交付工作随时编辑底片相册。
+- 员工可以看到完整客户列表。
+- 员工只能看到交付工作所需的最少客户信息。
+- 如果后续显示员工负责人或相册分配关系，该关系是运营协作标签，不是第一阶段权限边界。
+- 3 个月期限结束后，底片应从产品内所有存储位置删除。
+- 正常产品流程中不应保留仅老板可用的过期底片人工归档访问权限。

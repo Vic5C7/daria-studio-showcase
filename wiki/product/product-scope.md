@@ -36,8 +36,11 @@ The current public repository remains suitable for product documentation and hig
 - Staff permissions are not configurable in the first product scope.
 - The studio owner also acts as the website administrator.
 - Employees can handle original photo upload and related client gallery delivery operations.
+- Employees can see the full client list with only the minimum client information needed for delivery.
+- Employees can edit original photo galleries at any time for delivery operations.
 - Employees cannot edit customer-facing website content.
 - Final retouched photos should follow the same 3-month download window and storage timing rules as original photos.
+- After the 3-month window expires, original photos should be deleted from all product storage locations.
 - Gallery set names, including studio shoot display set names, should be editable.
 - Logged-in client gallery features should be considered in the product design, but the near-term requirement is only basic login.
 
@@ -53,8 +56,11 @@ The current public repository remains suitable for product documentation and hig
 - 第一阶段暂不做可配置权限。
 - 工作室老板同时具备网站管理员身份。
 - 员工可以处理底片上传及相关客户相册交付操作。
+- 员工可以看到完整客户列表，但只能看到交付所需的最少客户信息。
+- 员工可以为了交付工作随时编辑底片相册。
 - 员工不可编辑客户可见的网站内容。
 - 最终精修图应与底片保持统一的 3 个月下载期和存储计时规则。
+- 3 个月期限结束后，底片应从产品内所有存储位置删除。
 - 展示集名称，包括棚拍展示集名称，应可自定义。
 - 登录客户相册功能需要纳入产品设计，但近期只要求实现基础登录。
 
@@ -247,13 +253,13 @@ In scope:
 范围内：
 
 - Use the staff workspace.
-- Manage assigned client galleries for photo delivery.
+- Manage client galleries for photo delivery.
 - Upload original photos for clients.
 - View client retouch selections and notes.
 - Upload final retouched photos.
 
 - 使用工作人员端。
-- 管理被分配的客户相册交付流程。
+- 管理客户相册交付流程。
 - 为客户上传底片。
 - 查看客户提交的精修选择和修图备注。
 - 上传最终精修图。
@@ -351,7 +357,9 @@ In scope:
 - Owner can manage package-related content that exists in the current high-fidelity prototype.
 - Owner can manage add-on groups and add-on items that exist in the current high-fidelity prototype.
 - Owner can manage bilingual customer-visible names, descriptions, details, and empty-state text.
-- Employee can upload original photos for assigned client galleries.
+- Employee can upload original photos for client galleries.
+- Employee can see the full client list with minimum delivery-needed client information.
+- Employee can edit original photo galleries at any time for delivery operations.
 - Employee can view client retouch selections and per-photo notes after submission.
 - Employee can upload final retouched photos.
 - Employee cannot edit customer-facing website content.
@@ -367,7 +375,9 @@ In scope:
 - 老板可以管理当前高保真原型中已有的套餐相关内容。
 - 老板可以管理当前高保真原型中已有的加购分组和加购项。
 - 老板可以管理客户可见名称、描述、详情和空状态文案的中英双语内容。
-- 员工可以为被分配的客户相册上传底片。
+- 员工可以为客户相册上传底片。
+- 员工可以看到完整客户列表，但只能看到交付所需的最少客户信息。
+- 员工可以为了交付工作随时编辑底片相册。
 - 员工可以在客户提交后查看精修选择和每张照片的修图备注。
 - 员工可以上传最终精修图。
 - 员工不可编辑客户可见的网站内容。
@@ -386,6 +396,7 @@ These features should be planned, but they do not need to be implemented in the 
 - Loss of free retouch selection rights after the 7-day window.
 - Original photo download availability for 3 months after upload.
 - Final retouched photo download availability for the same 3-month window as original photos.
+- Deletion of original photos from all product storage locations after the 3-month window expires.
 - Client retouch selection and per-photo note submission.
 - Retouch note limit of 500 characters.
 - Retouch notes supporting Simplified Chinese, Traditional Chinese, English, mixed text, and matching punctuation.
@@ -403,6 +414,7 @@ These features should be planned, but they do not need to be implemented in the 
 - 7 天过期后失去免费精修选择权。
 - 底片上传后 3 个月内可下载。
 - 最终精修图与底片保持同一套 3 个月下载期。
+- 3 个月期限结束后，底片从产品内所有存储位置删除。
 - 客户选择精修底片并填写每张照片的修图备注。
 - 修图备注不超过 500 字。
 - 修图备注支持简体、繁体、英文、混合文本和对应标点符号。
@@ -501,13 +513,19 @@ The following items were previously open questions and are now confirmed:
 - The staff workspace should be bilingual in Simplified Chinese and English.
 - The product should use the three-layer localization model described above.
 - Employees can handle original photo upload and related client gallery delivery operations.
+- Employees can see the full client list with minimum delivery-needed client information.
+- Employees can edit original photo galleries at any time for delivery operations.
 - Employees cannot edit customer-facing website content.
 - Final retouched photos use the same 3-month download and storage timing rule as original photos.
+- Original photos are deleted from all product storage locations after the 3-month window expires.
 - Client accounts are created through client self-registration.
 
 - 工作人员端应支持简体中文和英文双语。
 - 产品应使用上文所述的三层多语言模型。
 - 员工可以处理底片上传及相关客户相册交付操作。
+- 员工可以看到完整客户列表，但只能看到交付所需的最少客户信息。
+- 员工可以为了交付工作随时编辑底片相册。
 - 员工不可编辑客户可见的网站内容。
 - 最终精修图与底片使用相同的 3 个月下载和存储计时规则。
+- 3 个月期限结束后，底片从产品内所有存储位置删除。
 - 客户账号由客户自主注册创建。
