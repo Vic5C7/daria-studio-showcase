@@ -489,9 +489,9 @@ stateDiagram-v2
     SelectionOpen --> SelectionExpired: "7 days pass with no submission / 7天未提交"
     SelectionSubmitted --> Retouching: "Staff reviews notes / 工作人员查看备注"
     Retouching --> FinalsUploaded: "Staff uploads finals / 工作人员上传最终精修"
-    FinalsUploaded --> Completed: "Client downloads files / 客户下载文件"
+    FinalsUploaded --> FinalsUploaded: "Client downloads files / 客户下载文件"
     SelectionExpired --> OriginalsDownloadOnly: "Free retouch right lost / 失去免费精修权利"
-    Completed --> ExpiredDeleted: "3-month window expires / 3个月期限结束"
+    FinalsUploaded --> ExpiredDeleted: "3-month window expires / 3个月期限结束"
     OriginalsDownloadOnly --> ExpiredDeleted: "3-month window expires / 3个月期限结束"
     ExpiredDeleted --> [*]
 ```

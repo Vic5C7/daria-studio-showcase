@@ -443,12 +443,12 @@ Relationships:
 - Belongs to a service area.
 - Can have packages.
 - Can have add-on groups.
-- Graduation service can relate to schools and scene types.
+- Graduation service can relate to schools and reusable scene types.
 
 - 属于一个服务地区。
 - 可以拥有套餐。
 - 可以拥有加购分组。
-- 毕业照服务可以关联学校和场景类型。
+- 毕业照服务可以关联学校和可复用场景类型。
 
 ### School / 学校
 
@@ -470,9 +470,9 @@ Relationships:
 
 关系：
 
-- Has 0 to many scene types.
+- Has 0 to many reusable scene type relationships.
 
-- 拥有 0 到多个场景类型。
+- 拥有 0 到多个可复用场景类型关系。
 
 ### Scene Type / 场景类型
 
@@ -498,10 +498,14 @@ Relationships:
 
 关系：
 
-- Belongs to one or more schools depending on later design.
+- Reusable across schools.
+- Can be linked to one or more schools.
+- Owner can edit the scene type's specific information.
 - Has 0 to many packages, or uses a fixed package.
 
-- 根据后续设计，可属于一个或多个学校。
+- 可在多个学校之间复用。
+- 可以关联一个或多个学校。
+- 老板可以编辑场景类型的具体信息。
 - 拥有 0 到多个套餐，或使用固定套餐。
 
 ### Package / 套餐
@@ -515,7 +519,7 @@ Core data:
 - Localized detail lines.
 - Price amount.
 - Currency: AUD.
-- Included original photo count if applicable.
+- Included original photo count as a numeric value if applicable.
 - Included retouched photo count if applicable.
 - Sort order.
 - Availability status.
@@ -525,7 +529,7 @@ Core data:
 - 本地化详情行。
 - 价格金额。
 - 货币：AUD。
-- 如适用，包含底片数量。
+- 如适用，以数字记录包含底片数量。
 - 如适用，包含精修数量。
 - 排序。
 - 可用状态。
@@ -545,9 +549,11 @@ Rules:
 规则：
 
 - Price is shared across languages.
+- Included original photo count is numeric when applicable.
 - Included retouched photo count drives client selection limit later.
 
 - 价格跨语言共享。
+- 如适用，包含底片数量使用数字字段。
 - 包含精修数量后续用于驱动客户选片上限。
 
 ### Add-on Group / 加购分组
@@ -588,7 +594,7 @@ Core data:
 - Price amount.
 - Currency: AUD.
 - Preview image reference.
-- Additional retouch count if applicable.
+- Optional additional retouch count if automatic quota changes are needed.
 - Sort order.
 - Availability status.
 
@@ -598,7 +604,7 @@ Core data:
 - 价格金额。
 - 货币：AUD。
 - 预览图引用。
-- 如适用，额外精修数量。
+- 如需自动改变精修额度，可选记录额外精修数量。
 - 排序。
 - 可用状态。
 
@@ -678,7 +684,7 @@ Core data:
 
 - Client gallery ID.
 - Client account relationship.
-- Gallery title or identifier.
+- Internal gallery identifier.
 - Related package or retouch quota.
 - Original upload timestamp.
 - Retouch selection deadline.
@@ -687,7 +693,7 @@ Core data:
 
 - 客户相册 ID。
 - 关联客户账号。
-- 相册标题或识别信息。
+- 内部相册识别信息。
 - 关联套餐或精修数量。
 - 底片上传时间。
 - 精修选择截止时间。
@@ -716,11 +722,13 @@ Rules:
 
 - Employee can access galleries for delivery work.
 - Client can only access own galleries.
+- Client gallery title does not need to be displayed to the client.
 - Original upload starts the 7-day and 3-month timers.
 - 3-month expiration deletes original photos, final retouched photos, and generated packages.
 
 - 员工可以为了交付工作访问相册。
 - 客户只能访问自己的相册。
+- 客户相册不需要向客户显示标题。
 - 底片上传开始计算 7 天和 3 个月计时。
 - 3 个月过期后删除底片、最终精修图和已生成压缩包。
 
@@ -750,11 +758,11 @@ Relationships:
 
 - Belongs to one client gallery.
 - Can be selected in a retouch selection.
-- Can map to one final retouched photo if selected and completed.
+- Can map to one final retouched photo if selected and a final retouched photo is uploaded.
 
 - 属于一个客户相册。
 - 可以被精修选择引用。
-- 如果被选择并完成交付，可以映射到一张最终精修图。
+- 如果被选择并上传了最终精修图，可以映射到一张最终精修图。
 
 Rules:
 
@@ -963,7 +971,6 @@ States:
 - Retouch selection expired.
 - Retouching.
 - Finals uploaded.
-- Completed.
 - Expired and deleted.
 
 - 暂无相册。
@@ -973,7 +980,6 @@ States:
 - 精修选择已过期。
 - 精修中。
 - 最终精修图已上传。
-- 已完成。
 - 已过期并删除。
 
 Rules:
@@ -1038,16 +1044,22 @@ Rules:
 | 精修选择 | 无 | 自己草稿/提交 | 查看已提交 | 查看已提交 |
 | 最终精修图 | 无 | 自己相册有效期内 | 为交付上传/管理 | 管理 |
 
-## Open Questions / 待确认问题
+## Resolved Decisions / 已确认补充决策
 
-- Should scene types be reusable across schools, or should each school own separate scene type records?
-- Should package included original photo count be modeled as a strict number, a descriptive text line, or both?
-- Should add-ons that include extra retouched photos always store a numeric retouch count?
-- Should client gallery title be manually editable, automatically generated, or both?
-- Should final retouched photos require a one-to-one match with every selected original before the gallery can be marked completed?
+The following data-model items were previously open and are now confirmed:
 
-- 场景类型是否应在学校之间复用，还是每个学校拥有独立场景类型记录？
-- 套餐包含底片数量应建模为严格数字、描述文本，还是两者都需要？
-- 包含额外精修数量的加购项是否必须存储数字型精修数量？
-- 客户相册标题应允许手动编辑、自动生成，还是两者都支持？
-- 最终精修图是否必须与每张已选底片一一对应后，才能将相册标记为完成？
+以下内容此前待确认，现已确认：
+
+- Scene type is a reusable general entity across schools, and the owner can edit its specific information.
+- Package included original photo count should be modeled as a numeric value when applicable.
+- Add-ons do not always need a numeric retouch count.
+- Client gallery title does not need to be displayed to the client; an internal identifier is enough for the model.
+- Client gallery does not need a completed status.
+- Final retouched photos only represent delivered files; they do not create an additional gallery completion state.
+
+- 场景类型是在学校之间复用的通用实体，老板可以编辑其具体信息。
+- 如适用，套餐包含底片数量应建模为数字值。
+- 加购项不强制始终记录数字型精修数量。
+- 客户相册不需要向客户显示标题；模型中保留内部识别信息即可。
+- 客户相册不需要“已完成”状态。
+- 最终精修图只表示已交付文件，不产生额外的相册完成状态。

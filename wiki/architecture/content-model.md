@@ -467,11 +467,11 @@ Rules:
 规则：
 
 - School names should be bilingual.
-- Schools can be related to scene types.
+- Schools can be related to reusable scene types.
 - Owner can manage schools.
 
 - 学校名称应双语。
-- 学校可关联场景类型。
+- 学校可关联可复用的场景类型。
 - 老板可以管理学校。
 
 ### Scene Type / 场景类型
@@ -507,10 +507,14 @@ Rules:
 
 - Scene type name and description should be bilingual.
 - Preview image is shared across languages.
+- Scene type is a reusable general content type.
+- Owner can edit the specific information for each scene type.
 - Scene type can have one or more packages, unless it uses a fixed package.
 
 - 场景类型名称和说明应双语。
 - 预览图跨语言共享。
+- 场景类型是可复用的通用内容类型。
+- 老板可以编辑每个场景类型的具体信息。
 - 场景类型可以有一个或多个套餐，除非使用固定套餐。
 
 ### Package / 套餐
@@ -530,7 +534,7 @@ Fields:
 - Related service type or scene type.
 - Price in AUD.
 - Package details.
-- Included original photo count if applicable.
+- Included original photo count as a numeric value if applicable.
 - Included retouched photo count if applicable.
 - Sort order.
 - Availability status.
@@ -539,7 +543,7 @@ Fields:
 - 关联服务类型或场景类型。
 - AUD 价格。
 - 套餐详情。
-- 如适用，包含底片数量。
+- 如适用，以数字记录包含底片数量。
 - 如适用，包含精修数量。
 - 排序。
 - 可用状态。
@@ -550,12 +554,14 @@ Rules:
 
 - Package name and details should be bilingual.
 - Price is shared across languages.
+- Included original photo count should be modeled as a numeric shared field when applicable.
 - Included retouch count should be modeled as a shared rule so client selection limits can be calculated later.
 - Owner can manage packages.
 - Employee cannot manage packages.
 
 - 套餐名称和详情应双语。
 - 价格跨语言共享。
+- 如适用，套餐包含底片数量应建模为数字型共享字段。
 - 套餐包含精修数量应建模为共享规则，方便后续计算客户选片上限。
 - 老板可以管理套餐。
 - 员工不能管理套餐。
@@ -613,7 +619,7 @@ Fields:
 - Price in AUD.
 - Related add-on group.
 - Preview image if applicable.
-- Additional retouched photo count if applicable.
+- Optional additional retouched photo count if automatic quota changes are needed.
 - Sort order.
 - Availability status.
 
@@ -622,7 +628,7 @@ Fields:
 - AUD 价格。
 - 所属加购分组。
 - 如适用，预览图。
-- 如适用，额外精修数量。
+- 如需自动改变精修额度，可选记录额外精修数量。
 - 排序。
 - 可用状态。
 
@@ -634,13 +640,15 @@ Rules:
 - Price is shared across languages.
 - Preview image is shared across languages.
 - Add-ons can affect the estimated total.
-- Add-ons can affect included retouch count if explicitly modeled.
+- Add-ons do not always need a numeric retouch count.
+- Add-ons can affect included retouch count only if explicitly modeled.
 
 - 加购项名称和说明应双语。
 - 价格跨语言共享。
 - 预览图跨语言共享。
 - 加购项可以影响估算总价。
-- 如果明确建模，加购项可以影响包含精修数量。
+- 加购项不强制始终记录数字型精修数量。
+- 只有在明确建模时，加购项才影响包含精修数量。
 
 ## Inquiry Summary Content / 咨询信息汇总内容
 
@@ -744,7 +752,7 @@ Fields:
 字段：
 
 - Client account relationship.
-- Gallery title or identifier.
+- Internal gallery identifier.
 - Package or retouch quota relationship.
 - Original photo upload timestamp.
 - Retouch selection deadline.
@@ -752,7 +760,7 @@ Fields:
 - Delivery status.
 
 - 关联客户账号。
-- 相册标题或识别信息。
+- 内部相册识别信息。
 - 套餐或精修数量关系。
 - 底片上传时间。
 - 精修选择截止时间。
@@ -768,6 +776,7 @@ Rules:
 - Employees can edit original photo galleries at any time.
 - Owner can view and manage all client galleries.
 - Client can only view own galleries.
+- Client gallery title does not need to be displayed to the client.
 - 7-day retouch selection countdown starts when original photos are uploaded.
 - 3-month download and deletion countdown starts when original photos are uploaded.
 
@@ -776,6 +785,7 @@ Rules:
 - 员工可以随时编辑底片相册。
 - 老板可以查看和管理全部客户相册。
 - 客户只能查看自己的相册。
+- 客户相册不需要向客户显示标题。
 - 7 天精修选择倒计时从底片上传时开始。
 - 3 个月下载和删除倒计时从底片上传时开始。
 
@@ -997,7 +1007,6 @@ Client gallery statuses:
 - Retouch selection expired.
 - Retouching.
 - Finals uploaded.
-- Completed.
 - Expired and deleted.
 
 - 暂无相册。
@@ -1007,7 +1016,6 @@ Client gallery statuses:
 - 精修选择已过期。
 - 精修中。
 - 最终精修图已上传。
-- 已完成。
 - 已过期并删除。
 
 ## Open Questions / 待确认问题
@@ -1015,11 +1023,27 @@ Client gallery statuses:
 - Should owner-managed public content use a draft-review-publish workflow, or is save-and-publish enough?
 - Should hidden content remain visible in staff previews?
 - Should deleted public content be recoverable by the owner, or treated as final deletion?
-- Should client gallery titles be owner/staff editable, generated automatically, or both?
 - Should final retouched photos have their own independent status, or only inherit the client gallery status?
 
 - 老板管理的公开内容是否需要草稿-复核-发布流程，还是保存并发布即可？
 - 隐藏内容是否仍可在工作人员预览中查看？
 - 已删除公开内容是否允许老板恢复，还是视为最终删除？
-- 客户相册标题应由老板/员工编辑、自动生成，还是两者都支持？
 - 最终精修图是否需要独立状态，还是只继承客户相册状态？
+
+## Resolved Decisions / 已确认补充决策
+
+The following content-model items were previously open and are now confirmed:
+
+以下内容此前待确认，现已确认：
+
+- Scene type is a reusable general content type, and the owner can edit its specific information.
+- Package included original photo count should be modeled as a numeric value when applicable.
+- Add-ons do not always need a numeric retouch count.
+- Client gallery title does not need to be displayed to the client.
+- Client gallery does not need a completed status.
+
+- 场景类型是可复用的通用内容类型，老板可以编辑其具体信息。
+- 如适用，套餐包含底片数量应建模为数字值。
+- 加购项不强制始终记录数字型精修数量。
+- 客户相册不需要向客户显示标题。
+- 客户相册不需要“已完成”状态。
