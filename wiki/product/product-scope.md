@@ -25,26 +25,60 @@ The current public repository remains suitable for product documentation and hig
 ## Confirmed Product Decisions / 已确认产品决策
 
 - The customer-facing website should remain bilingual in Simplified Chinese and English.
+- The staff workspace interface should also be bilingual in Simplified Chinese and English.
 - Customer-visible editable content should support both Chinese and English fields.
+- Multilingual implementation should use a three-layer model: fixed interface copy, editable business content, and localized formatting or display rules.
 - User registration and login should use email.
+- Client accounts should be created through client self-registration.
 - Pricing pages show estimated pricing and copied inquiry information only.
 - Online booking, online payment, and payment workflow are out of scope for now.
 - Staff roles are fixed as owner and employee.
 - Staff permissions are not configurable in the first product scope.
 - The studio owner also acts as the website administrator.
+- Employees can handle original photo upload and related client gallery delivery operations.
+- Employees cannot edit customer-facing website content.
+- Final retouched photos should follow the same 3-month download window and storage timing rules as original photos.
 - Gallery set names, including studio shoot display set names, should be editable.
 - Logged-in client gallery features should be considered in the product design, but the near-term requirement is only basic login.
 
 - 客户端网站始终保留简体中文和英文双语。
+- 工作人员端界面本身也应支持简体中文和英文双语。
 - 客户可见的可编辑内容应支持中文和英文字段。
+- 多语言实现应使用三层模型：固定界面文案、可编辑业务内容、本地化格式或展示规则。
 - 用户注册和登录使用邮箱。
+- 客户账号应由客户自主注册创建。
 - 价格页目前只展示估价和可复制的咨询信息。
 - 暂不做在线预约、在线支付和支付流程。
 - 工作人员角色固定为老板和员工。
 - 第一阶段暂不做可配置权限。
 - 工作室老板同时具备网站管理员身份。
+- 员工可以处理底片上传及相关客户相册交付操作。
+- 员工不可编辑客户可见的网站内容。
+- 最终精修图应与底片保持统一的 3 个月下载期和存储计时规则。
 - 展示集名称，包括棚拍展示集名称，应可自定义。
 - 登录客户相册功能需要纳入产品设计，但近期只要求实现基础登录。
+
+## Localization Model / 多语言模型
+
+The product should not duplicate pages for different languages. It should use one page and component structure with language-specific content.
+
+产品不应为不同语言重复制作多套页面，而应使用同一套页面和组件结构，搭配不同语言内容。
+
+The bilingual model has three layers:
+
+双语模型分为三层：
+
+- Fixed interface copy: navigation, buttons, labels, validation messages, empty states, helper text, and system prompts.
+- Editable business content: service areas, service types, gallery category names, studio shoot display set names, package names, package details, add-on names, add-on descriptions, and customer-facing page copy.
+- Localized formatting and display rules: dates, deadlines, currencies, counts, download-window copy, and other language-specific presentation details.
+
+- 固定界面文案：导航、按钮、标签、校验提示、空状态、辅助说明和系统提示。
+- 可编辑业务内容：服务地区、服务类型、作品分类名称、棚拍展示集名称、套餐名称、套餐详情、加购项名称、加购项说明和客户可见页面文案。
+- 本地化格式和展示规则：日期、截止时间、货币、数量、下载期限文案，以及其他与语言相关的展示细节。
+
+For customer-visible editable content, the staff workspace should provide Chinese and English fields. Missing translations should be visible to staff before publishing.
+
+对于客户可见的可编辑内容，工作人员端应提供中文和英文字段。发布前，缺失翻译应对工作人员可见。
 
 ## Primary Roles / 主要角色
 
@@ -94,22 +128,22 @@ Future scope:
 
 ### Employee / 员工
 
-An employee is a fixed staff role. Detailed permission differences can be defined later, but permissions are not configurable in the first product scope.
+An employee is a fixed staff role. Employees can handle original photo upload and related client gallery delivery operations, but they cannot edit customer-facing website content. Permissions are not configurable in the first product scope.
 
-员工是固定工作人员角色。具体权限差异可后续定义，但第一阶段不做权限配置。
+员工是固定工作人员角色。员工可以处理底片上传及相关客户相册交付操作，但不可编辑客户可见的网站内容。第一阶段不做权限配置。
 
-Likely scope:
+In scope:
 
-可能范围：
+范围内：
 
 - Use the staff workspace.
-- Manage assigned client galleries.
+- Manage assigned client galleries for photo delivery.
 - Upload original photos for clients.
 - View client retouch selections and notes.
 - Upload final retouched photos.
 
 - 使用工作人员端。
-- 管理被分配的客户相册。
+- 管理被分配的客户相册交付流程。
 - 为客户上传底片。
 - 查看客户提交的精修选择和修图备注。
 - 上传最终精修图。
@@ -188,9 +222,9 @@ In scope:
 
 ### Staff Workspace / 工作人员端
 
-The first staff-facing scope should focus on content management needed by the customer-facing MVP.
+The first staff-facing scope should cover owner-managed website content and employee-managed client gallery delivery operations.
 
-第一阶段工作人员端应优先覆盖客户端 MVP 所需的内容管理能力。
+第一阶段工作人员端应覆盖老板管理的网站内容，以及员工处理的客户相册交付操作。
 
 In scope:
 
@@ -198,6 +232,7 @@ In scope:
 
 - Owner and employee login.
 - Fixed owner and employee roles.
+- Bilingual staff workspace interface in Simplified Chinese and English.
 - Owner can manage gallery categories.
 - Owner can manage normal gallery category images.
 - Owner can manage studio shoot display sets and their images.
@@ -206,9 +241,14 @@ In scope:
 - Owner can manage package-related content that exists in the current high-fidelity prototype.
 - Owner can manage add-on groups and add-on items that exist in the current high-fidelity prototype.
 - Owner can manage bilingual customer-visible names, descriptions, details, and empty-state text.
+- Employee can upload original photos for assigned client galleries.
+- Employee can view client retouch selections and per-photo notes after submission.
+- Employee can upload final retouched photos.
+- Employee cannot edit customer-facing website content.
 
 - 老板和员工登录。
 - 固定老板和员工角色。
+- 工作人员端界面支持简体中文和英文双语。
 - 老板可以管理作品分类。
 - 老板可以管理普通作品分类图片。
 - 老板可以管理棚拍展示集及展示集图片。
@@ -217,6 +257,10 @@ In scope:
 - 老板可以管理当前高保真原型中已有的套餐相关内容。
 - 老板可以管理当前高保真原型中已有的加购分组和加购项。
 - 老板可以管理客户可见名称、描述、详情和空状态文案的中英双语内容。
+- 员工可以为被分配的客户相册上传底片。
+- 员工可以在客户提交后查看精修选择和每张照片的修图备注。
+- 员工可以上传最终精修图。
+- 员工不可编辑客户可见的网站内容。
 
 ## Later Scope / 后续范围
 
@@ -231,6 +275,7 @@ These features should be planned, but they do not need to be implemented in the 
 - 7-day free retouch selection window after original photos are uploaded.
 - Loss of free retouch selection rights after the 7-day window.
 - Original photo download availability for 3 months after upload.
+- Final retouched photo download availability for the same 3-month window as original photos.
 - Client retouch selection and per-photo note submission.
 - Retouch note limit of 500 characters.
 - Retouch notes supporting Simplified Chinese, Traditional Chinese, English, mixed text, and matching punctuation.
@@ -247,6 +292,7 @@ These features should be planned, but they do not need to be implemented in the 
 - 底片上传后 7 天免费精修选择期。
 - 7 天过期后失去免费精修选择权。
 - 底片上传后 3 个月内可下载。
+- 最终精修图与底片保持同一套 3 个月下载期。
 - 客户选择精修底片并填写每张照片的修图备注。
 - 修图备注不超过 500 字。
 - 修图备注支持简体、繁体、英文、混合文本和对应标点符号。
@@ -263,6 +309,7 @@ These features should be planned, but they do not need to be implemented in the 
 - Deposit collection.
 - Calendar scheduling.
 - Configurable staff permission system.
+- Employee editing of customer-facing website content.
 - Client retouch revision requests.
 - Unlocking or editing submitted retouch selections.
 - Public implementation of production authentication, database, backend APIs, or file storage in this repository.
@@ -273,6 +320,7 @@ These features should be planned, but they do not need to be implemented in the 
 - 定金收取。
 - 日历排期。
 - 可配置员工权限系统。
+- 员工编辑客户可见网站内容。
 - 客户精修返修请求。
 - 解锁或修改已提交的精修选择。
 - 在本公开仓库中实现生产级登录认证、数据库、后端 API 或文件存储。
@@ -334,16 +382,22 @@ The product should eventually model the following editable content instead of ha
 - 下载压缩包。
 - 过期时间。
 
-## Open Questions / 待确认问题
+## Resolved Decisions / 已确认补充决策
 
-- Should the staff workspace interface itself be bilingual, or can it be Chinese-only while customer-facing content stays bilingual?
-- Which actions should employees have by default if permissions are fixed?
-- Should employees be allowed to edit customer-facing website content, or should only the owner do that?
-- Should final retouched photos have the same 3-month download window as original photos, or a different storage rule?
-- Should client accounts be created by clients directly, by staff invitation, or both?
+The following items were previously open questions and are now confirmed:
 
-- 工作人员端界面本身是否需要中英双语，还是只需中文，客户可见内容保持双语？
-- 如果权限固定，员工默认可以执行哪些操作？
-- 员工是否允许编辑客户可见的网站内容，还是只有老板可以编辑？
-- 最终精修图是否与底片一样有 3 个月下载期，还是使用不同存储规则？
-- 客户账号应由客户自主注册、工作人员邀请创建，还是两者都支持？
+以下内容此前是待确认问题，现已确认：
+
+- The staff workspace should be bilingual in Simplified Chinese and English.
+- The product should use the three-layer localization model described above.
+- Employees can handle original photo upload and related client gallery delivery operations.
+- Employees cannot edit customer-facing website content.
+- Final retouched photos use the same 3-month download and storage timing rule as original photos.
+- Client accounts are created through client self-registration.
+
+- 工作人员端应支持简体中文和英文双语。
+- 产品应使用上文所述的三层多语言模型。
+- 员工可以处理底片上传及相关客户相册交付操作。
+- 员工不可编辑客户可见的网站内容。
+- 最终精修图与底片使用相同的 3 个月下载和存储计时规则。
+- 客户账号由客户自主注册创建。
