@@ -471,22 +471,26 @@ h1 {
   display: grid;
   align-items: center;
   justify-items: center;
-  padding: clamp(18px, 4vw, 52px);
+  padding: clamp(20px, 5vw, 64px);
   background: rgba(30, 28, 26, 0.24);
   backdrop-filter: blur(6px);
 }
 
 .studio-album-modal {
-  width: min(1100px, 100%);
-  max-height: min(82vh, 820px);
+  display: flex;
+  flex-direction: column;
+  width: min(60vw, 1240px);
+  min-width: min(920px, calc(100vw - 40px));
+  min-height: 60vh;
+  max-height: min(86vh, 840px);
   overflow: auto;
-  padding: clamp(18px, 3vw, 30px);
+  padding: clamp(22px, 3vw, 36px);
   border: 1px solid rgba(255, 255, 255, 0.54);
-  border-radius: 8px;
+  border-radius: 28px;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(239, 231, 218, 0.38)),
     rgba(248, 246, 241, 0.44);
-  box-shadow: 0 28px 90px rgba(30, 28, 26, 0.28);
+  box-shadow: 0 34px 110px rgba(30, 28, 26, 0.3);
   backdrop-filter: blur(28px) saturate(1.2);
 }
 
@@ -540,14 +544,16 @@ h1 {
 .studio-album-modal-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  width: 100%;
+  margin-block: auto;
+  gap: 14px;
 }
 
 .studio-album-modal-photo {
   overflow: hidden;
   margin: 0;
   aspect-ratio: 4 / 5;
-  border-radius: 8px;
+  border-radius: 18px;
   background: #dfd9cf;
   box-shadow: 0 14px 34px rgba(30, 28, 26, 0.12);
 }
