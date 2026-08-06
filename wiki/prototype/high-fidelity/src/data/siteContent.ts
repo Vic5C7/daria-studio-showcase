@@ -1037,14 +1037,10 @@ export const galleryServiceTypes: GalleryServiceType[] = [
   }
 ];
 
-const galleryImageSources = Array.from({ length: 9 }, (_, index) => {
-  const paddedIndex = String(index + 1).padStart(2, "0");
-
-  return {
-    src: `images/models/model-${paddedIndex}.jpg`,
-    index: index + 1
-  };
-});
+const galleryImageSources = Array.from({ length: 9 }, (_, index) => ({
+  src: optionPreviewImage.src,
+  index: index + 1
+}));
 
 function createGalleryImagesForService(
   serviceName: LocalizedText,

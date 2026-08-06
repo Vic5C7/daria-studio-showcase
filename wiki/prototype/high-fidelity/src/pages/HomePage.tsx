@@ -205,7 +205,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
                     {studioAlbum.images.slice(1, 4).map((image, stackIndex) => (
                       <span
                         className={`studio-album-stack studio-album-stack-${stackIndex + 1}`}
-                        key={`stack-${image.src}`}
+                        key={`${studioAlbum.id}-stack-${stackIndex}`}
                         aria-hidden="true"
                       >
                         <img src={image.src} alt="" loading="lazy" />
@@ -287,8 +287,11 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
             </div>
 
             <div className="studio-album-modal-grid">
-              {expandedStudioAlbum.images.map((image) => (
-                <figure className="studio-album-modal-photo" key={image.src}>
+              {expandedStudioAlbum.images.map((image, imageIndex) => (
+                <figure
+                  className="studio-album-modal-photo"
+                  key={`${expandedStudioAlbum.id}-photo-${imageIndex}`}
+                >
                   <img src={image.src} alt={image.alt[language]} loading="lazy" />
                 </figure>
               ))}
