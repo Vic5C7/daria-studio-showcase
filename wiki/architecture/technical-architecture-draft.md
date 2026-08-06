@@ -27,6 +27,7 @@ Confirmed:
 - Client photo delivery is part of the later product design and must be accounted for architecturally.
 - Production deployment should use Tencent Cloud. The exact Tencent Cloud server product is not selected yet.
 - The frontend stack is confirmed as Next.js + React with light TypeScript.
+- The backend stack is confirmed as Python FastAPI using a front-end/back-end separated architecture.
 
 - 公开展示仓库继续用于 wiki、原型、公开样片素材和 GitHub Pages 部署。
 - 真实应用代码应放在私有仓库 `daria-studio-platform`。
@@ -39,13 +40,14 @@ Confirmed:
 - 客户照片交付属于后续产品设计，但架构阶段必须预留。
 - 生产部署使用腾讯云。具体使用哪一种腾讯云服务器产品暂未确定。
 - 前端技术栈已确认为 Next.js + React + 轻量 TypeScript。
+- 后端技术栈已确认为 Python FastAPI，并采用前后端分离架构。
 
 Recommended, but still replaceable:
 
 推荐方向，但仍可替换：
 
 - Next.js + React frontend with light TypeScript for public pages, client account pages, and staff workspace.
-- Python FastAPI backend if the project chooses front-end/back-end separation; Next.js route handlers remain a simpler alternative for a smaller first version.
+- Python FastAPI backend for a front-end/back-end separated architecture.
 - Tencent Cloud as the production cloud provider.
 - Managed PostgreSQL for relational business data.
 - Email authentication with server-side session validation.
@@ -53,7 +55,7 @@ Recommended, but still replaceable:
 - Scheduled background jobs for expiration, cleanup, and download package maintenance.
 
 - 使用 Next.js + React + 轻量 TypeScript 前端承载公开页面、客户账号页面和工作人员端。
-- 如果项目选择前后端分离，后端优先考虑 Python FastAPI；如果第一版希望更轻，则 Next.js 路由处理仍是备选。
+- 使用 Python FastAPI 后端，并采用前后端分离架构。
 - 生产云服务商使用腾讯云。
 - 使用托管 PostgreSQL 存储关系型业务数据。
 - 使用支持邮箱认证和服务端会话校验的认证方案。
@@ -106,23 +108,23 @@ flowchart LR
     Jobs --> Storage
 ```
 
-Primary route groups:
+Primary frontend route groups:
 
-主要路由分组：
+主要前端路由分组：
 
 | Route Group | Purpose |
 | --- | --- |
 | `/` | Customer-facing public website |
 | `/account` | Logged-in client account and future photo delivery |
 | `/staff` | Staff workspace for employee and owner |
-| `/api` | Server-side application APIs or route handlers |
+| `/api/*` | Frontend API proxy or typed client boundary if needed |
 
 | 路由分组 | 用途 |
 | --- | --- |
 | `/` | 客户可见公开网站 |
 | `/account` | 登录客户账号区和后续照片交付 |
 | `/staff` | 员工和老板使用的工作人员端 |
-| `/api` | 服务端应用 API 或路由处理 |
+| `/api/*` | 如有需要，用作前端 API 代理或类型化客户端边界 |
 
 ## Repository Boundary / 仓库边界
 
@@ -149,7 +151,7 @@ Primary route groups:
 - Production customer-facing website.
 - Production client account area.
 - Production staff workspace.
-- Backend APIs or server route handlers.
+- Python FastAPI backend APIs.
 - Database schema and migrations.
 - Authentication integration.
 - Private file storage integration.
@@ -158,7 +160,7 @@ Primary route groups:
 - 正式客户端网站。
 - 正式客户账号区。
 - 正式工作人员端。
-- 后端 API 或服务端路由处理。
+- Python FastAPI 后端 API。
 - 数据库结构和迁移。
 - 认证集成。
 - 私有文件存储集成。
@@ -173,9 +175,9 @@ Recommended first implementation stack:
 | Layer | Recommended Direction | Reason |
 | --- | --- | --- |
 | Frontend | Next.js + React with light TypeScript | Confirmed direction for public pages, client account pages, and staff workspace |
-| Backend | Python FastAPI if front-end/back-end separation is selected; Next.js route handlers remain a simpler alternative | Python is strong for APIs, file processing, zip generation, and scheduled jobs |
+| Backend | Python FastAPI | Confirmed direction for APIs, file processing, zip generation, and scheduled jobs |
 | Database | TencentDB for PostgreSQL, TDSQL-C for PostgreSQL, or another managed PostgreSQL option | Fits relational content, users, roles, galleries, selections, and audit records |
-| ORM or query layer | SQLAlchemy/SQLModel for Python backend, or Prisma/Drizzle if using a TypeScript backend | Should follow the final backend choice |
+| ORM or query layer | SQLAlchemy or SQLModel | Fits the confirmed Python backend direction |
 | Auth | Email auth with server-side session validation | Supports self-registration clients and staff login; implementation approach remains a decision |
 | Object storage | Tencent Cloud COS or another private S3-compatible storage layer | Supports originals, finals, generated zip packages, signed URLs, and deletion jobs |
 | Background jobs | Backend scheduled job, Tencent Cloud SCF timer trigger, or worker queue | Needed for 7-day status updates, 3-month deletion, and zip generation cleanup |
@@ -185,18 +187,64 @@ Recommended first implementation stack:
 | 层级 | 推荐方向 | 原因 |
 | --- | --- | --- |
 | 前端 | Next.js + React + 轻量 TypeScript | 已确认用于公开页面、客户账号页和工作人员端 |
-| 后端 | 如果选择前后端分离，使用 Python FastAPI；Next.js 路由处理作为更轻量的备选 | Python 适合 API、文件处理、压缩包生成和定时任务 |
+| 后端 | Python FastAPI | 已确认用于 API、文件处理、压缩包生成和定时任务 |
 | 数据库 | TencentDB for PostgreSQL、TDSQL-C for PostgreSQL 或其他托管 PostgreSQL | 适合内容、用户、角色、相册、选片和审计等关系型数据 |
-| ORM 或查询层 | Python 后端用 SQLAlchemy/SQLModel；TypeScript 后端用 Prisma/Drizzle | 应跟随最终后端选择 |
+| ORM 或查询层 | SQLAlchemy 或 SQLModel | 符合已确认的 Python 后端方向 |
 | 认证 | 支持服务端会话校验的邮箱认证 | 支持客户自主注册和工作人员登录；具体实现方式仍需决定 |
 | 对象存储 | 腾讯云 COS 或其他私有 S3 兼容存储 | 支持底片、最终图、压缩包、临时签名链接和删除任务 |
 | 后台任务 | 后端定时任务、腾讯云 SCF 定时触发或 worker 队列 | 用于 7 天状态更新、3 个月删除和压缩包清理 |
 | 部署 / 计算 | 腾讯云；具体服务器类型待定，例如 Lighthouse、CVM、容器服务或 Serverless | 需要匹配后端运行时、后台任务、存储和维护需求 |
 | 测试 | 单元、集成、端到端和权限测试 | 权限和文件访问是核心风险点 |
 
-With Tencent Cloud confirmed as the deployment direction, the most practical MVP candidate is to keep compute, database, object storage, and scheduled jobs inside Tencent Cloud where possible. The exact server product should be selected after confirming traffic expectations, budget, maintenance preference, and whether the backend will be Python FastAPI or a lighter full-stack route-handler model.
+With Tencent Cloud and Python FastAPI confirmed, the most practical MVP candidate is to keep compute, database, object storage, and scheduled jobs inside Tencent Cloud where possible. The exact server product should be selected after confirming traffic expectations, budget, maintenance preference, and how the FastAPI service, frontend build, and background jobs will be deployed.
 
-在已经确认腾讯云作为部署方向后，第一版 MVP 最实际的候选方案，是尽量让计算、数据库、对象存储和定时任务都留在腾讯云体系内。具体服务器产品应在确认访问量预期、预算、维护偏好，以及后端是否采用 Python FastAPI 后再决定。
+在已经确认腾讯云和 Python FastAPI 后端方向后，第一版 MVP 最实际的候选方案，是尽量让计算、数据库、对象存储和定时任务都留在腾讯云体系内。具体服务器产品应在确认访问量预期、预算、维护偏好，以及 FastAPI 服务、前端构建产物和后台任务如何部署后再决定。
+
+## Front-end / Back-end Separation Boundary / 前后端分离边界
+
+The confirmed implementation direction separates the frontend application from the backend API service.
+
+已确认的实现方向是前端应用与后端 API 服务分离。
+
+Frontend responsibilities:
+
+前端职责：
+
+- Render the public website, client account area, and staff workspace.
+- Manage page-level interaction state, such as pricing selections and active language.
+- Display server-provided gallery, pricing, account, and delivery data.
+- Show live countdowns based on server timestamps.
+- Call FastAPI endpoints for authenticated data and mutations.
+- Never make final permission or expiry decisions by itself.
+
+- 渲染公开网站、客户账号区和工作人员端。
+- 管理页面级交互状态，例如价格选择和当前语言。
+- 展示服务端返回的作品、价格、账号和交付数据。
+- 根据服务端时间戳显示实时倒计时。
+- 调用 FastAPI 接口获取认证数据并执行写操作。
+- 不独自做最终权限或过期判断。
+
+Backend responsibilities:
+
+后端职责：
+
+- Own business rules, permission checks, account boundaries, and lifecycle decisions.
+- Serve resource-oriented APIs to the frontend.
+- Validate pricing content mutations, gallery mutations, file limits, retouch quotas, and note length.
+- Manage database reads and writes.
+- Issue scoped upload and download access for private files.
+- Generate or coordinate zip packages.
+- Run or coordinate scheduled expiry and deletion jobs.
+- Record audit events for sensitive staff and file operations.
+
+- 负责业务规则、权限校验、账号边界和生命周期判断。
+- 向前端提供面向资源的 API。
+- 校验价格内容修改、相册修改、文件限制、精修数量和备注长度。
+- 管理数据库读写。
+- 为私有文件签发受限上传和下载访问。
+- 生成或协调压缩包。
+- 运行或协调定时过期和删除任务。
+- 记录敏感工作人员操作和文件操作审计事件。
 
 ## Application Domains / 应用领域划分
 
@@ -898,7 +946,6 @@ Phase 3: Final retouched delivery and deletion.
 
 ## Open Technical Decisions / 待确认技术决策
 
-- Should the backend/API layer use Python FastAPI in a front-end/back-end separated architecture, or stay inside the Next.js project with Route Handlers?
 - Which Tencent Cloud server product should production use first: Lighthouse, CVM, container service, or serverless?
 - Should authentication be implemented inside the application backend, handled by a third-party auth service, or handled by another Tencent-compatible auth approach?
 - Should the database use TencentDB for PostgreSQL, TDSQL-C for PostgreSQL, or another managed PostgreSQL option?
@@ -910,7 +957,6 @@ Phase 3: Final retouched delivery and deletion.
 - Should email notifications for registration, password reset, deadline reminders, and delivery completion be included in the first release?
 - How should the first owner account be bootstrapped securely?
 
-- 第一版后端/API 层是否采用 Python FastAPI 的前后端分离架构，还是留在 Next.js 项目内使用 Route Handlers？
 - 生产环境应优先使用哪一种腾讯云服务器产品：Lighthouse、CVM、容器服务，还是 Serverless？
 - 认证应由应用后端实现、第三方认证服务处理，还是采用另一种兼容腾讯云部署的认证方案？
 - 数据库应使用 TencentDB for PostgreSQL、TDSQL-C for PostgreSQL，还是其他托管 PostgreSQL 方案？
@@ -929,7 +975,7 @@ These references support the feasibility of the draft, but they do not finalize 
 以下参考资料用于确认草案可行性，但不最终决定服务商选择。
 
 - Next.js App Router: https://nextjs.org/docs/app
-- Next.js Route Handlers: https://nextjs.org/docs/app/getting-started/route-handlers
+- FastAPI: https://fastapi.tiangolo.com/
 - Tencent Cloud Lighthouse: https://intl.cloud.tencent.com/zh/products/lighthouse
 - Tencent Cloud CVM overview: https://intl.cloud.tencent.com/document/product/1226/76565?lang=en
 - Tencent Cloud COS: https://intl.cloud.tencent.com/zh/products/cos
