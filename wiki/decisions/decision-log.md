@@ -31,7 +31,8 @@ ADR 状态值：
 | [ADR-005](adr-005-object-storage.md) | Object Storage for Photo Assets | Accepted with deferred detail | 2026-08-07 |
 | [ADR-006](adr-006-localization-data-storage.md) | Localization and Data Storage | Accepted with deferred detail | 2026-08-07 |
 | [ADR-007](adr-007-api-style.md) | API Style | Accepted | 2026-08-07 |
-| [ADR-008](adr-008-authentication-boundary.md) | Authentication Boundary | Accepted with deferred detail | 2026-08-07 |
+| [ADR-008](adr-008-authentication-boundary.md) | Authentication Boundary | Accepted | 2026-08-07 |
+| [ADR-009](adr-009-authentication-implementation.md) | Authentication Implementation | Accepted | 2026-08-08 |
 
 | ADR | 标题 | 状态 | 日期 |
 | --- | --- | --- | --- |
@@ -42,7 +43,8 @@ ADR 状态值：
 | [ADR-005](adr-005-object-storage.md) | 照片资产对象存储 | Accepted with deferred detail | 2026-08-07 |
 | [ADR-006](adr-006-localization-data-storage.md) | 多语言与数据存储 | Accepted with deferred detail | 2026-08-07 |
 | [ADR-007](adr-007-api-style.md) | API 风格 | Accepted | 2026-08-07 |
-| [ADR-008](adr-008-authentication-boundary.md) | 认证边界 | Accepted with deferred detail | 2026-08-07 |
+| [ADR-008](adr-008-authentication-boundary.md) | 认证边界 | Accepted | 2026-08-07 |
+| [ADR-009](adr-009-authentication-implementation.md) | 认证实现方式 | Accepted | 2026-08-08 |
 
 ## Remaining Decision Work / 剩余决策工作
 
@@ -52,14 +54,14 @@ The following details still need later confirmation:
 
 - Tencent Cloud server product: Lighthouse, CVM, container service, or serverless.
 - Concrete managed PostgreSQL product: TencentDB for PostgreSQL, TDSQL-C for PostgreSQL, or another managed PostgreSQL option.
-- Authentication provider and session transport.
+- Email delivery provider for account verification and password reset.
 - Exact upload file types and file size limits.
 - Zip package generation strategy.
 - Public content publishing workflow: save-and-publish or draft-review-publish.
 
 - 腾讯云服务器产品：Lighthouse、CVM、容器服务或 Serverless。
 - 具体托管 PostgreSQL 产品：TencentDB for PostgreSQL、TDSQL-C for PostgreSQL，或其他托管 PostgreSQL 方案。
-- 认证服务商与会话传输方式。
+- 用于账号验证和密码重置的邮件发送服务商。
 - 准确上传文件类型和文件大小限制。
 - 压缩包生成策略。
 - 公开内容发布流程：保存即发布，或草稿-复核-发布。

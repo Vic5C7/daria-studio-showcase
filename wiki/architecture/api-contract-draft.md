@@ -82,9 +82,9 @@ General rules:
 
 ## Authentication and Session Model / 认证与会话模型
 
-The API contract should remain auth-provider-neutral until the authentication implementation is selected.
+The API contract uses FastAPI-managed email/password authentication with backend-managed server-side sessions.
 
-在认证实现方式确定前，API 契约应保持认证服务商中立。
+API 契约使用 FastAPI 管理的邮箱密码认证，并由后端管理服务端会话。
 
 Recommended contract shape:
 
@@ -94,14 +94,20 @@ Recommended contract shape:
 - Staff accounts do not self-register.
 - Client profile and staff profile are separate.
 - A staff profile has a fixed role: `owner` or `employee`.
-- The frontend should call authenticated endpoints with a secure session mechanism, such as an HTTP-only cookie or another server-validated token.
+- Login success sets an opaque session cookie managed by the backend.
+- The session cookie must be Secure, HTTP-only, and SameSite.
+- Cookie-authenticated state-changing requests must include a server-validated CSRF token.
+- Password reset and email verification tokens must be single-use, time-limited, and stored as hashes.
 - Backend endpoints must not rely on frontend route protection alone.
 
 - 客户账号通过邮箱自主注册。
 - 工作人员账号不自主注册。
 - 客户资料和工作人员资料分离。
 - 工作人员资料只有固定角色：`owner` 或 `employee`。
-- 前端应使用安全会话机制调用认证接口，例如 HTTP-only cookie 或其他服务端可校验 token。
+- 登录成功后由后端设置不透明会话 cookie。
+- 会话 cookie 必须使用 Secure、HTTP-only 和 SameSite。
+- 使用 cookie 认证的写操作必须携带服务端校验的 CSRF token。
+- 密码重置和邮箱验证 token 必须一次性、限时有效，并以哈希形式存储。
 - 后端接口不能只依赖前端路由保护。
 
 Session response shape:
@@ -112,6 +118,7 @@ Session response shape:
 {
   "authenticated": true,
   "accountType": "staff",
+  "emailVerified": true,
   "client": null,
   "staff": {
     "id": "staff_123",
@@ -155,6 +162,28 @@ Rules:
 - 老板编辑接口应返回中英双语可编辑字段。
 - 价格、数量、状态和截止时间等动态值应保持标准值，再由前端或后端展示工具格式化。
 - 客户填写的备注永远不自动翻译。
+
+### CSRF / CSRF
+
+Cookie-authenticated state-changing requests should include a CSRF token.
+
+使用 cookie 认证的写操作应携带 CSRF token。
+
+```text
+X-CSRF-Token: csrf_token_abc
+```
+
+Rules:
+
+规则：
+
+- The frontend fetches a CSRF token from the backend before authenticated mutations.
+- The backend validates the token together with the current session.
+- Public read requests and unauthenticated public estimate requests do not need CSRF tokens.
+
+- 前端在执行认证后的写操作前，从后端获取 CSRF token。
+- 后端将 CSRF token 与当前会话一起校验。
+- 公开读取请求和未登录公开估价请求不需要 CSRF token。
 
 ### IDs / ID
 
@@ -666,6 +695,22 @@ Rules:
 
 ## Auth APIs / 认证 API
 
+### Get CSRF Token / 获取 CSRF Token
+
+```text
+GET /api/v1/auth/csrf
+```
+
+Purpose:
+
+用途：
+
+- Returns a CSRF token for cookie-authenticated state-changing requests.
+- The token is validated together with the current session.
+
+- 返回用于 cookie 认证写操作的 CSRF token。
+- 该 token 与当前会话一起校验。
+
 ### Register Client Account / 注册客户账号
 
 ```text
@@ -702,10 +747,56 @@ Rules:
 - Creates a client account only.
 - Does not grant staff workspace access.
 - Staff accounts cannot be created through this endpoint.
+- Sends or queues an email verification message when email delivery is configured.
+- Private gallery and download features require verified email.
 
 - 只创建客户账号。
 - 不授予工作人员端访问权限。
 - 工作人员账号不能通过此接口创建。
+- 邮件发送能力配置完成后，发送或排队发送邮箱验证邮件。
+- 私有相册和下载功能要求邮箱已验证。
+
+### Request Email Verification / 请求邮箱验证
+
+```text
+POST /api/v1/auth/email-verification/request
+```
+
+Purpose:
+
+用途：
+
+- Sends a new verification email for the current account or submitted email, subject to rate limits.
+- Does not reveal whether an unknown email exists.
+
+- 为当前账号或提交的邮箱发送新的验证邮件，并受限流保护。
+- 不暴露未知邮箱是否存在。
+
+### Confirm Email Verification / 确认邮箱验证
+
+```text
+POST /api/v1/auth/email-verification/confirm
+```
+
+Request:
+
+请求：
+
+```json
+{
+  "token": "verification_token_from_email"
+}
+```
+
+Rules:
+
+规则：
+
+- Token must be single-use and time-limited.
+- Stored token value must be a hash, not the raw token.
+
+- Token 必须一次性使用，并有时间限制。
+- 数据库存储 token 哈希，而不是原始 token。
 
 ### Log In / 登录
 
@@ -732,6 +823,7 @@ Response:
 {
   "authenticated": true,
   "accountType": "client",
+  "emailVerified": true,
   "client": {
     "id": "client_123",
     "email": "client@example.com"
@@ -745,10 +837,12 @@ Rules:
 规则：
 
 - The backend identifies whether the authenticated user has a client profile, staff profile, or both if that is later allowed.
+- Successful login sets the Secure HTTP-only SameSite session cookie.
 - Staff workspace access still requires a valid staff profile.
 - Client-only accounts must be denied from staff endpoints.
 
 - 后端识别认证用户是否拥有客户资料、工作人员资料，或在后续允许时同时拥有两者。
+- 登录成功后设置 Secure、HTTP-only、SameSite 会话 cookie。
 - 访问工作人员端仍然必须有有效工作人员资料。
 - 仅客户账号必须被工作人员接口拒绝。
 
@@ -764,17 +858,51 @@ GET /api/v1/auth/me
 POST /api/v1/auth/logout
 ```
 
+Rules:
+
+规则：
+
+- Revokes the current server-side session.
+- Clears the browser session cookie.
+
+- 撤销当前服务端会话。
+- 清除浏览器会话 cookie。
+
 ### Request Password Reset / 请求密码重置
 
 ```text
 POST /api/v1/auth/password-reset/request
 ```
 
+Rules:
+
+规则：
+
+- Applies rate limits.
+- Does not reveal whether an unknown email exists.
+- Sends a reset email when the submitted account is eligible.
+
+- 受限流保护。
+- 不暴露未知邮箱是否存在。
+- 当提交的账号符合条件时发送密码重置邮件。
+
 ### Confirm Password Reset / 确认密码重置
 
 ```text
 POST /api/v1/auth/password-reset/confirm
 ```
+
+Rules:
+
+规则：
+
+- Token must be single-use and time-limited.
+- Stored token value must be a hash, not the raw token.
+- Confirming reset invalidates existing sessions for that auth identity unless a later implementation decision says otherwise.
+
+- Token 必须一次性使用，并有时间限制。
+- 数据库存储 token 哈希，而不是原始 token。
+- 密码重置确认后，应使该认证身份已有会话失效，除非后续实现决策另有说明。
 
 ## Client Account APIs / 客户账号 API
 
@@ -1773,7 +1901,7 @@ Rules:
 
 ## Open API Decisions / 待确认 API 决策
 
-- Should auth use secure HTTP-only cookies, bearer tokens, or a hybrid approach between Next.js and FastAPI?
+- What exact cookie domain, SameSite value, and CSRF token pattern should be used after production frontend/backend domains are selected?
 - Should public pricing estimate be fully calculated by the backend, or should the frontend calculate simple totals while the backend provides validation?
 - What are the exact file type and file size limits for public display images, originals, finals, and generated zip packages?
 - Should upload completion verify file presence synchronously against COS, or accept completion and verify asynchronously?
@@ -1782,7 +1910,7 @@ Rules:
 - Should staff-created client galleries allow retouch quota overrides, or always derive quota from package data?
 - Should APIs expose deleted audit metadata to owner, or keep deletion records internal only?
 
-- 认证应使用安全 HTTP-only cookie、bearer token，还是 Next.js 与 FastAPI 之间的混合方式？
+- 生产前后端域名确认后，应使用哪一个准确 cookie domain、SameSite 值和 CSRF token 模式？
 - 公开价格估算应完全由后端计算，还是前端计算简单总价、后端只提供校验？
 - 公开展示图、底片、最终图和压缩包的准确文件类型与大小限制是什么？
 - 上传完成时是否同步向 COS 校验文件存在，还是先接受完成并异步校验？

@@ -6,9 +6,9 @@ This document drafts a PostgreSQL-oriented schema for the future DARIA STUDIO pl
 
 本文档草拟未来 DARIA STUDIO 正式平台的 PostgreSQL 方向数据库 Schema。它把产品范围、角色模型、内容模型、数据模型草案、技术架构草案和 API 契约草案转化为接近实现层的数据库规划。
 
-This is not a production migration file. It does not finalize every table name, index, storage key format, authentication implementation, or ORM model. Real migrations should be created later in the private `daria-studio-platform` repository.
+This is not a production migration file. It does not finalize every table name, index, storage key format, authentication library, or ORM model. Real migrations should be created later in the private `daria-studio-platform` repository.
 
-本文档不是生产迁移文件。它不最终确定每一个表名、索引、存储 key 格式、认证实现或 ORM 模型。真实迁移应后续在私有仓库 `daria-studio-platform` 中创建。
+本文档不是生产迁移文件。它不最终确定每一个表名、索引、存储 key 格式、认证库或 ORM 模型。真实迁移应后续在私有仓库 `daria-studio-platform` 中创建。
 
 ## Confirmed Technical Context / 已确认技术背景
 
@@ -16,6 +16,7 @@ This is not a production migration file. It does not finalize every table name, 
 - Backend: Python FastAPI.
 - Architecture: front-end/back-end separation.
 - Database direction: managed PostgreSQL.
+- Authentication direction: FastAPI-managed email/password auth with server-side cookie sessions.
 - Cloud direction: Tencent Cloud.
 - Object storage candidate: Tencent Cloud COS.
 - Public inquiry flow does not create booking, payment, deposit, or calendar records.
@@ -24,6 +25,7 @@ This is not a production migration file. It does not finalize every table name, 
 - 后端：Python FastAPI。
 - 架构：前后端分离。
 - 数据库方向：托管 PostgreSQL。
+- 认证方向：FastAPI 管理的邮箱密码认证和服务端 cookie 会话。
 - 云服务方向：腾讯云。
 - 对象存储候选：腾讯云 COS。
 - 公开咨询流程不创建预约、付款、定金或日历记录。
@@ -273,6 +275,202 @@ Rules:
 | `download_package_kind` | `originals`, `finals` |
 | `download_package_status` | `queued`, `processing`, `ready`, `failed`, `deleted`, `expired` |
 
+## Authentication Tables / 认证表
+
+### `auth_identities`
+
+Purpose:
+
+用途：
+
+- Stores the canonical login identity for both clients and staff.
+- Owns password hashes, email verification state, and login-level account state.
+- Does not by itself grant client gallery access or staff workspace access.
+
+- 保存客户和工作人员共用的标准登录身份。
+- 负责密码哈希、邮箱验证状态和登录层账号状态。
+- 认证身份本身不直接授予客户相册访问或工作人员端访问。
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` | No | Primary key |
+| `email` | `citext` | No | Canonical login email |
+| `password_hash` | `text` | No | Strong password hash, never plaintext |
+| `password_hash_algorithm` | `text` | No | Expected first value: `argon2id`; fallback: `bcrypt` |
+| `email_verified_at` | `timestamptz` | Yes | Email verification timestamp |
+| `account_status` | `text` | No | `active`, `disabled`, or `locked` |
+| `failed_login_count` | `integer` | No | Supports login rate-limit/lockout logic |
+| `locked_until` | `timestamptz` | Yes | Temporary login lock timestamp |
+| `last_login_at` | `timestamptz` | Yes | Optional tracking |
+| `created_at` | `timestamptz` | No | Common timestamp |
+| `updated_at` | `timestamptz` | No | Common timestamp |
+| `deleted_at` | `timestamptz` | Yes | Soft deletion if needed |
+
+| 字段 | 类型 | 可空 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `uuid` | 否 | 主键 |
+| `email` | `citext` | 否 | 标准登录邮箱 |
+| `password_hash` | `text` | 否 | 强密码哈希，永远不是明文 |
+| `password_hash_algorithm` | `text` | 否 | 第一版预期值：`argon2id`；备选：`bcrypt` |
+| `email_verified_at` | `timestamptz` | 是 | 邮箱验证时间 |
+| `account_status` | `text` | 否 | `active`、`disabled` 或 `locked` |
+| `failed_login_count` | `integer` | 否 | 支持登录限流/锁定逻辑 |
+| `locked_until` | `timestamptz` | 是 | 临时登录锁定时间 |
+| `last_login_at` | `timestamptz` | 是 | 可选登录跟踪 |
+| `created_at` | `timestamptz` | 否 | 通用时间戳 |
+| `updated_at` | `timestamptz` | 否 | 通用时间戳 |
+| `deleted_at` | `timestamptz` | 是 | 如需要可软删除 |
+
+Constraints and indexes:
+
+约束与索引：
+
+- `unique (email)` among active identities.
+- Index on `account_status`.
+- Password hash must be created by the backend authentication library.
+- Plaintext passwords must never be stored.
+
+- 有效认证身份中的 `email` 唯一。
+- 为 `account_status` 建索引。
+- 密码哈希必须由后端认证库生成。
+- 永远不存储明文密码。
+
+### `auth_sessions`
+
+Purpose:
+
+用途：
+
+- Stores backend-managed browser sessions.
+- Allows logout, revocation, expiry, and audit-friendly session checks.
+
+- 保存后端管理的浏览器会话。
+- 支持退出登录、撤销、过期和便于审计的会话校验。
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` | No | Primary key |
+| `auth_identity_id` | `uuid` | No | FK to `auth_identities.id` |
+| `session_token_hash` | `text` | No | Hash of opaque session token stored in browser cookie |
+| `csrf_token_hash` | `text` | Yes | Hash of CSRF token if synchronizer-token storage is used |
+| `user_agent_hash` | `text` | Yes | Optional privacy-preserving client hint |
+| `ip_address` | `inet` | Yes | Optional security/audit hint |
+| `created_at` | `timestamptz` | No | Common timestamp |
+| `last_seen_at` | `timestamptz` | Yes | Updated on active use |
+| `expires_at` | `timestamptz` | No | Session expiry timestamp |
+| `revoked_at` | `timestamptz` | Yes | Logout or admin revocation timestamp |
+
+| 字段 | 类型 | 可空 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `uuid` | 否 | 主键 |
+| `auth_identity_id` | `uuid` | 否 | 外键到 `auth_identities.id` |
+| `session_token_hash` | `text` | 否 | 浏览器 cookie 中不透明会话 token 的哈希 |
+| `csrf_token_hash` | `text` | 是 | 如果使用同步 token 存储模式，则保存 CSRF token 哈希 |
+| `user_agent_hash` | `text` | 是 | 可选、较保护隐私的客户端提示 |
+| `ip_address` | `inet` | 是 | 可选安全/审计提示 |
+| `created_at` | `timestamptz` | 否 | 通用时间戳 |
+| `last_seen_at` | `timestamptz` | 是 | 活跃使用时更新 |
+| `expires_at` | `timestamptz` | 否 | 会话过期时间 |
+| `revoked_at` | `timestamptz` | 是 | 退出登录或管理员撤销时间 |
+
+Constraints and indexes:
+
+约束与索引：
+
+- `unique (session_token_hash)`.
+- Index on `(auth_identity_id, expires_at)`.
+- Index on `revoked_at` for cleanup and active-session checks.
+
+- `session_token_hash` 唯一。
+- 为 `(auth_identity_id, expires_at)` 建索引。
+- 为 `revoked_at` 建索引，用于清理和活跃会话校验。
+
+### `auth_email_verification_tokens`
+
+Purpose:
+
+用途：
+
+- Stores one-time email verification tokens.
+- Enables clients and staff to verify the email on their auth identity.
+
+- 保存一次性邮箱验证 token。
+- 支持客户和工作人员验证认证身份上的邮箱。
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` | No | Primary key |
+| `auth_identity_id` | `uuid` | No | FK to `auth_identities.id` |
+| `token_hash` | `text` | No | Hash of token sent by email |
+| `created_at` | `timestamptz` | No | Common timestamp |
+| `expires_at` | `timestamptz` | No | Token expiry timestamp |
+| `used_at` | `timestamptz` | Yes | Set when token is consumed |
+
+| 字段 | 类型 | 可空 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `uuid` | 否 | 主键 |
+| `auth_identity_id` | `uuid` | 否 | 外键到 `auth_identities.id` |
+| `token_hash` | `text` | 否 | 邮件发送 token 的哈希 |
+| `created_at` | `timestamptz` | 否 | 通用时间戳 |
+| `expires_at` | `timestamptz` | 否 | token 过期时间 |
+| `used_at` | `timestamptz` | 是 | token 被使用时写入 |
+
+Constraints and indexes:
+
+约束与索引：
+
+- `unique (token_hash)`.
+- Index on `(auth_identity_id, expires_at)`.
+- Backend must reject expired or already used tokens.
+
+- `token_hash` 唯一。
+- 为 `(auth_identity_id, expires_at)` 建索引。
+- 后端必须拒绝已过期或已使用 token。
+
+### `auth_password_reset_tokens`
+
+Purpose:
+
+用途：
+
+- Stores one-time password reset tokens.
+- Supports secure password reset without exposing whether an unknown email exists.
+
+- 保存一次性密码重置 token。
+- 支持安全密码重置，同时不暴露未知邮箱是否存在。
+
+| Column | Type | Null | Notes |
+| --- | --- | --- | --- |
+| `id` | `uuid` | No | Primary key |
+| `auth_identity_id` | `uuid` | No | FK to `auth_identities.id` |
+| `token_hash` | `text` | No | Hash of token sent by email |
+| `requested_ip` | `inet` | Yes | Optional security/audit hint |
+| `created_at` | `timestamptz` | No | Common timestamp |
+| `expires_at` | `timestamptz` | No | Token expiry timestamp |
+| `used_at` | `timestamptz` | Yes | Set when token is consumed |
+
+| 字段 | 类型 | 可空 | 说明 |
+| --- | --- | --- | --- |
+| `id` | `uuid` | 否 | 主键 |
+| `auth_identity_id` | `uuid` | 否 | 外键到 `auth_identities.id` |
+| `token_hash` | `text` | 否 | 邮件发送 token 的哈希 |
+| `requested_ip` | `inet` | 是 | 可选安全/审计提示 |
+| `created_at` | `timestamptz` | 否 | 通用时间戳 |
+| `expires_at` | `timestamptz` | 否 | token 过期时间 |
+| `used_at` | `timestamptz` | 是 | token 被使用时写入 |
+
+Constraints and indexes:
+
+约束与索引：
+
+- `unique (token_hash)`.
+- Index on `(auth_identity_id, expires_at)`.
+- Confirming a password reset should revoke existing sessions for the auth identity unless a later implementation decision says otherwise.
+
+- `token_hash` 唯一。
+- 为 `(auth_identity_id, expires_at)` 建索引。
+- 密码重置确认后，应使该认证身份已有会话失效，除非后续实现决策另有说明。
+
 ## Identity and Account Tables / 身份与账号表
 
 ### `client_accounts`
@@ -290,10 +488,9 @@ Purpose:
 | Column | Type | Null | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` | No | Primary key |
-| `external_auth_user_id` | `text` | No | ID from selected auth system |
-| `email` | `citext` | No | Unique email for login/contact |
+| `auth_identity_id` | `uuid` | No | FK to `auth_identities.id` |
+| `email` | `citext` | No | Contact/search email copied from auth identity in MVP |
 | `display_name` | `text` | Yes | Optional client-facing account name |
-| `email_verified_at` | `timestamptz` | Yes | Verification timestamp |
 | `account_status` | `text` | No | `active`, `disabled`, or future value |
 | `created_at` | `timestamptz` | No | Common timestamp |
 | `updated_at` | `timestamptz` | No | Common timestamp |
@@ -302,10 +499,9 @@ Purpose:
 | 字段 | 类型 | 可空 | 说明 |
 | --- | --- | --- | --- |
 | `id` | `uuid` | 否 | 主键 |
-| `external_auth_user_id` | `text` | 否 | 所选认证系统中的用户 ID |
-| `email` | `citext` | 否 | 用于登录/联系的唯一邮箱 |
+| `auth_identity_id` | `uuid` | 否 | 外键到 `auth_identities.id` |
+| `email` | `citext` | 否 | 第一版从认证身份复制的联系/搜索邮箱 |
 | `display_name` | `text` | 是 | 可选客户账号显示名 |
-| `email_verified_at` | `timestamptz` | 是 | 邮箱验证时间 |
 | `account_status` | `text` | 否 | `active`、`disabled` 或未来值 |
 | `created_at` | `timestamptz` | 否 | 通用时间戳 |
 | `updated_at` | `timestamptz` | 否 | 通用时间戳 |
@@ -315,11 +511,11 @@ Constraints and indexes:
 
 约束与索引：
 
-- `unique (external_auth_user_id)`.
+- `unique (auth_identity_id)`.
 - `unique (email)` among active records.
 - Index on `account_status`.
 
-- `external_auth_user_id` 唯一。
+- `auth_identity_id` 唯一。
 - 有效记录中的 `email` 唯一。
 - 为 `account_status` 建索引。
 
@@ -338,8 +534,8 @@ Purpose:
 | Column | Type | Null | Notes |
 | --- | --- | --- | --- |
 | `id` | `uuid` | No | Primary key |
-| `external_auth_user_id` | `text` | No | ID from selected auth system |
-| `email` | `citext` | No | Staff login/contact email |
+| `auth_identity_id` | `uuid` | No | FK to `auth_identities.id` |
+| `email` | `citext` | No | Staff contact/search email copied from auth identity in MVP |
 | `display_name` | `text` | No | Staff display name |
 | `role` | `staff_role` | No | `owner` or `employee` |
 | `account_status` | `text` | No | `active` or `disabled` |
@@ -352,8 +548,8 @@ Purpose:
 | 字段 | 类型 | 可空 | 说明 |
 | --- | --- | --- | --- |
 | `id` | `uuid` | 否 | 主键 |
-| `external_auth_user_id` | `text` | 否 | 所选认证系统中的用户 ID |
-| `email` | `citext` | 否 | 工作人员登录/联系邮箱 |
+| `auth_identity_id` | `uuid` | 否 | 外键到 `auth_identities.id` |
+| `email` | `citext` | 否 | 第一版从认证身份复制的工作人员联系/搜索邮箱 |
 | `display_name` | `text` | 否 | 工作人员显示名 |
 | `role` | `staff_role` | 否 | `owner` 或 `employee` |
 | `account_status` | `text` | 否 | `active` 或 `disabled` |
@@ -367,13 +563,13 @@ Constraints and indexes:
 
 约束与索引：
 
-- `unique (external_auth_user_id)`.
+- `unique (auth_identity_id)`.
 - `unique (email)` among active staff accounts.
 - Index on `role`.
 - Index on `account_status`.
 - Backend enforces owner-only staff account management.
 
-- `external_auth_user_id` 唯一。
+- `auth_identity_id` 唯一。
 - 有效工作人员账号中的 `email` 唯一。
 - 为 `role` 建索引。
 - 为 `account_status` 建索引。
@@ -1589,9 +1785,15 @@ Recommended first indexes:
 
 | Table | Index |
 | --- | --- |
-| `client_accounts` | `unique (external_auth_user_id)` |
+| `auth_identities` | `unique (email)` among active identities |
+| `auth_identities` | `(account_status)` |
+| `auth_sessions` | `unique (session_token_hash)` |
+| `auth_sessions` | `(auth_identity_id, expires_at)` |
+| `auth_email_verification_tokens` | `unique (token_hash)` |
+| `auth_password_reset_tokens` | `unique (token_hash)` |
+| `client_accounts` | `unique (auth_identity_id)` |
 | `client_accounts` | `unique (email)` among active records |
-| `staff_accounts` | `unique (external_auth_user_id)` |
+| `staff_accounts` | `unique (auth_identity_id)` |
 | `staff_accounts` | `(role, account_status)` |
 | `gallery_categories` | `(publish_status, sort_order)` |
 | `public_gallery_images` | `(gallery_category_id, sort_order)` |
@@ -1617,9 +1819,15 @@ Recommended first indexes:
 
 | 表 | 索引 |
 | --- | --- |
-| `client_accounts` | 有效记录中 `external_auth_user_id` 唯一 |
+| `auth_identities` | 有效认证身份中 `email` 唯一 |
+| `auth_identities` | `(account_status)` |
+| `auth_sessions` | `session_token_hash` 唯一 |
+| `auth_sessions` | `(auth_identity_id, expires_at)` |
+| `auth_email_verification_tokens` | `token_hash` 唯一 |
+| `auth_password_reset_tokens` | `token_hash` 唯一 |
+| `client_accounts` | `auth_identity_id` 唯一 |
 | `client_accounts` | 有效记录中 `email` 唯一 |
-| `staff_accounts` | `external_auth_user_id` 唯一 |
+| `staff_accounts` | `auth_identity_id` 唯一 |
 | `staff_accounts` | `(role, account_status)` |
 | `gallery_categories` | `(publish_status, sort_order)` |
 | `public_gallery_images` | `(gallery_category_id, sort_order)` |
@@ -1729,7 +1937,7 @@ Phase 3: Operations hardening.
 
 - Should localized fields remain `jsonb`, or move to separate translation tables before production?
 - Should public API IDs be UUID strings, prefixed IDs, or separate public ID columns?
-- Which authentication implementation will provide `external_auth_user_id`?
+- Should auth sessions be stored only in PostgreSQL for MVP, or moved to Redis later if traffic grows?
 - Should the database use native PostgreSQL enum types, lookup tables, or text columns with check constraints?
 - Should image count rules be enforced with database triggers or only backend validation?
 - Should deleted public content be restorable, or should owner delete be final after a confirmation?
@@ -1740,7 +1948,7 @@ Phase 3: Operations hardening.
 
 - 本地化字段应继续使用 `jsonb`，还是生产前改为独立翻译表？
 - 公开 API ID 使用 UUID 字符串、带前缀 ID，还是独立公开 ID 字段？
-- 哪一种认证实现会提供 `external_auth_user_id`？
+- 第一版认证会话只存在 PostgreSQL，还是在访问量增长后迁移到 Redis？
 - 数据库状态值使用 PostgreSQL 原生 enum、查找表，还是带 check 约束的 text 字段？
 - 图片数量规则应通过数据库 trigger 执行，还是仅由后端校验？
 - 已删除公开内容是否允许恢复，还是老板确认删除后视为最终删除？

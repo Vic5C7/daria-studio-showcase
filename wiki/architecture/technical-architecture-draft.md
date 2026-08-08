@@ -28,6 +28,7 @@ Confirmed:
 - Production deployment should use Tencent Cloud. The exact Tencent Cloud server product is not selected yet.
 - The frontend stack is confirmed as Next.js + React with light TypeScript.
 - The backend stack is confirmed as Python FastAPI using a front-end/back-end separated architecture.
+- The authentication implementation is confirmed as FastAPI-managed email/password auth with server-side cookie sessions.
 
 - 公开展示仓库继续用于 wiki、原型、公开样片素材和 GitHub Pages 部署。
 - 真实应用代码应放在私有仓库 `daria-studio-platform`。
@@ -41,6 +42,7 @@ Confirmed:
 - 生产部署使用腾讯云。具体使用哪一种腾讯云服务器产品暂未确定。
 - 前端技术栈已确认为 Next.js + React + 轻量 TypeScript。
 - 后端技术栈已确认为 Python FastAPI，并采用前后端分离架构。
+- 认证实现已确认为 FastAPI 管理的邮箱密码认证和服务端 cookie 会话。
 
 Recommended, but still replaceable:
 
@@ -50,7 +52,6 @@ Recommended, but still replaceable:
 - Python FastAPI backend for a front-end/back-end separated architecture.
 - Tencent Cloud as the production cloud provider.
 - Managed PostgreSQL for relational business data.
-- Email authentication with server-side session validation.
 - Tencent Cloud COS or another private object storage layer for client originals, final retouched photos, and generated download packages.
 - Scheduled background jobs for expiration, cleanup, and download package maintenance.
 
@@ -58,7 +59,6 @@ Recommended, but still replaceable:
 - 使用 Python FastAPI 后端，并采用前后端分离架构。
 - 生产云服务商使用腾讯云。
 - 使用托管 PostgreSQL 存储关系型业务数据。
-- 使用支持邮箱认证和服务端会话校验的认证方案。
 - 使用腾讯云 COS 或其他私有对象存储保存客户底片、最终精修图和生成的下载压缩包。
 - 使用定时后台任务处理过期、清理和下载压缩包维护。
 
@@ -99,7 +99,7 @@ flowchart LR
     ClientAccount --> AppServer
     StaffWorkspace --> AppServer
 
-    AppServer --> Auth["Auth Provider / 认证服务"]
+    AppServer --> Auth["Auth Domain / 认证领域"]
     AppServer --> Database["PostgreSQL Database / PostgreSQL 数据库"]
     AppServer --> Storage["Object Storage / 对象存储"]
     AppServer --> Jobs["Scheduled Jobs / 定时任务"]
@@ -178,7 +178,7 @@ Recommended first implementation stack:
 | Backend | Python FastAPI | Confirmed direction for APIs, file processing, zip generation, and scheduled jobs |
 | Database | TencentDB for PostgreSQL, TDSQL-C for PostgreSQL, or another managed PostgreSQL option | Fits relational content, users, roles, galleries, selections, and audit records |
 | ORM or query layer | SQLAlchemy or SQLModel | Fits the confirmed Python backend direction |
-| Auth | Email auth with server-side session validation | Supports self-registration clients and staff login; implementation approach remains a decision |
+| Auth | FastAPI-managed email/password authentication with server-side cookie sessions | Supports client self-registration, staff login, backend authorization, and Tencent Cloud deployment |
 | Object storage | Tencent Cloud COS or another private S3-compatible storage layer | Supports originals, finals, generated zip packages, signed URLs, and deletion jobs |
 | Background jobs | Backend scheduled job, Tencent Cloud SCF timer trigger, or worker queue | Needed for 7-day status updates, 3-month deletion, and zip generation cleanup |
 | Hosting / compute | Tencent Cloud; exact server type TBD, such as Lighthouse, CVM, container service, or serverless | Must match backend runtime, background jobs, storage, and maintenance needs |
@@ -190,7 +190,7 @@ Recommended first implementation stack:
 | 后端 | Python FastAPI | 已确认用于 API、文件处理、压缩包生成和定时任务 |
 | 数据库 | TencentDB for PostgreSQL、TDSQL-C for PostgreSQL 或其他托管 PostgreSQL | 适合内容、用户、角色、相册、选片和审计等关系型数据 |
 | ORM 或查询层 | SQLAlchemy 或 SQLModel | 符合已确认的 Python 后端方向 |
-| 认证 | 支持服务端会话校验的邮箱认证 | 支持客户自主注册和工作人员登录；具体实现方式仍需决定 |
+| 认证 | FastAPI 管理的邮箱密码认证和服务端 cookie 会话 | 支持客户自主注册、工作人员登录、后端授权和腾讯云部署 |
 | 对象存储 | 腾讯云 COS 或其他私有 S3 兼容存储 | 支持底片、最终图、压缩包、临时签名链接和删除任务 |
 | 后台任务 | 后端定时任务、腾讯云 SCF 定时触发或 worker 队列 | 用于 7 天状态更新、3 个月删除和压缩包清理 |
 | 部署 / 计算 | 腾讯云；具体服务器类型待定，例如 Lighthouse、CVM、容器服务或 Serverless | 需要匹配后端运行时、后台任务、存储和维护需求 |
@@ -282,18 +282,28 @@ Recommended model:
 
 推荐模型：
 
-- Use one auth provider, but keep separate profile records for clients and staff.
+- Use one FastAPI-managed auth identity model, but keep separate profile records for clients and staff.
 - A user with a client profile does not automatically gain staff access.
 - A staff profile has one fixed role: `owner` or `employee`.
 - Role permissions are hard-coded in the first product scope, with no permission editor.
 - Staff login routes must reject users that only have client profiles.
+- Password hashes are stored only in auth identity records.
+- Browser login uses backend-managed opaque server-side sessions.
+- Session cookies must be Secure, HTTP-only, and SameSite.
+- Cookie-authenticated state-changing requests must use CSRF protection.
+- Password reset and email verification tokens are hashed, single-use, and time-limited.
 - Owner bootstrap should be a one-time deployment or admin operation, then owner can manage employee accounts.
 
-- 使用同一个认证服务，但客户资料和工作人员资料分开保存。
+- 使用同一个由 FastAPI 管理的认证身份模型，但客户资料和工作人员资料分开保存。
 - 拥有客户资料的用户不会自动获得工作人员端权限。
 - 工作人员资料只有一个固定角色：`owner` 或 `employee`。
 - 第一阶段角色权限写成固定规则，不提供权限编辑器。
 - 工作人员登录路由必须拒绝只有客户资料的用户。
+- 密码哈希只保存在认证身份记录中。
+- 浏览器登录使用后端管理的不透明服务端会话。
+- 会话 cookie 必须使用 Secure、HTTP-only 和 SameSite。
+- 使用 cookie 认证的写操作必须使用 CSRF 防护。
+- 密码重置和邮箱验证 token 必须哈希存储、一次性使用，并有时间限制。
 - 老板账号初始化应作为一次性部署或管理操作完成，之后由老板管理员工账号。
 
 Server-side checks:
@@ -691,6 +701,10 @@ Security requirements:
 安全要求：
 
 - Use HTTPS everywhere.
+- Never store plaintext passwords or reversible encrypted passwords.
+- Hash passwords with Argon2id where available, with bcrypt only as a fallback.
+- Send browser sessions through Secure, HTTP-only, SameSite cookies.
+- Require CSRF protection for cookie-authenticated mutations.
 - Keep production secrets outside the repository.
 - Use environment variables or managed secret storage.
 - Never expose service-role storage keys to the browser.
@@ -702,6 +716,10 @@ Security requirements:
 - Keep deleted file content out of application backups where practical by storing photos in object storage, not inside the database.
 
 - 全站使用 HTTPS。
+- 永远不保存明文密码或可逆加密密码。
+- 密码哈希优先使用 Argon2id；仅在无法使用时以 bcrypt 作为备选。
+- 浏览器会话通过 Secure、HTTP-only、SameSite cookie 传输。
+- 使用 cookie 认证的写操作必须具备 CSRF 防护。
 - 生产密钥不进入仓库。
 - 使用环境变量或托管密钥存储。
 - 永远不要把 service-role 存储密钥暴露给浏览器。
@@ -886,11 +904,11 @@ Phase 0: Architecture confirmation.
 
 阶段 0：确认架构。
 
-- Confirm framework, database, auth provider, storage provider, hosting, and background job provider.
+- Confirm framework, database, auth implementation, storage provider, hosting, and background job provider.
 - Create or prepare the private `daria-studio-platform` implementation workspace.
 - Convert content model and data model draft into real schema planning.
 
-- 确认框架、数据库、认证服务、存储服务、部署平台和后台任务方案。
+- 确认框架、数据库、认证实现、存储服务、部署平台和后台任务方案。
 - 创建或准备私有 `daria-studio-platform` 实现工作区。
 - 将内容模型和数据模型草案转换为真实 schema 规划。
 
@@ -947,26 +965,24 @@ Phase 3: Final retouched delivery and deletion.
 ## Open Technical Decisions / 待确认技术决策
 
 - Which Tencent Cloud server product should production use first: Lighthouse, CVM, container service, or serverless?
-- Should authentication be implemented inside the application backend, handled by a third-party auth service, or handled by another Tencent-compatible auth approach?
 - Should the database use TencentDB for PostgreSQL, TDSQL-C for PostgreSQL, or another managed PostgreSQL option?
 - Which ORM or query layer should be used after database provider selection?
 - What maximum upload size, file type list, and image processing requirements should production support?
 - Should generated zip packages be built synchronously for small galleries, or always through a background worker?
 - What is the exact backup retention policy for database metadata and storage audit logs?
 - Should public content publishing use save-and-publish, or a draft-review-publish workflow?
-- Should email notifications for registration, password reset, deadline reminders, and delivery completion be included in the first release?
-- How should the first owner account be bootstrapped securely?
+- Which email delivery provider should send account verification and password reset emails, and should deadline reminders and delivery completion emails be included in the first release?
+- What exact operational runbook should bootstrap the first owner account securely?
 
 - 生产环境应优先使用哪一种腾讯云服务器产品：Lighthouse、CVM、容器服务，还是 Serverless？
-- 认证应由应用后端实现、第三方认证服务处理，还是采用另一种兼容腾讯云部署的认证方案？
 - 数据库应使用 TencentDB for PostgreSQL、TDSQL-C for PostgreSQL，还是其他托管 PostgreSQL 方案？
 - 数据库服务商确认后，应选择哪一种 ORM 或查询层？
 - 生产环境需要支持的最大上传大小、文件类型列表和图片处理需求是什么？
 - 生成压缩包时，小相册是否可同步生成，还是全部走后台 worker？
 - 数据库元数据和存储审计日志的具体备份保留策略是什么？
 - 公开内容发布流程使用保存即发布，还是草稿-复核-发布？
-- 邮箱通知，包括注册、密码重置、截止提醒和交付完成，是否进入第一版？
-- 第一个老板账号应如何安全初始化？
+- 哪个邮件发送服务商负责账号验证和密码重置邮件，截止提醒和交付完成邮件是否进入第一版？
+- 第一个老板账号应使用哪份具体运维流程安全初始化？
 
 ## External Technical References / 外部技术参考
 
@@ -982,3 +998,6 @@ These references support the feasibility of the draft, but they do not finalize 
 - TencentDB for PostgreSQL: https://cloud.tencent.com/product/postgres
 - Tencent Cloud SCF: https://cloud.tencent.com/document/product/583
 - Tencent Cloud COS lifecycle configuration: https://www.tencentcloud.com/document/product/436/14605
+- OWASP Password Storage Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
+- OWASP Session Management Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
+- OWASP CSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
