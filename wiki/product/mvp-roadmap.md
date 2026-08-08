@@ -701,6 +701,7 @@ Make the product safe enough for real clients, real staff, and real private phot
 - `wiki/product/product-scope.md`
 - `wiki/product/roles-and-permissions.md`
 - `wiki/product/user-journey.md`
+- `wiki/project/agile-process-and-backlog.md`
 - `wiki/user-stories/stories-by-epic.md`
 - `wiki/acceptance-criteria/criteria-by-story.md`
 - `wiki/architecture/technical-architecture-draft.md`
