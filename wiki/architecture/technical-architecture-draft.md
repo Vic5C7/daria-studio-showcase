@@ -900,6 +900,10 @@ Required test areas:
 
 ## Implementation Phases / 实现阶段
 
+The detailed product MVP release sequence is defined in `wiki/product/mvp-roadmap.md`. This section remains a technical architecture summary.
+
+详细产品 MVP 发布顺序见 `wiki/product/mvp-roadmap.md`。本节保留为技术架构摘要。
+
 Phase 0: Architecture confirmation.
 
 阶段 0：确认架构。
