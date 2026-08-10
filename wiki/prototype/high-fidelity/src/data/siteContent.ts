@@ -8,36 +8,24 @@ export type GalleryImage = {
   alt: LocalizedText;
 };
 
-export type ServiceAreaId = "shanghai" | "melbourne";
+export type ServiceAreaId = string;
 
 export type ServiceArea = {
   id: ServiceAreaId;
   name: LocalizedText;
 };
 
-export type ServiceTypeId =
-  | "wedding-portrait"
-  | "registry-wedding"
-  | "daily-portrait"
-  | "id-photo"
-  | "graduation";
+export type ServiceTypeId = string;
 
-export type GalleryServiceTypeId = ServiceTypeId | "studio-shoot";
-export type StudioModelId =
-  | "model-1"
-  | "model-2"
-  | "model-3"
-  | "model-4"
-  | "model-5"
-  | "model-6"
-  | "model-7"
-  | "model-8"
-  | "model-9";
+export type GalleryServiceTypeId = string;
+export type StudioModelId = string;
+export type ServiceKind = "graduation" | "registry" | "id-photo" | "other";
 
 export type ServiceType = {
   id: ServiceTypeId;
   name: LocalizedText;
   isAvailable: boolean;
+  kind?: ServiceKind;
 };
 
 export type GalleryServiceType = {
@@ -51,14 +39,14 @@ export type StudioModelGallery = {
   images: GalleryImage[];
 };
 
-export type GraduationSchoolId = "unimelb" | "monash" | "rmit";
+export type GraduationSchoolId = string;
 
 export type GraduationSchool = {
   id: GraduationSchoolId;
   name: LocalizedText;
 };
 
-export type SceneTypeId = "unimelb-single" | "unimelb-carlton-garden" | "graduation-studio";
+export type SceneTypeId = string;
 
 export type GraduationSceneType = {
   id: SceneTypeId;
@@ -84,7 +72,7 @@ export type RegistryPackage = {
 
 export type AddOnGroupId = "clothing" | "props" | "makeup";
 export type RegistryAddOnGroupId = "registryStyling" | "registryProps" | "registryClothing";
-export type IdPhotoAddOnGroupId = "idPhotoStyling" | "idPhotoProps";
+export type IdPhotoAddOnGroupId = "idPhotoStyling" | "idPhotoProps" | "idPhotoClothing";
 
 export type GraduationAddOn = {
   id: string;
@@ -137,6 +125,14 @@ export const navigation = {
   language: {
     zh: "English",
     en: "中文"
+  },
+  login: {
+    zh: "登录",
+    en: "Log in"
+  },
+  register: {
+    zh: "注册",
+    en: "Sign up"
   }
 } satisfies Record<string, LocalizedText>;
 
@@ -156,6 +152,81 @@ export const homeContent = {
   studioModelLabel: {
     zh: "棚拍影集",
     en: "Studio Albums"
+  }
+} satisfies Record<string, LocalizedText>;
+
+export const authContent = {
+  eyebrow: {
+    zh: "客户账户",
+    en: "Client Account"
+  },
+  title: {
+    zh: "管理预约与拍摄资料",
+    en: "Manage bookings and shoot details"
+  },
+  intro: {
+    zh: "登录后可查看套餐选择、保存沟通记录，并继续完成拍摄预约。",
+    en: "Sign in to review package choices, save notes, and continue a booking."
+  },
+  loginTab: {
+    zh: "登录",
+    en: "Log in"
+  },
+  registerTab: {
+    zh: "注册",
+    en: "Sign up"
+  },
+  nameLabel: {
+    zh: "姓名",
+    en: "Name"
+  },
+  namePlaceholder: {
+    zh: "请输入姓名",
+    en: "Your name"
+  },
+  emailLabel: {
+    zh: "邮箱",
+    en: "Email"
+  },
+  emailPlaceholder: {
+    zh: "you@example.com",
+    en: "you@example.com"
+  },
+  passwordLabel: {
+    zh: "密码",
+    en: "Password"
+  },
+  passwordPlaceholder: {
+    zh: "请输入密码",
+    en: "Enter your password"
+  },
+  remember: {
+    zh: "记住我",
+    en: "Remember me"
+  },
+  forgotPassword: {
+    zh: "忘记密码",
+    en: "Forgot password"
+  },
+  loginSubmit: {
+    zh: "登录",
+    en: "Log in"
+  },
+  registerSubmit: {
+    zh: "创建账户",
+    en: "Create account"
+  },
+  switchToRegister: {
+    zh: "还没有账户？立即注册",
+    en: "No account yet? Sign up"
+  },
+  switchToLogin: {
+    zh: "已有账户？返回登录",
+    en: "Already have an account? Log in"
+  },
+  secureNote: {
+    zh: "预约、选片与发票信息将同步到你的客户账户。",
+    en: "Bookings, selections, and invoices stay with your client account."
   }
 } satisfies Record<string, LocalizedText>;
 
@@ -193,8 +264,8 @@ export const pricingContent = {
     en: "Choose scene type"
   },
   packageLabel: {
-    zh: "选择毕业照套餐",
-    en: "Choose graduation package"
+    zh: "选择套餐",
+    en: "Choose package"
   },
   registryPackageLabel: {
     zh: "选择注册/求婚套餐",
@@ -883,6 +954,7 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
 export const graduationStudioProps: GraduationAddOn[] = [];
 
 export const idPhotoAddOns: Record<IdPhotoAddOnGroupId, IdPhotoAddOn[]> = {
+  idPhotoClothing: [],
   idPhotoStyling: [
     {
       id: "id-photo-studio-styling",

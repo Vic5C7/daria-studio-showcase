@@ -1,11 +1,10 @@
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Pencil, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { GalleryEditor } from "../components/GalleryEditor";
+import type { EditableGalleryContent } from "../data/editableContent";
 import {
   brand,
-  galleryImagesByServiceType,
-  galleryServiceTypes,
   homeContent,
-  studioModelGalleries,
   type GalleryServiceTypeId,
   type Language,
   type StudioModelId
@@ -13,23 +12,34 @@ import {
 
 type HomePageProps = {
   language: Language;
+  content: EditableGalleryContent;
+  isAdmin: boolean;
+  onChange: (content: EditableGalleryContent) => void;
   onNavigatePricing: () => void;
 };
 
-export function HomePage({ language, onNavigatePricing }: HomePageProps) {
+export function HomePage({ language, content, isAdmin, onChange, onNavigatePricing }: HomePageProps) {
   const [selectedGalleryTypeId, setSelectedGalleryTypeId] = useState<GalleryServiceTypeId>("graduation");
   const [expandedStudioAlbumId, setExpandedStudioAlbumId] = useState<StudioModelId | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const resumeTimeoutRef = useRef<number | null>(null);
   const isAutoScrollingRef = useRef(true);
   const isStudioGallery = selectedGalleryTypeId === "studio-shoot";
   const expandedStudioAlbum =
-    studioModelGalleries.find((studioAlbum) => studioAlbum.id === expandedStudioAlbumId) ?? null;
-  const selectedGalleryImages = galleryImagesByServiceType[selectedGalleryTypeId];
+    content.studioModelGalleries.find((studioAlbum) => studioAlbum.id === expandedStudioAlbumId) ?? null;
+  const selectedGalleryImages = content.imagesByServiceType[selectedGalleryTypeId] ?? [];
   const scrollingImages = useMemo(
     () => [...selectedGalleryImages, ...selectedGalleryImages],
     [selectedGalleryImages]
   );
+
+  useEffect(() => {
+    if (!content.serviceTypes.some((serviceType) => serviceType.id === selectedGalleryTypeId)) {
+      setSelectedGalleryTypeId(content.serviceTypes[0]?.id ?? "");
+      setExpandedStudioAlbumId(null);
+    }
+  }, [content.serviceTypes, selectedGalleryTypeId]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -147,9 +157,22 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
       </div>
 
       <section className="gallery-section" aria-labelledby="gallery-title">
-        <div className="section-heading">
-          <p>{brand.tagline[language]}</p>
-          <h2 id="gallery-title">{homeContent.galleryTitle[language]}</h2>
+        <div className="section-heading-row">
+          <div className="section-heading">
+            <p>{brand.tagline[language]}</p>
+            <h2 id="gallery-title">{homeContent.galleryTitle[language]}</h2>
+          </div>
+          {isAdmin && (
+            <button
+              className="admin-edit-button"
+              type="button"
+              onClick={() => setIsEditorOpen(true)}
+              aria-label={language === "zh" ? "编辑作品展示" : "Edit gallery"}
+            >
+              <Pencil size={18} aria-hidden="true" />
+              <span>{language === "zh" ? "编辑" : "Edit"}</span>
+            </button>
+          )}
         </div>
 
         <div className="gallery-controls">
@@ -158,7 +181,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
             role="tablist"
             aria-label={language === "zh" ? "选择作品服务类型" : "Choose gallery service type"}
           >
-            {galleryServiceTypes.map((serviceType) => {
+            {content.serviceTypes.map((serviceType) => {
               const isSelected = selectedGalleryTypeId === serviceType.id;
 
               return (
@@ -185,7 +208,7 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
         {isStudioGallery ? (
           <div className="studio-gallery-view">
             <div className="studio-album-grid" aria-label={homeContent.studioModelLabel[language]}>
-              {studioModelGalleries.map((studioAlbum) => {
+              {content.studioModelGalleries.map((studioAlbum) => {
                 const isExpanded = expandedStudioAlbumId === studioAlbum.id;
                 const coverImage = studioAlbum.images[0];
                 const photoCount =
@@ -211,9 +234,11 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
                         <img src={image.src} alt="" loading="lazy" />
                       </span>
                     ))}
-                    <span className="studio-album-cover">
-                      <img src={coverImage.src} alt={coverImage.alt[language]} loading="lazy" />
-                    </span>
+                    {coverImage && (
+                      <span className="studio-album-cover">
+                        <img src={coverImage.src} alt={coverImage.alt[language]} loading="lazy" />
+                      </span>
+                    )}
                     <span className="studio-album-meta">
                       <span>{studioAlbum.name[language]}</span>
                       <small>{photoCount}</small>
@@ -236,11 +261,15 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
             </button>
 
             <div className="gallery-track" ref={carouselRef}>
-              {scrollingImages.map((image, index) => (
-                <figure className="gallery-item" key={`${image.src}-${index}`}>
-                  <img src={image.src} alt={image.alt[language]} loading="lazy" />
-                </figure>
-              ))}
+              {scrollingImages.length > 0 ? (
+                scrollingImages.map((image, index) => (
+                  <figure className="gallery-item" key={`${image.src}-${index}`}>
+                    <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                  </figure>
+                ))
+              ) : (
+                <div className="empty-state">{language === "zh" ? "暂无作品照片。" : "No gallery photos yet."}</div>
+              )}
             </div>
 
             <button
@@ -298,6 +327,17 @@ export function HomePage({ language, onNavigatePricing }: HomePageProps) {
             </div>
           </div>
         </div>
+      )}
+      {isEditorOpen && (
+        <GalleryEditor
+          language={language}
+          content={content}
+          onClose={() => setIsEditorOpen(false)}
+          onSave={(nextContent) => {
+            onChange(nextContent);
+            setIsEditorOpen(false);
+          }}
+        />
       )}
     </section>
   );
