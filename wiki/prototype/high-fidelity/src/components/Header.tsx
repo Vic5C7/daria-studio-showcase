@@ -37,8 +37,32 @@ export function Header({
   onToggleLanguage
 }: HeaderProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const roleLabel = currentUser?.role === "admin" ? copy(language, "管理员", "Admin") : copy(language, "客户", "Client");
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const syncHeaderHeight = () => {
+      const height = Math.ceil(header.getBoundingClientRect().height);
+      document.documentElement.style.setProperty("--site-header-height", `${height}px`);
+    };
+
+    syncHeaderHeight();
+
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncHeaderHeight) : null;
+    observer?.observe(header);
+    window.addEventListener("resize", syncHeaderHeight);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", syncHeaderHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
@@ -68,7 +92,7 @@ export function Header({
   };
 
   return (
-    <header className="site-header">
+    <header className="site-header" ref={headerRef}>
       <button
         className="brand-mark"
         type="button"
@@ -173,4 +197,3 @@ export function Header({
     </header>
   );
 }
-
