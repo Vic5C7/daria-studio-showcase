@@ -16,6 +16,7 @@ import {
   Shirt,
   Trash2,
   WandSparkles,
+  X,
   type LucideIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -653,6 +654,15 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
 
         {isAddSectionMenuOpen && (
           <div className="pricing-flow-add-menu">
+            <button
+              className="pricing-flow-add-close"
+              type="button"
+              onClick={() => setIsAddSectionMenuOpen(false)}
+              aria-label="关闭添加栏弹窗"
+              title="关闭"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
             <p>选择一个已有栏添加回流程</p>
             <div className="pricing-flow-add-list">
               {pricingFlowSectionOrder.map((sectionKey) => {
