@@ -13,10 +13,16 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
   background:
     linear-gradient(180deg, rgba(248, 246, 241, 0.98), rgba(238, 234, 226, 0.98)),
     #f8f6f1;
@@ -40,6 +46,8 @@ img {
 
 .site-shell {
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 .site-header {
@@ -92,6 +100,8 @@ img {
 }
 
 .site-nav {
+  min-width: 0;
+  max-width: 100%;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
@@ -178,6 +188,12 @@ img {
   white-space: nowrap;
 }
 
+.user-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .user-chip svg {
   flex: 0 0 auto;
   color: #9f7437;
@@ -242,6 +258,7 @@ img {
   display: grid;
   gap: 6px;
   width: max-content;
+  max-width: calc(100vw - 28px);
   min-width: 190px;
   padding: 8px;
   border: 1px solid rgba(30, 28, 26, 0.12);
@@ -334,6 +351,7 @@ h1 {
 
 .primary-action {
   gap: 10px;
+  max-width: 100%;
   min-height: 54px;
   margin-top: 14px;
   padding: 0 22px;
@@ -353,6 +371,11 @@ h1 {
   background: #9f7437;
   transform: translateY(-2px);
   box-shadow: 0 18px 36px rgba(159, 116, 55, 0.24);
+}
+
+.primary-action span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .gallery-section {
@@ -449,7 +472,8 @@ h1 {
 
 .gallery-carousel {
   position: relative;
-  width: min(100vw - 36px, 1180px);
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
   overflow: hidden;
 }
@@ -639,10 +663,12 @@ h1 {
 .studio-album-modal {
   display: flex;
   flex-direction: column;
-  width: min(60vw, 1240px);
-  min-width: min(920px, calc(100vw - 40px));
+  width: min(100%, 1240px);
+  min-width: 0;
   min-height: 60vh;
+  min-height: 60dvh;
   max-height: min(86vh, 840px);
+  max-height: min(86dvh, 840px);
   overflow: auto;
   padding: clamp(22px, 3vw, 36px);
   border: 1px solid rgba(255, 255, 255, 0.54);
@@ -764,6 +790,7 @@ h1 {
   display: grid;
   place-items: center;
   min-height: calc(100vh - 76px);
+  min-height: calc(100dvh - 76px);
   padding: clamp(42px, 7vw, 76px) 0 86px;
 }
 
@@ -1443,6 +1470,7 @@ h1 {
   justify-content: space-between;
   gap: 24px;
   width: min(380px, calc(100vw - 36px));
+  max-width: calc(100% - 36px);
   min-height: 82px;
   padding: 18px 22px;
   border: 1px solid rgba(30, 28, 26, 0.08);
@@ -1459,6 +1487,7 @@ h1 {
 }
 
 .floating-total strong {
+  min-width: 0;
   color: #050505;
   font-size: clamp(1.6rem, 3vw, 2.15rem);
   line-height: 1;
@@ -2172,8 +2201,11 @@ textarea {
   display: flex;
   flex-direction: column;
   width: min(820px, calc(100vw - 32px));
+  max-width: 100%;
   height: min(88vh, 860px);
+  height: min(88dvh, 860px);
   max-height: min(88vh, 860px);
+  max-height: min(88dvh, 860px);
   overflow: hidden;
   border: 1px solid rgba(30, 28, 26, 0.12);
   border-radius: 8px;
@@ -2183,6 +2215,7 @@ textarea {
 
 .admin-modal-wide {
   width: min(1120px, calc(100vw - 32px));
+  max-width: 100%;
 }
 
 .admin-modal-header {
@@ -2606,7 +2639,11 @@ textarea {
   }
 
   .floating-total {
-    top: 132px;
+    position: static;
+    width: 100%;
+    max-width: none;
+    min-height: 74px;
+    margin: 0 0 18px;
   }
 
   .pricing-layout {
@@ -2658,24 +2695,43 @@ textarea {
   .auth-page,
   .customers-page,
   .album-page {
-    width: min(100% - 28px, 1180px);
+    width: min(1180px, calc(100% - 28px));
   }
 
   .site-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     min-height: auto;
     padding: 14px;
   }
 
+  .site-nav {
+    width: 100%;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
   .floating-total {
-    top: 118px;
-    right: 14px;
-    width: min(340px, calc(100vw - 28px));
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 8px;
     min-height: 70px;
     padding: 14px 16px;
   }
 
   .floating-total span {
     font-size: 0.92rem;
+  }
+
+  .floating-total strong,
+  .floating-total strong.floating-total-status {
+    width: 100%;
+    max-width: none;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .brand-mark {
@@ -2688,8 +2744,8 @@ textarea {
   .logout-button,
   .user-chip {
     min-height: 38px;
-    padding: 0 11px;
-    font-size: 0.9rem;
+    padding: 0 9px;
+    font-size: 0.86rem;
   }
 
   .user-session {
@@ -2713,7 +2769,7 @@ textarea {
   }
 
   h1 {
-    font-size: 3rem;
+    font-size: 2.8rem;
   }
 
   .primary-action {
@@ -2748,7 +2804,8 @@ textarea {
   }
 
   .gallery-carousel {
-    width: min(100vw - 28px, 1180px);
+    width: 100%;
+    max-width: none;
   }
 
   .gallery-track {
@@ -2765,6 +2822,7 @@ textarea {
 
   .studio-album-modal {
     max-height: 84vh;
+    max-height: 84dvh;
     padding: 16px;
   }
 
@@ -2852,9 +2910,11 @@ textarea {
 
   .admin-modal,
   .admin-modal-wide {
-    width: calc(100vw - 20px);
+    width: min(100%, calc(100vw - 20px));
     height: calc(100vh - 20px);
+    height: calc(100dvh - 20px);
     max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
   }
 
   .admin-modal-header,
@@ -2903,5 +2963,16 @@ textarea {
   .admin-detail-row button {
     flex: 1 1 0;
     width: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .site-nav .auth-button-primary {
+    flex: 0 0 100%;
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 2.45rem;
   }
 }

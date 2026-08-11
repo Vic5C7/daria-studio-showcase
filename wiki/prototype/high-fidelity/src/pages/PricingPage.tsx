@@ -1193,13 +1193,6 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
 
   return (
     <section className="pricing-page">
-      <aside className="floating-total" aria-live="polite">
-        <span>{pricingContent.estimatedTotal[language]}</span>
-        <strong className={hasConfirmedTotal ? undefined : "floating-total-status"}>
-          {totalDisplay}
-        </strong>
-      </aside>
-
       <div className="pricing-hero">
         <div className="pricing-hero-actions">
           <button className="back-button" type="button" onClick={onNavigateHome}>
@@ -1221,6 +1214,13 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         <h1>{pricingContent.title[language]}</h1>
         <p>{pricingContent.intro[language]}</p>
       </div>
+
+      <aside className="floating-total" aria-live="polite">
+        <span>{pricingContent.estimatedTotal[language]}</span>
+        <strong className={hasConfirmedTotal ? undefined : "floating-total-status"}>
+          {totalDisplay}
+        </strong>
+      </aside>
 
       <div className="pricing-layout flow-layout">
         {isFlowSectionVisible("areas") && (
