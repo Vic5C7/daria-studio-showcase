@@ -2628,6 +2628,10 @@ textarea {
 }
 
 @media (max-width: 900px) {
+  .pricing-page {
+    padding-top: 130px;
+  }
+
   .site-header {
     align-items: flex-start;
     flex-direction: column;
@@ -2639,13 +2643,16 @@ textarea {
   }
 
   .floating-total {
-    position: sticky;
+    position: fixed;
     top: calc(var(--site-header-height, 124px) + 10px);
+    right: auto;
+    left: 50%;
     z-index: 9;
-    width: 100%;
+    width: min(900px, calc(100% - 36px));
     max-width: none;
     min-height: 74px;
-    margin: 0 0 18px;
+    margin: 0;
+    transform: translateX(-50%);
   }
 
   .pricing-layout {
@@ -2717,7 +2724,7 @@ textarea {
   .floating-total {
     display: grid;
     grid-template-columns: 1fr;
-    width: 100%;
+    width: calc(100% - 28px);
     gap: 8px;
     min-height: 70px;
     padding: 14px 16px;
