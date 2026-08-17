@@ -255,11 +255,9 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         return graduationStudioProps;
       }
 
-      return selectedSchoolId === "monash" || selectedSchoolId === "rmit"
-        ? (graduationAddOns.props ?? []).filter((addOn) => addOn.id !== "academic-scroll")
-        : graduationAddOns.props ?? [];
+      return graduationAddOns.props ?? [];
     },
-    [graduationAddOns.props, graduationStudioProps, selectedSceneTypeId, selectedSchoolId]
+    [graduationAddOns.props, graduationStudioProps, selectedSceneTypeId]
   );
 
   useEffect(() => {
@@ -713,7 +711,13 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     return "graduation";
   };
 
-  const getAddOnTargetForCurrentSelection = (): AddOnTarget => {
+  const getAddOnTargetForCurrentSelection = (
+    sectionKey?: PricingFlowSectionKey
+  ): AddOnTarget => {
+    if (isStudioGraduation && sectionKey === "makeup") {
+      return "graduation";
+    }
+
     if (isStudioGraduation) {
       return "graduationStudio";
     }
@@ -800,7 +804,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     }
 
     if (tab === "addons") {
-      context.initialAddOnTarget = getAddOnTargetForCurrentSelection();
+      context.initialAddOnTarget = getAddOnTargetForCurrentSelection(sectionKey);
       context.initialAddOnGroup = getAddOnGroupForSection(sectionKey);
     }
 

@@ -992,7 +992,10 @@ export const graduationAddOnsBySchool: Record<
     school.id,
     {
       clothing: graduationAddOns.clothing,
-      props: graduationAddOns.props,
+      props:
+        school.id === "monash" || school.id === "rmit"
+          ? graduationAddOns.props.filter((addOn) => addOn.id !== "academic-scroll")
+          : graduationAddOns.props,
       makeup: graduationAddOns.makeup
     }
   ])
