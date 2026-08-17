@@ -281,7 +281,14 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   }, [selectedAreaId, serviceAreas]);
 
   useEffect(() => {
-    if (selectedServiceTypeId && !availableServiceTypes.some((serviceType) => serviceType.id === selectedServiceTypeId)) {
+    const selectedServiceTypeOption = availableServiceTypes.find(
+      (serviceType) => serviceType.id === selectedServiceTypeId
+    );
+
+    if (
+      selectedServiceTypeId &&
+      (!selectedServiceTypeOption || !isContentAvailable(selectedServiceTypeOption))
+    ) {
       setSelectedServiceTypeId("");
       clearGraduationSelections();
     }
@@ -290,13 +297,25 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   useEffect(() => {
     const selectedSchoolOption = graduationSchools.find((school) => school.id === selectedSchoolId);
 
-    if (selectedSchoolId && (!selectedSchoolOption || !isContentVisible(selectedSchoolOption))) {
+    if (
+      selectedSchoolId &&
+      (!selectedSchoolOption ||
+        !isContentVisible(selectedSchoolOption) ||
+        !isContentAvailable(selectedSchoolOption))
+    ) {
       clearGraduationSelections();
     }
   }, [graduationSchools, selectedSchoolId]);
 
   useEffect(() => {
-    if (selectedSceneTypeId && !availableSceneTypes.some((sceneType) => sceneType.id === selectedSceneTypeId)) {
+    const selectedSceneOption = availableSceneTypes.find(
+      (sceneType) => sceneType.id === selectedSceneTypeId
+    );
+
+    if (
+      selectedSceneTypeId &&
+      (!selectedSceneOption || !isContentAvailable(selectedSceneOption))
+    ) {
       setSelectedSceneTypeId("");
       setSelectedPackageId("");
       setSelectedAddOnIds([]);
@@ -326,14 +345,14 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   }, [isSpotGalleryOpen]);
 
   useEffect(() => {
-    const packageStillExists = [
+    const selectedPackageOption = [
       ...availablePackages,
       ...visibleRegistryPackages
-    ].some((packageOption) => packageOption.id === selectedPackageId);
+    ].find((packageOption) => packageOption.id === selectedPackageId);
 
     if (
       selectedPackageId &&
-      !packageStillExists &&
+      (!selectedPackageOption || !isContentAvailable(selectedPackageOption)) &&
       selectedPackageId !== graduationStudioPackage.title.en &&
       selectedPackageId !== idPhotoPackage.title.en
     ) {
@@ -352,16 +371,30 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const isRegistryService = selectedServiceKind === "registry";
   const isIdPhotoService = selectedServiceKind === "id-photo";
   const isStudioGraduation = isGraduationService && selectedSceneTypeId === "graduation-studio";
+  const hasAvailableGraduationPackage = Boolean(
+    selectedPackage && isContentAvailable(selectedPackage)
+  );
+  const hasAvailableRegistryPackage = Boolean(
+    selectedRegistryPackage && isContentAvailable(selectedRegistryPackage)
+  );
+  const hasAvailableStudioPackage =
+    isContentVisible(graduationStudioPackage) && isContentAvailable(graduationStudioPackage);
+  const hasAvailableIdPhotoPackage =
+    isContentVisible(idPhotoPackage) && isContentAvailable(idPhotoPackage);
   const registryExtraLocationsTotal = isRegistryService ? sectionNotes.registryExtraLocations.length * 100 : 0;
   const graduationBasePrice = isStudioGraduation
-    ? isContentAvailable(graduationStudioPackage)
+    ? hasAvailableStudioPackage
       ? graduationStudioPackage.priceAud
       : 0
-    : selectedPackage?.priceAud ?? 0;
+    : hasAvailableGraduationPackage
+      ? selectedPackage?.priceAud ?? 0
+      : 0;
   const totalPrice = isRegistryService
-    ? (selectedRegistryPackage?.priceAud ?? 0) + selectedAddOnsTotal + registryExtraLocationsTotal
+    ? (hasAvailableRegistryPackage ? selectedRegistryPackage?.priceAud ?? 0 : 0) +
+      selectedAddOnsTotal +
+      registryExtraLocationsTotal
     : isIdPhotoService
-      ? (isContentAvailable(idPhotoPackage) ? idPhotoPackage.priceAud : 0) + selectedAddOnsTotal
+      ? (hasAvailableIdPhotoPackage ? idPhotoPackage.priceAud : 0) + selectedAddOnsTotal
       : graduationBasePrice + selectedAddOnsTotal;
   const showServiceTypes = Boolean(selectedAreaId);
   const showSchoolSelect = isGraduationService;
@@ -370,11 +403,19 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const showRegistryPackages = isRegistryService;
   const showIdPhotoPackage = isIdPhotoService && isContentVisible(idPhotoPackage);
   const showAddOns = isRegistryService
-    ? Boolean(selectedRegistryPackage)
-    : isIdPhotoService || isStudioGraduation || Boolean(selectedPackage);
+    ? hasAvailableRegistryPackage
+    : isIdPhotoService
+      ? hasAvailableIdPhotoPackage
+      : isStudioGraduation
+        ? hasAvailableStudioPackage
+        : hasAvailableGraduationPackage;
   const hasConfirmedTotal = isRegistryService
-    ? Boolean(selectedRegistryPackage)
-    : isIdPhotoService || isStudioGraduation || Boolean(selectedPackage);
+    ? hasAvailableRegistryPackage
+    : isIdPhotoService
+      ? hasAvailableIdPhotoPackage
+      : isStudioGraduation
+        ? hasAvailableStudioPackage
+        : hasAvailableGraduationPackage;
   const addOnsStepLabel = isRegistryService
     ? "Step 05-07"
     : isIdPhotoService
