@@ -464,6 +464,22 @@ h1 {
   transform: translateY(-1px);
 }
 
+.gallery-filter-button:disabled,
+.gallery-filter-button.is-unavailable {
+  cursor: not-allowed;
+  border-color: rgba(30, 28, 26, 0.1);
+  background: #e8e4dd;
+  color: #8d8880;
+  opacity: 0.78;
+}
+
+.gallery-filter-button:disabled:hover,
+.gallery-filter-button.is-unavailable:hover {
+  border-color: rgba(30, 28, 26, 0.1);
+  background: #e8e4dd;
+  transform: none;
+}
+
 .gallery-filter-button.is-selected {
   border-color: #1e1c1a;
   background: #1e1c1a;
@@ -531,6 +547,30 @@ h1 {
 
 .gallery-item:hover img {
   transform: scale(1.035);
+}
+
+.gallery-item.is-unavailable,
+.studio-album-card.is-unavailable,
+.studio-album-modal-photo.is-unavailable {
+  filter: grayscale(0.72);
+  opacity: 0.62;
+}
+
+.gallery-item.is-unavailable:hover img {
+  transform: none;
+}
+
+.gallery-unavailable-label {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 3;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(30, 28, 26, 0.76);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .studio-gallery-view {
@@ -736,6 +776,7 @@ h1 {
 }
 
 .studio-album-modal-photo {
+  position: relative;
   overflow: hidden;
   margin: 0;
   aspect-ratio: 4 / 5;
@@ -749,6 +790,23 @@ h1 {
   height: 100%;
   object-fit: cover;
   object-position: center top;
+}
+
+.spot-gallery-modal-context {
+  margin: -4px 0 18px;
+  color: #675f57;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.spot-gallery-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.spot-gallery-modal-grid .studio-album-modal-photo {
+  aspect-ratio: 4 / 3;
 }
 
 .gallery-arrow {
@@ -1610,6 +1668,37 @@ h1 {
   align-items: center;
 }
 
+.spot-gallery-trigger {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: #9f7437;
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.spot-gallery-trigger svg {
+  transition: transform 160ms ease;
+}
+
+.spot-gallery-trigger:hover {
+  color: #1e1c1a;
+  transform: translateY(-1px);
+}
+
+.spot-gallery-trigger[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
 .admin-title-edit-button,
 .admin-title-delete-button {
   display: inline-flex;
@@ -1651,6 +1740,7 @@ h1 {
 
 .pricing-flow-add-control {
   position: relative;
+  order: 999;
   display: grid;
   justify-items: center;
   gap: 10px;
@@ -1715,6 +1805,10 @@ h1 {
   color: #1e1c1a;
   font-weight: 900;
   text-align: left;
+}
+
+.studio-album-card:disabled {
+  cursor: not-allowed;
 }
 
 .pricing-flow-add-menu .pricing-flow-add-close {
@@ -1863,6 +1957,49 @@ h1 {
   opacity: 0.58;
 }
 
+.choice-button.is-unavailable {
+  position: relative;
+  border-color: rgba(30, 28, 26, 0.12);
+  background: #ece9e3;
+  color: #8b857d;
+  cursor: not-allowed;
+  opacity: 0.82;
+}
+
+.choice-button.is-unavailable:hover {
+  border-color: rgba(30, 28, 26, 0.18);
+  background: #ece9e3;
+  transform: none;
+}
+
+.choice-button.is-unavailable[data-tooltip]::after {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 5;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: #1e1c1a;
+  color: #ffffff;
+  content: attr(data-tooltip);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  white-space: nowrap;
+}
+
+.choice-button.is-unavailable[data-tooltip]:hover::after,
+.choice-button.is-unavailable[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 .scene-choice,
 .addon-choice {
   justify-content: flex-start;
@@ -1907,20 +2044,18 @@ h1 {
   font-size: 1.55rem;
 }
 
-.choice-button .package-detail,
-.choice-button .addon-description {
+.choice-button .content-detail {
   color: #675f57;
   font-weight: 600;
   line-height: 1.55;
 }
 
-.choice-button .package-detail::before {
-  content: "- ";
+.choice-button.is-selected .content-detail {
+  color: #efe7da;
 }
 
-.choice-button.is-selected .package-detail,
-.choice-button.is-selected .addon-description {
-  color: #efe7da;
+.choice-button .content-detail::before {
+  content: "- ";
 }
 
 .compact-title {
@@ -2495,6 +2630,61 @@ textarea {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
+.admin-publish-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: max-content;
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.admin-edit-row .admin-publish-controls .admin-check-field,
+.admin-edit-row-wide .admin-publish-controls .admin-check-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+}
+
+.admin-photo-edit-content {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-photo-thumbnail {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid rgba(30, 28, 26, 0.14);
+  border-radius: 8px;
+  background: #efe7da;
+}
+
+.admin-photo-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.admin-add-on-preview {
+  width: 148px;
+  height: 112px;
+  overflow: hidden;
+  border: 1px solid rgba(30, 28, 26, 0.14);
+  border-radius: 8px;
+  background: #efe7da;
+}
+
+.admin-add-on-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
 .admin-edit-card {
   display: grid;
   gap: 16px;
@@ -2503,6 +2693,13 @@ textarea {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.84);
   box-shadow: 0 12px 28px rgba(30, 28, 26, 0.045);
+}
+
+.admin-edit-card.is-context-target {
+  border-color: rgba(159, 116, 55, 0.58);
+  box-shadow:
+    0 0 0 3px rgba(159, 116, 55, 0.1),
+    0 12px 28px rgba(30, 28, 26, 0.08);
 }
 
 .admin-card-actions {
@@ -2699,6 +2896,10 @@ textarea {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .spot-gallery-modal-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .customer-card {
     grid-template-columns: 1fr;
   }
@@ -2860,6 +3061,10 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .spot-gallery-modal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .studio-album-card {
     padding-right: 16px;
   }
@@ -2977,6 +3182,10 @@ textarea {
   .admin-card-delete-button {
     width: auto;
     align-self: flex-end;
+  }
+
+  .admin-photo-edit-content {
+    grid-template-columns: 1fr;
   }
 
   .admin-edit-row,

@@ -1,6 +1,7 @@
 import {
   Aperture,
   ArrowLeft,
+  ChevronDown,
   BadgePlus,
   Gift,
   HeartHandshake,
@@ -27,15 +28,21 @@ import {
   type PackageScope,
   type PricingEditorTab
 } from "../components/PricingEditor";
-import type { EditablePricingContent } from "../data/editableContent";
 import {
-  pricingContent,
+  defaultPricingFlowLayouts,
+  type EditablePricingContent,
+  type PricingFlowKind,
+  type PricingFlowSectionKey
+} from "../data/editableContent";
+import {
+  pricingContent as defaultPricingContent,
   type AddOnGroupId,
   type GalleryImage,
   type GraduationAddOn,
   type IdPhotoAddOn,
   type IdPhotoAddOnGroupId,
   type Language,
+  type LocalizedList,
   type RegistryAddOn,
   type RegistryAddOnGroupId,
   type SceneTypeId,
@@ -46,18 +53,6 @@ import {
 type AddOnNoteSection = AddOnGroupId | RegistryAddOnGroupId | IdPhotoAddOnGroupId;
 type AddOnOption = GraduationAddOn | RegistryAddOn | IdPhotoAddOn;
 type NoteSection = "schoolScene" | "package" | "registryExtraLocations" | AddOnNoteSection;
-type PricingFlowSectionKey =
-  | "areas"
-  | "services"
-  | "schools"
-  | "scenes"
-  | "studioPackage"
-  | "graduationPackage"
-  | "registryPackage"
-  | "idPhotoPackage"
-  | "registryExtraLocations"
-  | "addOnsIntro"
-  | AddOnNoteSection;
 type PricingFlowSectionInstance = {
   id: string;
   sectionKey: PricingFlowSectionKey;
@@ -76,10 +71,13 @@ type PricingPageProps = {
 type PricingEditorContext = {
   visibleTabs?: PricingEditorTab[];
   initialAreaId?: string;
+  initialServiceTypeId?: string;
   initialSchoolId?: string;
   initialSceneId?: string;
   initialPackageScope?: PackageScope;
+  initialPackageId?: string;
   initialAddOnTarget?: AddOnTarget;
+  initialAddOnGroup?: "clothing" | "props" | "makeup";
 };
 
 const emptySectionNotes: SectionNotes = {
@@ -97,30 +95,37 @@ const emptySectionNotes: SectionNotes = {
   idPhotoProps: []
 };
 
-const pricingFlowSectionOrder: PricingFlowSectionKey[] = [
-  "areas",
-  "services",
-  "schools",
-  "scenes",
-  "studioPackage",
-  "graduationPackage",
-  "registryPackage",
-  "idPhotoPackage",
-  "registryExtraLocations",
-  "addOnsIntro",
-  "clothing",
-  "props",
-  "makeup",
-  "registryStyling",
-  "registryProps",
-  "registryClothing",
-  "idPhotoClothing",
-  "idPhotoStyling",
-  "idPhotoProps"
-];
-
 function formatAud(price: number) {
   return `${price} AUD`;
+}
+
+function isContentVisible(item: { isVisible?: boolean }) {
+  return item.isVisible !== false;
+}
+
+function isContentAvailable(item: { isAvailable?: boolean }) {
+  return item.isAvailable !== false;
+}
+
+function renderDescriptionItems(
+  description: LocalizedList | undefined,
+  language: Language
+) {
+  const items = (description?.[language] ?? []).filter((item) => item.trim().length > 0);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {items.map((item, index) => (
+        <span className="content-detail" key={`${index}-${item}`}>
+          {item}
+        </span>
+      ))}
+    </>
+  );
 }
 
 function renderOptionPreview(previewImage: GalleryImage, language: Language) {
@@ -142,9 +147,9 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editorInitialTab, setEditorInitialTab] = useState<PricingEditorTab>("areas");
   const [editorContext, setEditorContext] = useState<PricingEditorContext>({});
-  const [hiddenFlowSections, setHiddenFlowSections] = useState<PricingFlowSectionKey[]>([]);
-  const [addedFlowSections, setAddedFlowSections] = useState<PricingFlowSectionInstance[]>([]);
+  const [addedFlowSections] = useState<PricingFlowSectionInstance[]>([]);
   const [isAddSectionMenuOpen, setIsAddSectionMenuOpen] = useState(false);
+  const [isSpotGalleryOpen, setIsSpotGalleryOpen] = useState(false);
 
   const {
     serviceAreas,
@@ -158,10 +163,32 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     idPhotoPackage,
     registryAddOns,
     registryPackages,
-    graduationAddOns
+    graduationAddOns: sharedGraduationAddOns,
+    graduationAddOnsBySchool,
+    pricingCopy
   } = content;
 
-  const availableServiceTypes = selectedAreaId ? serviceTypesByArea[selectedAreaId] ?? [] : [];
+  const pricingContent = pricingCopy ?? defaultPricingContent;
+
+  const graduationAddOns = selectedSchoolId
+    ? graduationAddOnsBySchool[selectedSchoolId] ?? sharedGraduationAddOns
+    : sharedGraduationAddOns;
+
+  const availableServiceTypes = selectedAreaId
+    ? (serviceTypesByArea[selectedAreaId] ?? []).filter(isContentVisible)
+    : [];
+  const visibleServiceAreas = useMemo(
+    () => serviceAreas.filter(isContentVisible),
+    [serviceAreas]
+  );
+  const visibleGraduationSchools = useMemo(
+    () => graduationSchools.filter(isContentVisible),
+    [graduationSchools]
+  );
+  const visibleRegistryPackages = useMemo(
+    () => registryPackages.filter(isContentVisible),
+    [registryPackages]
+  );
 
   const selectedServiceType = useMemo(
     () => availableServiceTypes.find((serviceType) => serviceType.id === selectedServiceTypeId),
@@ -174,7 +201,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   );
 
   const availableSceneTypes = selectedSchoolId
-    ? sceneTypesBySchool[selectedSchoolId] ?? []
+    ? (sceneTypesBySchool[selectedSchoolId] ?? []).filter(isContentVisible)
     : [];
 
   const selectedSceneType = useMemo(
@@ -183,7 +210,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   );
 
   const availablePackages = selectedSceneTypeId
-    ? graduationPackages[selectedSceneTypeId] ?? []
+    ? (graduationPackages[selectedSceneTypeId] ?? []).filter(isContentVisible)
     : [];
 
   const selectedPackage = useMemo(
@@ -192,8 +219,24 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   );
 
   const selectedRegistryPackage = useMemo(
-    () => registryPackages.find((registryPackage) => registryPackage.id === selectedPackageId),
-    [registryPackages, selectedPackageId]
+    () => visibleRegistryPackages.find((registryPackage) => registryPackage.id === selectedPackageId),
+    [visibleRegistryPackages, selectedPackageId]
+  );
+
+  const spotGalleryImages = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => {
+        const imageNumber = String((index % 9) + 1).padStart(2, "0");
+
+        return {
+          src: `images/models/model-${imageNumber}.jpg`,
+          alt: {
+            zh: `毕业照打卡点 ${index + 1}`,
+            en: `Graduation photo spot ${index + 1}`
+          }
+        };
+      }),
+    []
   );
 
   const allAddOns = useMemo(
@@ -202,7 +245,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       ...graduationStudioProps,
       ...Object.values(registryAddOns).flat(),
       ...Object.values(idPhotoAddOns).flat()
-    ],
+    ].filter(isContentVisible),
     [graduationAddOns, graduationStudioProps, idPhotoAddOns, registryAddOns]
   );
 
@@ -221,12 +264,16 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
 
   useEffect(() => {
     setSelectedAddOnIds((currentAddOnIds) =>
-      currentAddOnIds.filter((addOnId) => allAddOns.some((addOn) => addOn.id === addOnId))
+      currentAddOnIds.filter((addOnId) =>
+        allAddOns.some((addOn) => addOn.id === addOnId && isContentAvailable(addOn))
+      )
     );
   }, [allAddOns]);
 
   useEffect(() => {
-    if (selectedAreaId && !serviceAreas.some((area) => area.id === selectedAreaId)) {
+    const selectedArea = serviceAreas.find((area) => area.id === selectedAreaId);
+
+    if (selectedAreaId && (!selectedArea || !isContentVisible(selectedArea) || !isContentAvailable(selectedArea))) {
       setSelectedAreaId("");
       setSelectedServiceTypeId("");
       clearGraduationSelections();
@@ -241,7 +288,9 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   }, [availableServiceTypes, selectedServiceTypeId]);
 
   useEffect(() => {
-    if (selectedSchoolId && !graduationSchools.some((school) => school.id === selectedSchoolId)) {
+    const selectedSchoolOption = graduationSchools.find((school) => school.id === selectedSchoolId);
+
+    if (selectedSchoolId && (!selectedSchoolOption || !isContentVisible(selectedSchoolOption))) {
       clearGraduationSelections();
     }
   }, [graduationSchools, selectedSchoolId]);
@@ -251,13 +300,35 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       setSelectedSceneTypeId("");
       setSelectedPackageId("");
       setSelectedAddOnIds([]);
+      setIsSpotGalleryOpen(false);
     }
   }, [availableSceneTypes, selectedSceneTypeId]);
 
   useEffect(() => {
+    if (!isSpotGalleryOpen) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSpotGalleryOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isSpotGalleryOpen]);
+
+  useEffect(() => {
     const packageStillExists = [
       ...availablePackages,
-      ...registryPackages
+      ...visibleRegistryPackages
     ].some((packageOption) => packageOption.id === selectedPackageId);
 
     if (
@@ -269,11 +340,11 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       setSelectedPackageId("");
       setSelectedAddOnIds([]);
     }
-  }, [availablePackages, graduationStudioPackage.title.en, idPhotoPackage.title.en, registryPackages, selectedPackageId]);
+  }, [availablePackages, graduationStudioPackage.title.en, idPhotoPackage.title.en, selectedPackageId, visibleRegistryPackages]);
 
   const selectedAddOnsTotal = selectedAddOnIds.reduce((sum, addOnId) => {
     const addOn = allAddOns.find((option) => option.id === addOnId);
-    return sum + (addOn?.priceAud ?? 0);
+    return sum + (addOn && isContentAvailable(addOn) ? addOn.priceAud : 0);
   }, 0);
 
   const selectedServiceKind = selectedServiceType?.kind ?? "other";
@@ -283,19 +354,21 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const isStudioGraduation = isGraduationService && selectedSceneTypeId === "graduation-studio";
   const registryExtraLocationsTotal = isRegistryService ? sectionNotes.registryExtraLocations.length * 100 : 0;
   const graduationBasePrice = isStudioGraduation
-    ? graduationStudioPackage.priceAud
+    ? isContentAvailable(graduationStudioPackage)
+      ? graduationStudioPackage.priceAud
+      : 0
     : selectedPackage?.priceAud ?? 0;
   const totalPrice = isRegistryService
     ? (selectedRegistryPackage?.priceAud ?? 0) + selectedAddOnsTotal + registryExtraLocationsTotal
     : isIdPhotoService
-      ? idPhotoPackage.priceAud + selectedAddOnsTotal
-    : graduationBasePrice + selectedAddOnsTotal;
+      ? (isContentAvailable(idPhotoPackage) ? idPhotoPackage.priceAud : 0) + selectedAddOnsTotal
+      : graduationBasePrice + selectedAddOnsTotal;
   const showServiceTypes = Boolean(selectedAreaId);
   const showSchoolSelect = isGraduationService;
   const showSceneTypes = isGraduationService && Boolean(selectedSchool);
   const showGraduationPackages = isGraduationService && Boolean(selectedSceneType) && !isStudioGraduation;
   const showRegistryPackages = isRegistryService;
-  const showIdPhotoPackage = isIdPhotoService;
+  const showIdPhotoPackage = isIdPhotoService && isContentVisible(idPhotoPackage);
   const showAddOns = isRegistryService
     ? Boolean(selectedRegistryPackage)
     : isIdPhotoService || isStudioGraduation || Boolean(selectedPackage);
@@ -314,8 +387,21 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     ? formatAud(totalPrice)
     : pricingContent.choosePackageTotal[language];
 
+  const currentFlowKind: PricingFlowKind = isRegistryService
+    ? "registry"
+    : isIdPhotoService
+      ? "idPhoto"
+      : "graduation";
+  const pricingFlowLayouts = content.pricingFlowLayouts ?? defaultPricingFlowLayouts;
+  const currentFlowLayout =
+    pricingFlowLayouts[currentFlowKind] ?? defaultPricingFlowLayouts[currentFlowKind];
+
   const isFlowSectionVisible = (sectionKey: PricingFlowSectionKey) =>
-    !hiddenFlowSections.includes(sectionKey);
+    currentFlowLayout.order.includes(sectionKey) && !currentFlowLayout.hidden.includes(sectionKey);
+
+  const flowSectionStyle = (sectionKey: PricingFlowSectionKey) => ({
+    order: Math.max(0, currentFlowLayout.order.indexOf(sectionKey))
+  });
 
   const getFlowSectionLabel = (sectionKey: PricingFlowSectionKey) => {
     switch (sectionKey) {
@@ -406,26 +492,34 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       case "addOnsIntro":
         return showAddOns;
       case "clothing":
-        return showAddOns && isGraduationService && !isStudioGraduation && (graduationAddOns.clothing ?? []).length > 0;
+        return showAddOns && isGraduationService && !isStudioGraduation && (graduationAddOns.clothing ?? []).some(isContentVisible);
       case "props":
-        return showAddOns && isGraduationService && availablePropsAddOns.length > 0;
+        return showAddOns && isGraduationService && availablePropsAddOns.some(isContentVisible);
       case "makeup":
-        return showAddOns && isGraduationService && (graduationAddOns.makeup ?? []).length > 0;
+        return showAddOns && isGraduationService && (graduationAddOns.makeup ?? []).some(isContentVisible);
       case "registryStyling":
-        return showAddOns && isRegistryService && (registryAddOns.registryStyling ?? []).length > 0;
+        return showAddOns && isRegistryService && (registryAddOns.registryStyling ?? []).some(isContentVisible);
       case "registryProps":
-        return showAddOns && isRegistryService && (registryAddOns.registryProps ?? []).length > 0;
+        return showAddOns && isRegistryService && (registryAddOns.registryProps ?? []).some(isContentVisible);
       case "registryClothing":
-        return showAddOns && isRegistryService && (registryAddOns.registryClothing ?? []).length > 0;
+        return showAddOns && isRegistryService && (registryAddOns.registryClothing ?? []).some(isContentVisible);
       case "idPhotoClothing":
-        return showAddOns && isIdPhotoService && (idPhotoAddOns.idPhotoClothing ?? []).length > 0;
+        return showAddOns && isIdPhotoService && (idPhotoAddOns.idPhotoClothing ?? []).some(isContentVisible);
       case "idPhotoStyling":
-        return showAddOns && isIdPhotoService && (idPhotoAddOns.idPhotoStyling ?? []).length > 0;
+        return showAddOns && isIdPhotoService && (idPhotoAddOns.idPhotoStyling ?? []).some(isContentVisible);
       case "idPhotoProps":
-        return showAddOns && isIdPhotoService && (idPhotoAddOns.idPhotoProps ?? []).length > 0;
+        return showAddOns && isIdPhotoService && (idPhotoAddOns.idPhotoProps ?? []).some(isContentVisible);
       default:
         return false;
     }
+  };
+
+  const getFlowStepLabel = (sectionKey: PricingFlowSectionKey, fallback = "") => {
+    const visibleSections = currentFlowLayout.order.filter(
+      (candidate) => isFlowSectionVisible(candidate) && canOfferFlowSection(candidate)
+    );
+    const sectionIndex = visibleSections.indexOf(sectionKey);
+    return sectionIndex >= 0 ? formatStepLabel(sectionIndex + 1) : fallback;
   };
 
   const clearGraduationSelections = () => {
@@ -441,6 +535,46 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     setSelectedServiceTypeId("");
     clearGraduationSelections();
   };
+
+  const renderServiceAreaOptions = (keyPrefix: string) => (
+    <div className="option-grid two-options">
+      {visibleServiceAreas.length === 0 ? (
+        <div className="empty-state">
+          {language === "zh" ? "暂无可显示的服务地区。" : "No service areas are currently visible."}
+        </div>
+      ) : (
+        visibleServiceAreas.map((area) => {
+          const isUnavailable = !isContentAvailable(area);
+          const areaClassName = [
+            "choice-button",
+            selectedAreaId === area.id ? "is-selected" : "",
+            isUnavailable ? "is-unavailable" : ""
+          ]
+            .filter(Boolean)
+            .join(" ");
+
+          return (
+            <button
+              className={areaClassName}
+              type="button"
+              key={`${keyPrefix}-${area.id}`}
+              onClick={() => {
+                if (!isUnavailable) {
+                  selectArea(area.id);
+                }
+              }}
+              aria-pressed={selectedAreaId === area.id}
+              aria-disabled={isUnavailable}
+              data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+              title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+            >
+              <span>{area.name[language]}</span>
+            </button>
+          );
+        })
+      )}
+    </div>
+  );
 
   const selectServiceType = (serviceTypeId: ServiceTypeId) => {
     setSelectedServiceTypeId(serviceTypeId);
@@ -459,6 +593,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     setSelectedSceneTypeId(sceneTypeId);
     setSelectedPackageId("");
     setSelectedAddOnIds([]);
+    setIsSpotGalleryOpen(false);
     setSectionNotes((currentNotes) => ({
       ...currentNotes,
       package: [],
@@ -476,12 +611,23 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     }));
   };
 
-  const toggleAddOn = (addOnId: string) => {
-    setSelectedAddOnIds((currentAddOns) =>
-      currentAddOns.includes(addOnId)
+  const toggleAddOn = (addOnId: string, exclusiveAddOnIds: string[] = []) => {
+    setSelectedAddOnIds((currentAddOns) => {
+      if (exclusiveAddOnIds.length > 0) {
+        if (currentAddOns.includes(addOnId)) {
+          return currentAddOns;
+        }
+
+        return [
+          ...currentAddOns.filter((currentAddOn) => !exclusiveAddOnIds.includes(currentAddOn)),
+          addOnId
+        ];
+      }
+
+      return currentAddOns.includes(addOnId)
         ? currentAddOns.filter((currentAddOn) => currentAddOn !== addOnId)
-        : [...currentAddOns, addOnId]
-    );
+        : [...currentAddOns, addOnId];
+    });
   };
 
   const updateNotes = (section: NoteSection, notes: string[]) => {
@@ -489,6 +635,25 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       ...currentNotes,
       [section]: notes
     }));
+  };
+
+  const renderSpotGalleryButton = () => {
+    if (!selectedSceneType) {
+      return null;
+    }
+
+    return (
+      <button
+        className="spot-gallery-trigger"
+        type="button"
+        onClick={() => setIsSpotGalleryOpen(true)}
+        aria-expanded={isSpotGalleryOpen}
+        aria-controls="graduation-spot-gallery"
+      >
+        <span>{language === "zh" ? "查看所有打卡点" : "View all photo spots"}</span>
+        <ChevronDown size={16} aria-hidden="true" />
+      </button>
+    );
   };
 
   const getPackageScopeForCurrentSelection = (): PackageScope => {
@@ -508,6 +673,10 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   };
 
   const getAddOnTargetForCurrentSelection = (): AddOnTarget => {
+    if (isStudioGraduation) {
+      return "graduationStudio";
+    }
+
     if (isRegistryService) {
       return "registry";
     }
@@ -519,13 +688,58 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     return "graduation";
   };
 
-  const getContextForTab = (tab: PricingEditorTab): PricingEditorContext => {
+  const getPackageScopeForSection = (sectionKey?: PricingFlowSectionKey): PackageScope => {
+    if (sectionKey === "registryPackage") {
+      return "registry";
+    }
+
+    if (sectionKey === "idPhotoPackage") {
+      return "idPhoto";
+    }
+
+    if (sectionKey === "studioPackage") {
+      return "studio";
+    }
+
+    if (sectionKey === "graduationPackage") {
+      return "graduation";
+    }
+
+    return getPackageScopeForCurrentSelection();
+  };
+
+  const getAddOnGroupForSection = (
+    sectionKey?: PricingFlowSectionKey
+  ): "clothing" | "props" | "makeup" | undefined => {
+    if (sectionKey === "clothing" || sectionKey === "registryClothing" || sectionKey === "idPhotoClothing") {
+      return "clothing";
+    }
+
+    if (sectionKey === "props" || sectionKey === "registryProps" || sectionKey === "idPhotoProps") {
+      return "props";
+    }
+
+    if (sectionKey === "makeup" || sectionKey === "registryStyling" || sectionKey === "idPhotoStyling") {
+      return "makeup";
+    }
+
+    return undefined;
+  };
+
+  const getContextForTab = (
+    tab: PricingEditorTab,
+    sectionKey?: PricingFlowSectionKey
+  ): PricingEditorContext => {
     const context: PricingEditorContext = {
       visibleTabs: [tab]
     };
 
     if (selectedAreaId) {
       context.initialAreaId = selectedAreaId;
+    }
+
+    if (selectedServiceTypeId) {
+      context.initialServiceTypeId = selectedServiceTypeId;
     }
 
     if (selectedSchoolId) {
@@ -537,19 +751,28 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     }
 
     if (tab === "packages") {
-      context.initialPackageScope = getPackageScopeForCurrentSelection();
+      context.initialPackageScope = getPackageScopeForSection(sectionKey);
+
+      if (selectedPackageId) {
+        context.initialPackageId = selectedPackageId;
+      }
     }
 
     if (tab === "addons") {
       context.initialAddOnTarget = getAddOnTargetForCurrentSelection();
+      context.initialAddOnGroup = getAddOnGroupForSection(sectionKey);
     }
 
     return context;
   };
 
-  const openPricingEditor = (tab: PricingEditorTab, isContextual = false) => {
+  const openPricingEditor = (
+    tab: PricingEditorTab,
+    isContextual = false,
+    sectionKey?: PricingFlowSectionKey
+  ) => {
     setEditorInitialTab(tab);
-    setEditorContext(isContextual ? getContextForTab(tab) : {});
+    setEditorContext(isContextual ? getContextForTab(tab, sectionKey) : {});
     setIsEditorOpen(true);
   };
 
@@ -567,31 +790,46 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     }
 
     if (instanceId) {
-      setAddedFlowSections((currentSections) =>
-        currentSections.filter((currentSection) => currentSection.id !== instanceId)
-      );
       setIsAddSectionMenuOpen(false);
       return;
     }
 
-    setHiddenFlowSections((currentSections) =>
-      currentSections.includes(sectionKey) ? currentSections : [...currentSections, sectionKey]
-    );
+    onChange({
+      ...content,
+      pricingFlowLayouts: {
+        ...pricingFlowLayouts,
+        [currentFlowKind]: {
+          ...currentFlowLayout,
+          hidden: currentFlowLayout.hidden.includes(sectionKey)
+            ? currentFlowLayout.hidden
+            : [...currentFlowLayout.hidden, sectionKey]
+        }
+      }
+    });
     setIsAddSectionMenuOpen(false);
   };
 
   const addFlowSection = (sectionKey: PricingFlowSectionKey) => {
-    setAddedFlowSections((currentSections) => [
-      ...currentSections,
-      {
-        id: `added-${sectionKey}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        sectionKey
+    onChange({
+      ...content,
+      pricingFlowLayouts: {
+        ...pricingFlowLayouts,
+        [currentFlowKind]: {
+          order: currentFlowLayout.order.includes(sectionKey)
+            ? currentFlowLayout.order
+            : [...currentFlowLayout.order, sectionKey],
+          hidden: currentFlowLayout.hidden.filter((hiddenSection) => hiddenSection !== sectionKey)
+        }
       }
-    ]);
+    });
     setIsAddSectionMenuOpen(false);
   };
 
-  const renderPricingEditButton = (tab: PricingEditorTab, labelText: string) => {
+  const renderPricingEditButton = (
+    tab: PricingEditorTab,
+    labelText: string,
+    sectionKey?: PricingFlowSectionKey
+  ) => {
     if (!isAdmin) {
       return null;
     }
@@ -600,7 +838,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       <button
         className="admin-title-edit-button"
         type="button"
-        onClick={() => openPricingEditor(tab, true)}
+        onClick={() => openPricingEditor(tab, true, sectionKey)}
         aria-label={`编辑${labelText}`}
         title={`编辑${labelText}`}
       >
@@ -621,7 +859,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
 
     return (
       <span className="admin-title-actions">
-        {editorTab && renderPricingEditButton(editorTab, labelText)}
+        {editorTab && renderPricingEditButton(editorTab, labelText, sectionKey)}
         <button
           className="admin-title-delete-button"
           type="button"
@@ -665,7 +903,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
             </button>
             <p>选择一个已有栏添加回流程</p>
             <div className="pricing-flow-add-list">
-              {pricingFlowSectionOrder.map((sectionKey) => {
+              {defaultPricingFlowLayouts[currentFlowKind].order.map((sectionKey) => {
                 return (
                 <button
                   type="button"
@@ -692,13 +930,19 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     options: AddOnOption[],
     instanceId?: string
   ) => {
-    if (!instanceId && (options.length === 0 || !isFlowSectionVisible(section as PricingFlowSectionKey))) {
+    const visibleOptions = options.filter(isContentVisible);
+    const isExclusiveSelection = ["makeup", "registryStyling", "idPhotoStyling"].includes(section);
+    const shouldShowPreview = !isExclusiveSelection;
+    const exclusiveAddOnIds = isExclusiveSelection ? options.map((option) => option.id) : [];
+
+    if (!instanceId && (visibleOptions.length === 0 || !isFlowSectionVisible(section as PricingFlowSectionKey))) {
       return null;
     }
 
     return (
       <section
         className="pricing-panel selector-panel"
+        style={flowSectionStyle(section as PricingFlowSectionKey)}
         aria-labelledby={`${section}${instanceId ? `-${instanceId}` : ""}-title`}
       >
         <div className="panel-title compact-title panel-title-with-action">
@@ -710,29 +954,43 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
           {renderFlowSectionActions(section as PricingFlowSectionKey, title, "addons", instanceId)}
         </div>
 
-        {options.length === 0 ? (
+        {visibleOptions.length === 0 ? (
           <div className="empty-state">这一栏当前还没有可选内容</div>
         ) : (
           <div className="option-grid addon-options">
-            {options.map((addOn) => {
-            const isSelected = selectedAddOnIds.includes(addOn.id);
+            {visibleOptions.map((addOn) => {
+              const isSelected = selectedAddOnIds.includes(addOn.id);
+              const isUnavailable = !isContentAvailable(addOn);
 
-            return (
-              <button
-                className={isSelected ? "choice-button addon-choice is-selected" : "choice-button addon-choice"}
-                type="button"
-                key={addOn.id}
-                onClick={() => toggleAddOn(addOn.id)}
-                aria-pressed={isSelected}
-              >
-                {addOn.previewImage && renderOptionPreview(addOn.previewImage, language)}
-                <span>{addOn.name[language]}</span>
-                <strong>{formatAud(addOn.priceAud)}</strong>
-                {addOn.description && (
-                  <small className="addon-description">{addOn.description[language]}</small>
-                )}
-              </button>
-            );
+              return (
+                <button
+                  className={
+                    [
+                      "choice-button addon-choice",
+                      isSelected ? "is-selected" : "",
+                      isUnavailable ? "is-unavailable" : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  type="button"
+                  key={addOn.id}
+                  onClick={() => {
+                    if (!isUnavailable) {
+                      toggleAddOn(addOn.id, exclusiveAddOnIds);
+                    }
+                  }}
+                  aria-pressed={isSelected}
+                  aria-disabled={isUnavailable}
+                  data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                  title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                >
+                  {shouldShowPreview && addOn.previewImage && renderOptionPreview(addOn.previewImage, language)}
+                  <span>{addOn.name[language]}</span>
+                  <strong>{formatAud(addOn.priceAud)}</strong>
+                  {renderDescriptionItems(addOn.description, language)}
+                </button>
+              );
             })}
           </div>
         )}
@@ -752,7 +1010,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     showServiceTypes && isFlowSectionVisible("services"),
     showSchoolSelect && isFlowSectionVisible("schools"),
     showSceneTypes && isFlowSectionVisible("scenes"),
-    isStudioGraduation && isFlowSectionVisible("studioPackage"),
+    isStudioGraduation && isContentVisible(graduationStudioPackage) && isFlowSectionVisible("studioPackage"),
     showGraduationPackages && Boolean(selectedSceneType) && isFlowSectionVisible("graduationPackage"),
     showRegistryPackages && isFlowSectionVisible("registryPackage"),
     showIdPhotoPackage && isFlowSectionVisible("idPhotoPackage"),
@@ -789,19 +1047,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
               {renderFlowSectionActions("areas", pricingContent.areaLabel[language], "areas", instanceId)}
             </div>
 
-            <div className="option-grid two-options">
-              {serviceAreas.map((area) => (
-                <button
-                  className={selectedAreaId === area.id ? "choice-button is-selected" : "choice-button"}
-                  type="button"
-                  key={`${instanceId}-${area.id}`}
-                  onClick={() => selectArea(area.id)}
-                  aria-pressed={selectedAreaId === area.id}
-                >
-                  <span>{area.name[language]}</span>
-                </button>
-              ))}
-            </div>
+            {renderServiceAreaOptions(`${instanceId}-area`)}
           </section>
         );
 
@@ -826,21 +1072,31 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {availableServiceTypes.map((serviceType) => (
                   <button
                     className={
-                      selectedServiceTypeId === serviceType.id
-                        ? "choice-button service-choice is-selected"
-                        : "choice-button service-choice"
+                      [
+                        "choice-button service-choice",
+                        selectedServiceTypeId === serviceType.id ? "is-selected" : "",
+                        !isContentAvailable(serviceType) ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
                     }
                     type="button"
                     key={`${instanceId}-${serviceType.id}`}
-                    onClick={() => selectServiceType(serviceType.id)}
+                    onClick={() => {
+                      if (isContentAvailable(serviceType)) {
+                        selectServiceType(serviceType.id);
+                      }
+                    }}
                     aria-pressed={selectedServiceTypeId === serviceType.id}
-                    disabled={!serviceType.isAvailable}
+                    aria-disabled={!isContentAvailable(serviceType)}
+                    data-tooltip={!isContentAvailable(serviceType) ? pricingContent.areaComingSoon[language] : undefined}
+                    title={!isContentAvailable(serviceType) ? pricingContent.areaComingSoon[language] : undefined}
                   >
                     <span>{serviceType.name[language]}</span>
                     <small>
-                      {serviceType.isAvailable
+                      {isContentAvailable(serviceType)
                         ? pricingContent.availableNow[language]
-                        : pricingContent.comingSoon[language]}
+                        : pricingContent.areaComingSoon[language]}
                     </small>
                   </button>
                 ))}
@@ -862,16 +1118,32 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
             </div>
 
             <div className="option-grid school-options">
-              {graduationSchools.map((school) => {
+              {visibleGraduationSchools.map((school) => {
                 const isSelected = selectedSchoolId === school.id;
+                const isUnavailable = !isContentAvailable(school);
 
                 return (
                   <button
-                    className={isSelected ? "choice-button school-choice is-selected" : "choice-button school-choice"}
+                    className={
+                      [
+                        "choice-button school-choice",
+                        isSelected ? "is-selected" : "",
+                        isUnavailable ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                    }
                     type="button"
                     key={`${instanceId}-${school.id}`}
-                    onClick={() => selectSchool(school.id)}
+                    onClick={() => {
+                      if (!isUnavailable) {
+                        selectSchool(school.id);
+                      }
+                    }}
                     aria-pressed={isSelected}
+                    aria-disabled={isUnavailable}
+                    data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                    title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
                   >
                     <span>{school.name[language]}</span>
                   </button>
@@ -897,23 +1169,38 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
               <div className="empty-state">请先选择学校</div>
             ) : (
               <div className="option-grid scene-options">
-                {availableSceneTypes.map((sceneType) => (
-                  <button
-                    className={
-                      selectedSceneTypeId === sceneType.id
-                        ? "choice-button scene-choice is-selected"
-                        : "choice-button scene-choice"
-                    }
-                    type="button"
-                    key={`${instanceId}-${sceneType.id}`}
-                    onClick={() => selectSceneType(sceneType.id)}
-                    aria-pressed={selectedSceneTypeId === sceneType.id}
-                  >
-                    {renderOptionPreview(sceneType.previewImage, language)}
-                    <span>{sceneType.name[language]}</span>
-                    <small>{sceneType.description[language]}</small>
-                  </button>
-                ))}
+                {availableSceneTypes.map((sceneType) => {
+                  const isUnavailable = !isContentAvailable(sceneType);
+
+                  return (
+                    <button
+                      className={
+                        [
+                          "choice-button scene-choice",
+                          selectedSceneTypeId === sceneType.id ? "is-selected" : "",
+                          isUnavailable ? "is-unavailable" : ""
+                        ]
+                          .filter(Boolean)
+                          .join(" ")
+                      }
+                      type="button"
+                      key={`${instanceId}-${sceneType.id}`}
+                      onClick={() => {
+                        if (!isUnavailable) {
+                          selectSceneType(sceneType.id);
+                        }
+                      }}
+                      aria-pressed={selectedSceneTypeId === sceneType.id}
+                      aria-disabled={isUnavailable}
+                      data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                      title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                    >
+                      {renderOptionPreview(sceneType.previewImage, language)}
+                      <span>{sceneType.name[language]}</span>
+                      {renderDescriptionItems(sceneType.description, language)}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -932,12 +1219,23 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
             </div>
 
             <div className="option-grid package-options">
-              <div className="choice-button package-choice is-selected">
+              <div
+                className={
+                  isContentAvailable(graduationStudioPackage)
+                    ? "choice-button package-choice is-selected"
+                    : "choice-button package-choice is-unavailable"
+                }
+                data-tooltip={
+                  !isContentAvailable(graduationStudioPackage)
+                    ? pricingContent.areaComingSoon[language]
+                    : undefined
+                }
+              >
                 <span>{graduationStudioPackage.title[language]}</span>
                 <strong className="package-price">{formatAud(graduationStudioPackage.priceAud)}</strong>
                 <small>{pricingContent.packageDetailsLabel[language]}</small>
                 {graduationStudioPackage.details[language].map((detail) => (
-                  <span className="package-detail" key={`${instanceId}-${detail}`}>
+                  <span className="package-detail content-detail" key={`${instanceId}-${detail}`}>
                     {detail}
                   </span>
                 ))}
@@ -955,6 +1253,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 <p>{stepLabel}</p>
                 <h2 id={titleId}>{pricingContent.packageLabel[language]}</h2>
               </div>
+              {renderSpotGalleryButton()}
               {renderFlowSectionActions("graduationPackage", pricingContent.packageLabel[language], "packages", instanceId)}
             </div>
 
@@ -967,22 +1266,36 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 <div className="option-grid package-options">
                   {availablePackages.map((graduationPackage) => {
                     const isSelected = selectedPackageId === graduationPackage.id;
+                    const isUnavailable = !isContentAvailable(graduationPackage);
 
                     return (
                       <button
                         className={
-                          isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
+                          [
+                            "choice-button package-choice",
+                            isSelected ? "is-selected" : "",
+                            isUnavailable ? "is-unavailable" : ""
+                          ]
+                            .filter(Boolean)
+                            .join(" ")
                         }
                         type="button"
                         key={`${instanceId}-${graduationPackage.id}`}
-                        onClick={() => selectPackage(graduationPackage.id)}
+                        onClick={() => {
+                          if (!isUnavailable) {
+                            selectPackage(graduationPackage.id);
+                          }
+                        }}
                         aria-pressed={isSelected}
+                        aria-disabled={isUnavailable}
+                        data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                        title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
                       >
                         <span>{graduationPackage.name[language]}</span>
                         <strong className="package-price">{formatAud(graduationPackage.priceAud)}</strong>
                         <small>{pricingContent.packageDetailsLabel[language]}</small>
                         {graduationPackage.details[language].map((detail) => (
-                          <span className="package-detail" key={`${instanceId}-${graduationPackage.id}-${detail}`}>
+                          <span className="package-detail content-detail" key={`${instanceId}-${graduationPackage.id}-${detail}`}>
                             {detail}
                           </span>
                         ))}
@@ -1008,24 +1321,38 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
             </div>
 
             <div className="option-grid package-options">
-              {registryPackages.map((registryPackage) => {
+              {visibleRegistryPackages.map((registryPackage) => {
                 const isSelected = selectedPackageId === registryPackage.id;
+                const isUnavailable = !isContentAvailable(registryPackage);
 
                 return (
                   <button
                     className={
-                      isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
+                      [
+                        "choice-button package-choice",
+                        isSelected ? "is-selected" : "",
+                        isUnavailable ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
                     }
                     type="button"
                     key={`${instanceId}-${registryPackage.id}`}
-                    onClick={() => selectPackage(registryPackage.id)}
+                    onClick={() => {
+                      if (!isUnavailable) {
+                        selectPackage(registryPackage.id);
+                      }
+                    }}
                     aria-pressed={isSelected}
+                    aria-disabled={isUnavailable}
+                    data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                    title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
                   >
                     <span>{registryPackage.name[language]}</span>
                     <strong className="package-price">{formatAud(registryPackage.priceAud)}</strong>
                     <small>{pricingContent.packageDetailsLabel[language]}</small>
                     {registryPackage.details[language].map((detail) => (
-                      <span className="package-detail" key={`${instanceId}-${registryPackage.id}-${detail}`}>
+                      <span className="package-detail content-detail" key={`${instanceId}-${registryPackage.id}-${detail}`}>
                         {detail}
                       </span>
                     ))}
@@ -1049,12 +1376,23 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
             </div>
 
             <div className="option-grid package-options">
-              <div className="choice-button package-choice is-selected">
+              <div
+                className={
+                  isContentAvailable(idPhotoPackage)
+                    ? "choice-button package-choice is-selected"
+                    : "choice-button package-choice is-unavailable"
+                }
+                data-tooltip={
+                  !isContentAvailable(idPhotoPackage)
+                    ? pricingContent.areaComingSoon[language]
+                    : undefined
+                }
+              >
                 <span>{idPhotoPackage.title[language]}</span>
                 <strong className="package-price">{formatAud(idPhotoPackage.priceAud)}</strong>
                 <small>{pricingContent.packageDetailsLabel[language]}</small>
                 {idPhotoPackage.details[language].map((detail) => (
-                  <span className="package-detail" key={`${instanceId}-${detail}`}>
+                  <span className="package-detail content-detail" key={`${instanceId}-${detail}`}>
                     {detail}
                   </span>
                 ))}
@@ -1234,38 +1572,26 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
 
       <div className="pricing-layout flow-layout">
         {isFlowSectionVisible("areas") && (
-        <section className="pricing-panel selector-panel" aria-labelledby="area-title">
+        <section className="pricing-panel selector-panel" style={flowSectionStyle("areas")} aria-labelledby="area-title">
           <div className="panel-title panel-title-with-action">
             <MapPinned size={24} aria-hidden="true" />
             <div>
-              <p>Step 01</p>
+              <p>{getFlowStepLabel("areas")}</p>
               <h2 id="area-title">{pricingContent.areaLabel[language]}</h2>
             </div>
             {renderFlowSectionActions("areas", pricingContent.areaLabel[language], "areas")}
           </div>
 
-          <div className="option-grid two-options">
-            {serviceAreas.map((area) => (
-              <button
-                className={selectedAreaId === area.id ? "choice-button is-selected" : "choice-button"}
-                type="button"
-                key={area.id}
-                onClick={() => selectArea(area.id)}
-                aria-pressed={selectedAreaId === area.id}
-              >
-                <span>{area.name[language]}</span>
-              </button>
-            ))}
-          </div>
+          {renderServiceAreaOptions("area")}
         </section>
         )}
 
         {showServiceTypes && isFlowSectionVisible("services") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="service-type-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("services")} aria-labelledby="service-type-title">
             <div className="panel-title panel-title-with-action">
               <ListChecks size={24} aria-hidden="true" />
               <div>
-                <p>Step 02</p>
+                <p>{getFlowStepLabel("services")}</p>
                 <h2 id="service-type-title">{pricingContent.serviceTypeLabel[language]}</h2>
               </div>
               {renderFlowSectionActions("services", pricingContent.serviceTypeLabel[language], "services")}
@@ -1278,21 +1604,31 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {availableServiceTypes.map((serviceType) => (
                   <button
                     className={
-                      selectedServiceTypeId === serviceType.id
-                        ? "choice-button service-choice is-selected"
-                        : "choice-button service-choice"
+                      [
+                        "choice-button service-choice",
+                        selectedServiceTypeId === serviceType.id ? "is-selected" : "",
+                        !isContentAvailable(serviceType) ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
                     }
                     type="button"
                     key={serviceType.id}
-                    onClick={() => selectServiceType(serviceType.id)}
+                    onClick={() => {
+                      if (isContentAvailable(serviceType)) {
+                        selectServiceType(serviceType.id);
+                      }
+                    }}
                     aria-pressed={selectedServiceTypeId === serviceType.id}
-                    disabled={!serviceType.isAvailable}
+                    aria-disabled={!isContentAvailable(serviceType)}
+                    data-tooltip={!isContentAvailable(serviceType) ? pricingContent.areaComingSoon[language] : undefined}
+                    title={!isContentAvailable(serviceType) ? pricingContent.areaComingSoon[language] : undefined}
                   >
                     <span>{serviceType.name[language]}</span>
                     <small>
-                      {serviceType.isAvailable
+                      {isContentAvailable(serviceType)
                         ? pricingContent.availableNow[language]
-                        : pricingContent.comingSoon[language]}
+                        : pricingContent.areaComingSoon[language]}
                     </small>
                   </button>
                 ))}
@@ -1302,28 +1638,44 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         )}
 
         {showSchoolSelect && isFlowSectionVisible("schools") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="school-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("schools")} aria-labelledby="school-title">
             <div className="panel-title panel-title-with-action">
               <School size={24} aria-hidden="true" />
               <div>
-                <p>Step 03</p>
+                <p>{getFlowStepLabel("schools")}</p>
                 <h2 id="school-title">{pricingContent.schoolLabel[language]}</h2>
               </div>
               {renderFlowSectionActions("schools", pricingContent.schoolLabel[language], "schools")}
             </div>
 
             <div className="option-grid school-options">
-              {graduationSchools.map((school) => {
-                const isSelected = selectedSchoolId === school.id;
+            {visibleGraduationSchools.map((school) => {
+              const isSelected = selectedSchoolId === school.id;
+              const isUnavailable = !isContentAvailable(school);
 
-                return (
-                  <button
-                    className={isSelected ? "choice-button school-choice is-selected" : "choice-button school-choice"}
-                    type="button"
-                    key={school.id}
-                    onClick={() => selectSchool(school.id)}
-                    aria-pressed={isSelected}
-                  >
+              return (
+                <button
+                  className={
+                    [
+                      "choice-button school-choice",
+                      isSelected ? "is-selected" : "",
+                      isUnavailable ? "is-unavailable" : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
+                  type="button"
+                  key={school.id}
+                  onClick={() => {
+                    if (!isUnavailable) {
+                      selectSchool(school.id);
+                    }
+                  }}
+                  aria-pressed={isSelected}
+                  aria-disabled={isUnavailable}
+                  data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                  title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                >
                     <span>{school.name[language]}</span>
                   </button>
                 );
@@ -1333,34 +1685,49 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         )}
 
         {showSceneTypes && isFlowSectionVisible("scenes") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="scene-type-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("scenes")} aria-labelledby="scene-type-title">
             <div className="panel-title panel-title-with-action">
               <Images size={24} aria-hidden="true" />
               <div>
-                <p>Step 04</p>
+                <p>{getFlowStepLabel("scenes")}</p>
                 <h2 id="scene-type-title">{pricingContent.sceneTypeLabel[language]}</h2>
               </div>
               {renderFlowSectionActions("scenes", pricingContent.sceneTypeLabel[language], "scenes")}
             </div>
 
             <div className="option-grid scene-options">
-              {availableSceneTypes.map((sceneType) => (
-                <button
-                  className={
-                    selectedSceneTypeId === sceneType.id
-                      ? "choice-button scene-choice is-selected"
-                      : "choice-button scene-choice"
-                  }
-                  type="button"
-                  key={sceneType.id}
-                  onClick={() => selectSceneType(sceneType.id)}
-                  aria-pressed={selectedSceneTypeId === sceneType.id}
-                >
-                  {renderOptionPreview(sceneType.previewImage, language)}
-                  <span>{sceneType.name[language]}</span>
-                  <small>{sceneType.description[language]}</small>
-                </button>
-              ))}
+              {availableSceneTypes.map((sceneType) => {
+                const isUnavailable = !isContentAvailable(sceneType);
+
+                return (
+                  <button
+                    className={
+                      [
+                        "choice-button scene-choice",
+                        selectedSceneTypeId === sceneType.id ? "is-selected" : "",
+                        isUnavailable ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
+                    }
+                    type="button"
+                    key={sceneType.id}
+                    onClick={() => {
+                      if (!isUnavailable) {
+                        selectSceneType(sceneType.id);
+                      }
+                    }}
+                    aria-pressed={selectedSceneTypeId === sceneType.id}
+                    aria-disabled={isUnavailable}
+                    data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                    title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                  >
+                    {renderOptionPreview(sceneType.previewImage, language)}
+                    <span>{sceneType.name[language]}</span>
+                    {renderDescriptionItems(sceneType.description, language)}
+                  </button>
+                );
+              })}
             </div>
 
             <NotesInput
@@ -1372,24 +1739,35 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
           </section>
         )}
 
-        {isStudioGraduation && isFlowSectionVisible("studioPackage") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="studio-package-title">
+        {isStudioGraduation && isContentVisible(graduationStudioPackage) && isFlowSectionVisible("studioPackage") && (
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("studioPackage")} aria-labelledby="studio-package-title">
             <div className="panel-title compact-title panel-title-with-action">
               <Aperture size={24} aria-hidden="true" />
               <div>
-                <p>Step 05</p>
+                <p>{getFlowStepLabel("studioPackage")}</p>
                 <h2 id="studio-package-title">{pricingContent.packageLabel[language]}</h2>
               </div>
               {renderFlowSectionActions("studioPackage", pricingContent.packageLabel[language], "packages")}
             </div>
 
             <div className="option-grid package-options">
-              <div className="choice-button package-choice is-selected">
+              <div
+                className={
+                  isContentAvailable(graduationStudioPackage)
+                    ? "choice-button package-choice is-selected"
+                    : "choice-button package-choice is-unavailable"
+                }
+                data-tooltip={
+                  !isContentAvailable(graduationStudioPackage)
+                    ? pricingContent.areaComingSoon[language]
+                    : undefined
+                }
+              >
                 <span>{graduationStudioPackage.title[language]}</span>
                 <strong className="package-price">{formatAud(graduationStudioPackage.priceAud)}</strong>
                 <small>{pricingContent.packageDetailsLabel[language]}</small>
                 {graduationStudioPackage.details[language].map((detail) => (
-                  <span className="package-detail" key={detail}>
+                        <span className="package-detail content-detail" key={detail}>
                     {detail}
                   </span>
                 ))}
@@ -1399,13 +1777,14 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         )}
 
         {showGraduationPackages && selectedSceneType && isFlowSectionVisible("graduationPackage") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="package-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("graduationPackage")} aria-labelledby="package-title">
             <div className="panel-title compact-title panel-title-with-action">
               <PackageCheck size={24} aria-hidden="true" />
               <div>
-                <p>Step 05</p>
+                <p>{getFlowStepLabel("graduationPackage")}</p>
                 <h2 id="package-title">{pricingContent.packageLabel[language]}</h2>
               </div>
+              {renderSpotGalleryButton()}
               {renderFlowSectionActions("graduationPackage", pricingContent.packageLabel[language], "packages")}
             </div>
 
@@ -1415,22 +1794,36 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
             <div className="option-grid package-options">
               {availablePackages.map((graduationPackage) => {
                 const isSelected = selectedPackageId === graduationPackage.id;
+                const isUnavailable = !isContentAvailable(graduationPackage);
 
                 return (
                   <button
                     className={
-                      isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
+                      [
+                        "choice-button package-choice",
+                        isSelected ? "is-selected" : "",
+                        isUnavailable ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
                     }
                     type="button"
                     key={graduationPackage.id}
-                    onClick={() => selectPackage(graduationPackage.id)}
+                    onClick={() => {
+                      if (!isUnavailable) {
+                        selectPackage(graduationPackage.id);
+                      }
+                    }}
                     aria-pressed={isSelected}
+                    aria-disabled={isUnavailable}
+                    data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                    title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
                   >
                     <span>{graduationPackage.name[language]}</span>
                     <strong className="package-price">{formatAud(graduationPackage.priceAud)}</strong>
                     <small>{pricingContent.packageDetailsLabel[language]}</small>
                     {graduationPackage.details[language].map((detail) => (
-                      <span className="package-detail" key={detail}>
+                        <span className="package-detail content-detail" key={detail}>
                         {detail}
                       </span>
                     ))}
@@ -1449,35 +1842,49 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         )}
 
         {showRegistryPackages && isFlowSectionVisible("registryPackage") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="registry-package-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("registryPackage")} aria-labelledby="registry-package-title">
             <div className="panel-title compact-title panel-title-with-action">
               <HeartHandshake size={24} aria-hidden="true" />
               <div>
-                <p>Step 03</p>
+                <p>{getFlowStepLabel("registryPackage")}</p>
                 <h2 id="registry-package-title">{pricingContent.registryPackageLabel[language]}</h2>
               </div>
               {renderFlowSectionActions("registryPackage", pricingContent.registryPackageLabel[language], "packages")}
             </div>
 
             <div className="option-grid package-options">
-              {registryPackages.map((registryPackage) => {
+              {visibleRegistryPackages.map((registryPackage) => {
                 const isSelected = selectedPackageId === registryPackage.id;
+                const isUnavailable = !isContentAvailable(registryPackage);
 
                 return (
                   <button
                     className={
-                      isSelected ? "choice-button package-choice is-selected" : "choice-button package-choice"
+                      [
+                        "choice-button package-choice",
+                        isSelected ? "is-selected" : "",
+                        isUnavailable ? "is-unavailable" : ""
+                      ]
+                        .filter(Boolean)
+                        .join(" ")
                     }
                     type="button"
                     key={registryPackage.id}
-                    onClick={() => selectPackage(registryPackage.id)}
+                    onClick={() => {
+                      if (!isUnavailable) {
+                        selectPackage(registryPackage.id);
+                      }
+                    }}
                     aria-pressed={isSelected}
+                    aria-disabled={isUnavailable}
+                    data-tooltip={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
+                    title={isUnavailable ? pricingContent.areaComingSoon[language] : undefined}
                   >
                     <span>{registryPackage.name[language]}</span>
                     <strong className="package-price">{formatAud(registryPackage.priceAud)}</strong>
                     <small>{pricingContent.packageDetailsLabel[language]}</small>
                     {registryPackage.details[language].map((detail) => (
-                      <span className="package-detail" key={detail}>
+                        <span className="package-detail content-detail" key={detail}>
                         {detail}
                       </span>
                     ))}
@@ -1489,23 +1896,34 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         )}
 
         {showIdPhotoPackage && isFlowSectionVisible("idPhotoPackage") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="id-photo-package-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("idPhotoPackage")} aria-labelledby="id-photo-package-title">
             <div className="panel-title compact-title panel-title-with-action">
               <ScanFace size={24} aria-hidden="true" />
               <div>
-                <p>Step 03</p>
+                <p>{getFlowStepLabel("idPhotoPackage")}</p>
                 <h2 id="id-photo-package-title">{pricingContent.packageLabel[language]}</h2>
               </div>
               {renderFlowSectionActions("idPhotoPackage", pricingContent.packageLabel[language], "packages")}
             </div>
 
             <div className="option-grid package-options">
-              <div className="choice-button package-choice is-selected">
+              <div
+                className={
+                  isContentAvailable(idPhotoPackage)
+                    ? "choice-button package-choice is-selected"
+                    : "choice-button package-choice is-unavailable"
+                }
+                data-tooltip={
+                  !isContentAvailable(idPhotoPackage)
+                    ? pricingContent.areaComingSoon[language]
+                    : undefined
+                }
+              >
                 <span>{idPhotoPackage.title[language]}</span>
                 <strong className="package-price">{formatAud(idPhotoPackage.priceAud)}</strong>
                 <small>{pricingContent.packageDetailsLabel[language]}</small>
                 {idPhotoPackage.details[language].map((detail) => (
-                  <span className="package-detail" key={detail}>
+                        <span className="package-detail content-detail" key={detail}>
                     {detail}
                   </span>
                 ))}
@@ -1515,11 +1933,11 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         )}
 
         {isRegistryService && selectedRegistryPackage && isFlowSectionVisible("registryExtraLocations") && (
-          <section className="pricing-panel selector-panel" aria-labelledby="registry-extra-locations-title">
+          <section className="pricing-panel selector-panel" style={flowSectionStyle("registryExtraLocations")} aria-labelledby="registry-extra-locations-title">
             <div className="panel-title compact-title panel-title-with-action">
               <MapPinPlus size={24} aria-hidden="true" />
               <div>
-                <p>Step 04</p>
+                <p>{getFlowStepLabel("registryExtraLocations")}</p>
                 <h2 id="registry-extra-locations-title">
                   {pricingContent.registryExtraLocationLabel[language]}
                 </h2>
@@ -1546,11 +1964,11 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
         {showAddOns && (
           <>
             {isFlowSectionVisible("addOnsIntro") && (
-            <section className="pricing-panel selector-panel add-on-intro-panel">
+            <section className="pricing-panel selector-panel add-on-intro-panel" style={flowSectionStyle("addOnsIntro")}>
               <div className="panel-title compact-title panel-title-with-action">
                 <BadgePlus size={24} aria-hidden="true" />
                 <div>
-                  <p>{addOnsStepLabel}</p>
+                  <p>{getFlowStepLabel("addOnsIntro", addOnsStepLabel)}</p>
                   <h2>{pricingContent.addOnsLabel[language]}</h2>
                   <span className="panel-helper-copy">{pricingContent.addOnIntro[language]}</span>
                 </div>
@@ -1565,7 +1983,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                   {renderAddOnSection(
                     "makeup",
                     pricingContent.makeupLabel[language],
-                    "Step 06",
+                    getFlowStepLabel("makeup", "Step 06"),
                     WandSparkles,
                     graduationAddOns.makeup ?? []
                   )}
@@ -1573,7 +1991,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                   {renderAddOnSection(
                     "props",
                     pricingContent.propsLabel[language],
-                    "Step 07",
+                    getFlowStepLabel("props", "Step 07"),
                     Gift,
                     availablePropsAddOns
                   )}
@@ -1583,7 +2001,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                   {renderAddOnSection(
                     "clothing",
                     pricingContent.clothingLabel[language],
-                    "Step 06",
+                    getFlowStepLabel("clothing", "Step 06"),
                     Shirt,
                     graduationAddOns.clothing ?? []
                   )}
@@ -1591,7 +2009,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                   {renderAddOnSection(
                     "props",
                     pricingContent.propsLabel[language],
-                    "Step 07",
+                    getFlowStepLabel("props", "Step 07"),
                     Gift,
                     availablePropsAddOns
                   )}
@@ -1599,7 +2017,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                   {renderAddOnSection(
                     "makeup",
                     pricingContent.makeupLabel[language],
-                    "Step 08",
+                    getFlowStepLabel("makeup", "Step 08"),
                     WandSparkles,
                     graduationAddOns.makeup ?? []
                   )}
@@ -1612,7 +2030,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {renderAddOnSection(
                   "registryStyling",
                   pricingContent.makeupLabel[language],
-                  "Step 05",
+                  getFlowStepLabel("registryStyling", "Step 05"),
                   WandSparkles,
                   registryAddOns.registryStyling ?? []
                 )}
@@ -1620,7 +2038,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {renderAddOnSection(
                   "registryProps",
                   pricingContent.propsLabel[language],
-                  "Step 06",
+                  getFlowStepLabel("registryProps", "Step 06"),
                   Gift,
                   registryAddOns.registryProps ?? []
                 )}
@@ -1628,7 +2046,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {renderAddOnSection(
                   "registryClothing",
                   pricingContent.clothingLabel[language],
-                  "Step 07",
+                  getFlowStepLabel("registryClothing", "Step 07"),
                   Shirt,
                   registryAddOns.registryClothing ?? []
                 )}
@@ -1640,7 +2058,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {renderAddOnSection(
                   "idPhotoClothing",
                   pricingContent.clothingLabel[language],
-                  "Step 04",
+                  getFlowStepLabel("idPhotoClothing", "Step 04"),
                   Shirt,
                   idPhotoAddOns.idPhotoClothing ?? []
                 )}
@@ -1648,7 +2066,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {renderAddOnSection(
                   "idPhotoStyling",
                   pricingContent.makeupLabel[language],
-                  "Step 05",
+                  getFlowStepLabel("idPhotoStyling", "Step 05"),
                   WandSparkles,
                   idPhotoAddOns.idPhotoStyling ?? []
                 )}
@@ -1656,7 +2074,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
                 {renderAddOnSection(
                   "idPhotoProps",
                   pricingContent.propsLabel[language],
-                  "Step 06",
+                  getFlowStepLabel("idPhotoProps", "Step 06"),
                   Gift,
                   idPhotoAddOns.idPhotoProps ?? []
                 )}
@@ -1671,22 +2089,69 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
       </div>
 
       {isEditorOpen && (
-        <PricingEditor
-          language={language}
-          content={content}
-          initialTab={editorInitialTab}
-          visibleTabs={editorContext.visibleTabs}
-          initialAreaId={editorContext.initialAreaId}
-          initialSchoolId={editorContext.initialSchoolId}
-          initialSceneId={editorContext.initialSceneId}
-          initialPackageScope={editorContext.initialPackageScope}
-          initialAddOnTarget={editorContext.initialAddOnTarget}
-          onClose={() => setIsEditorOpen(false)}
+          <PricingEditor
+            language={language}
+            content={content}
+            initialTab={editorInitialTab}
+            visibleTabs={editorContext.visibleTabs}
+            initialAreaId={editorContext.initialAreaId}
+            initialServiceTypeId={editorContext.initialServiceTypeId}
+            initialSchoolId={editorContext.initialSchoolId}
+            initialSceneId={editorContext.initialSceneId}
+            initialPackageScope={editorContext.initialPackageScope}
+            initialPackageId={editorContext.initialPackageId}
+            initialAddOnTarget={editorContext.initialAddOnTarget}
+            initialAddOnGroup={editorContext.initialAddOnGroup}
+            onClose={() => setIsEditorOpen(false)}
           onSave={(nextContent) => {
             onChange(nextContent);
             setIsEditorOpen(false);
           }}
         />
+      )}
+
+      {isSpotGalleryOpen && selectedSceneType && (
+        <div
+          className="studio-album-overlay"
+          onClick={() => setIsSpotGalleryOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="studio-album-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="graduation-spot-gallery-title"
+            id="graduation-spot-gallery"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="studio-album-modal-header">
+              <div>
+                <p>{selectedSchool?.name[language] ?? pricingContent.sceneTypeLabel[language]}</p>
+                <h3 id="graduation-spot-gallery-title">
+                  {language === "zh" ? "所有打卡点" : "All photo spots"}
+                </h3>
+              </div>
+              <button
+                className="studio-album-close"
+                type="button"
+                onClick={() => setIsSpotGalleryOpen(false)}
+                aria-label={language === "zh" ? "关闭打卡点" : "Close photo spots"}
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+
+            <p className="spot-gallery-modal-context">{selectedSceneType.name[language]}</p>
+
+            <div className="spot-gallery-modal-grid">
+              {spotGalleryImages.map((image, imageIndex) => (
+                <figure className="studio-album-modal-photo" key={`spot-photo-${imageIndex}`}>
+                  <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

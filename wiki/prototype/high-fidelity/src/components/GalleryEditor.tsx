@@ -21,13 +21,55 @@ function getLocalizedLabel(language: Language, zh: string, en: string) {
   return language === "zh" ? zh : en;
 }
 
+function GalleryPublishControls({
+  language,
+  item,
+  onChange
+}: {
+  language: Language;
+  item: { isAvailable?: boolean; isVisible?: boolean };
+  onChange: (updates: { isAvailable?: boolean; isVisible?: boolean }) => void;
+}) {
+  const isAvailable = item.isAvailable !== false;
+  const isVisible = item.isVisible !== false;
+
+  return (
+    <div className="admin-publish-controls">
+      <label className="admin-check-field">
+        <input
+          type="checkbox"
+          checked={isAvailable}
+          disabled={!isVisible}
+          onChange={(event) => onChange({ isAvailable: event.target.checked })}
+        />
+        <span>{getLocalizedLabel(language, "上架", "Listed")}</span>
+      </label>
+      <label className="admin-check-field">
+        <input
+          type="checkbox"
+          checked={!isVisible}
+          onChange={(event) =>
+            onChange({
+              isVisible: !event.target.checked,
+              isAvailable: event.target.checked ? false : isAvailable
+            })
+          }
+        />
+        <span>{getLocalizedLabel(language, "隐藏", "Hidden")}</span>
+      </label>
+    </div>
+  );
+}
+
 function createImage(label: string): GalleryImage {
   return {
     src: placeholderImage.src,
     alt: {
       zh: `${label} 图片`,
       en: `${label} image`
-    }
+    },
+    isAvailable: false,
+    isVisible: true
   };
 }
 
@@ -39,7 +81,9 @@ function createAlbum(): StudioModelGallery {
       zh: "新影集",
       en: "New Album"
     },
-    images: [createImage("新影集")]
+    images: [createImage("新影集")],
+    isAvailable: false,
+    isVisible: true
   };
 }
 
@@ -70,6 +114,25 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
     }));
   };
 
+  const moveType = (typeId: string, direction: -1 | 1) => {
+    setDraft((currentDraft) => {
+      const typeIndex = currentDraft.serviceTypes.findIndex((serviceType) => serviceType.id === typeId);
+      const nextIndex = typeIndex + direction;
+
+      if (typeIndex < 0 || nextIndex < 0 || nextIndex >= currentDraft.serviceTypes.length) {
+        return currentDraft;
+      }
+
+      const serviceTypes = [...currentDraft.serviceTypes];
+      [serviceTypes[typeIndex], serviceTypes[nextIndex]] = [serviceTypes[nextIndex], serviceTypes[typeIndex]];
+
+      return {
+        ...currentDraft,
+        serviceTypes
+      };
+    });
+  };
+
   const addType = () => {
     const id = makeId("gallery");
     setDraft((currentDraft) => ({
@@ -81,7 +144,9 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
           name: {
             zh: "新展示类",
             en: "New Category"
-          }
+          },
+          isAvailable: false,
+          isVisible: true
         }
       ],
       imagesByServiceType: {
@@ -342,6 +407,26 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
                 <div className="admin-edit-card" key={serviceType.id}>
                   <div className="admin-card-actions">
                     <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveType(serviceType.id, -1)}
+                      disabled={draft.serviceTypes[0]?.id === serviceType.id}
+                      aria-label={getLocalizedLabel(language, "上移展示类", "Move category up")}
+                      title={getLocalizedLabel(language, "上移展示类", "Move category up")}
+                    >
+                      <ArrowUp size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveType(serviceType.id, 1)}
+                      disabled={draft.serviceTypes[draft.serviceTypes.length - 1]?.id === serviceType.id}
+                      aria-label={getLocalizedLabel(language, "下移展示类", "Move category down")}
+                      title={getLocalizedLabel(language, "下移展示类", "Move category down")}
+                    >
+                      <ArrowDown size={16} aria-hidden="true" />
+                    </button>
+                    <button
                       className="admin-danger-button admin-card-delete-button"
                       type="button"
                       onClick={() => deleteType(serviceType.id)}
@@ -365,6 +450,18 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
                         onChange={(event) => updateTypeName(serviceType.id, "en", event.target.value)}
                       />
                     </label>
+                    <GalleryPublishControls
+                      language={language}
+                      item={serviceType}
+                      onChange={(updates) =>
+                        setDraft((currentDraft) => ({
+                          ...currentDraft,
+                          serviceTypes: currentDraft.serviceTypes.map((currentType) =>
+                            currentType.id === serviceType.id ? { ...currentType, ...updates } : currentType
+                          )
+                        }))
+                      }
+                    />
                   </div>
                 </div>
               ))}
@@ -420,43 +517,58 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
                       <span>{getLocalizedLabel(language, "删除", "Delete")}</span>
                     </button>
                   </div>
-                  <div className="admin-edit-row admin-edit-row-wide">
-                    <label>
-                      <span>图片地址</span>
-                      <input
-                        value={image.src}
-                        onChange={(event) =>
+                  <div className="admin-photo-edit-content">
+                    <div className="admin-photo-thumbnail">
+                      <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                    </div>
+                    <div className="admin-edit-row admin-edit-row-wide">
+                      <label>
+                        <span>图片地址</span>
+                        <input
+                          value={image.src}
+                          onChange={(event) =>
+                            updateImage(selectedTypeId, imageIndex, (currentImage) => ({
+                              ...currentImage,
+                              src: event.target.value || placeholderImage.src
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>中文 alt</span>
+                        <input
+                          value={image.alt.zh}
+                          onChange={(event) =>
+                            updateImage(selectedTypeId, imageIndex, (currentImage) => ({
+                              ...currentImage,
+                              alt: { ...currentImage.alt, zh: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>English alt</span>
+                        <input
+                          value={image.alt.en}
+                          onChange={(event) =>
+                            updateImage(selectedTypeId, imageIndex, (currentImage) => ({
+                              ...currentImage,
+                              alt: { ...currentImage.alt, en: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <GalleryPublishControls
+                        language={language}
+                        item={image}
+                        onChange={(updates) =>
                           updateImage(selectedTypeId, imageIndex, (currentImage) => ({
                             ...currentImage,
-                            src: event.target.value || placeholderImage.src
+                            ...updates
                           }))
                         }
                       />
-                    </label>
-                    <label>
-                      <span>中文 alt</span>
-                      <input
-                        value={image.alt.zh}
-                        onChange={(event) =>
-                          updateImage(selectedTypeId, imageIndex, (currentImage) => ({
-                            ...currentImage,
-                            alt: { ...currentImage.alt, zh: event.target.value }
-                          }))
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>English alt</span>
-                      <input
-                        value={image.alt.en}
-                        onChange={(event) =>
-                          updateImage(selectedTypeId, imageIndex, (currentImage) => ({
-                            ...currentImage,
-                            alt: { ...currentImage.alt, en: event.target.value }
-                          }))
-                        }
-                      />
-                    </label>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -483,6 +595,13 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
                 <>
                   <div className="admin-edit-card">
                     <div className="admin-card-actions">
+                      <GalleryPublishControls
+                        language={language}
+                        item={selectedAlbum}
+                        onChange={(updates) =>
+                          updateAlbum(selectedAlbum.id, (album) => ({ ...album, ...updates }))
+                        }
+                      />
                       <button
                         className="admin-danger-button admin-card-delete-button"
                         type="button"
@@ -552,55 +671,72 @@ export function GalleryEditor({ language, content, onClose, onSave }: GalleryEdi
                           <span>{getLocalizedLabel(language, "删除", "Delete")}</span>
                         </button>
                       </div>
-                      <div className="admin-edit-row admin-edit-row-wide">
-                        <label>
-                          <span>图片地址</span>
-                          <input
-                            value={image.src}
-                            onChange={(event) =>
+                      <div className="admin-photo-edit-content">
+                        <div className="admin-photo-thumbnail">
+                          <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                        </div>
+                        <div className="admin-edit-row admin-edit-row-wide">
+                          <label>
+                            <span>图片地址</span>
+                            <input
+                              value={image.src}
+                              onChange={(event) =>
+                                updateAlbum(selectedAlbum.id, (album) => ({
+                                  ...album,
+                                  images: album.images.map((albumImage, index) =>
+                                    index === imageIndex
+                                      ? { ...albumImage, src: event.target.value || placeholderImage.src }
+                                      : albumImage
+                                  )
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>中文 alt</span>
+                            <input
+                              value={image.alt.zh}
+                              onChange={(event) =>
+                                updateAlbum(selectedAlbum.id, (album) => ({
+                                  ...album,
+                                  images: album.images.map((albumImage, index) =>
+                                    index === imageIndex
+                                      ? { ...albumImage, alt: { ...albumImage.alt, zh: event.target.value } }
+                                      : albumImage
+                                  )
+                                }))
+                              }
+                            />
+                          </label>
+                          <label>
+                            <span>English alt</span>
+                            <input
+                              value={image.alt.en}
+                              onChange={(event) =>
+                                updateAlbum(selectedAlbum.id, (album) => ({
+                                  ...album,
+                                  images: album.images.map((albumImage, index) =>
+                                    index === imageIndex
+                                      ? { ...albumImage, alt: { ...albumImage.alt, en: event.target.value } }
+                                      : albumImage
+                                  )
+                                }))
+                              }
+                            />
+                          </label>
+                          <GalleryPublishControls
+                            language={language}
+                            item={image}
+                            onChange={(updates) =>
                               updateAlbum(selectedAlbum.id, (album) => ({
                                 ...album,
                                 images: album.images.map((albumImage, index) =>
-                                  index === imageIndex
-                                    ? { ...albumImage, src: event.target.value || placeholderImage.src }
-                                    : albumImage
+                                  index === imageIndex ? { ...albumImage, ...updates } : albumImage
                                 )
                               }))
                             }
                           />
-                        </label>
-                        <label>
-                          <span>中文 alt</span>
-                          <input
-                            value={image.alt.zh}
-                            onChange={(event) =>
-                              updateAlbum(selectedAlbum.id, (album) => ({
-                                ...album,
-                                images: album.images.map((albumImage, index) =>
-                                  index === imageIndex
-                                    ? { ...albumImage, alt: { ...albumImage.alt, zh: event.target.value } }
-                                    : albumImage
-                                )
-                              }))
-                            }
-                          />
-                        </label>
-                        <label>
-                          <span>English alt</span>
-                          <input
-                            value={image.alt.en}
-                            onChange={(event) =>
-                              updateAlbum(selectedAlbum.id, (album) => ({
-                                ...album,
-                                images: album.images.map((albumImage, index) =>
-                                  index === imageIndex
-                                    ? { ...albumImage, alt: { ...albumImage.alt, en: event.target.value } }
-                                    : albumImage
-                                )
-                              }))
-                            }
-                          />
-                        </label>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -6,6 +6,8 @@ export type LocalizedList = Record<Language, string[]>;
 export type GalleryImage = {
   src: string;
   alt: LocalizedText;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type ServiceAreaId = string;
@@ -13,6 +15,8 @@ export type ServiceAreaId = string;
 export type ServiceArea = {
   id: ServiceAreaId;
   name: LocalizedText;
+  isAvailable: boolean;
+  isVisible: boolean;
 };
 
 export type ServiceTypeId = string;
@@ -25,18 +29,23 @@ export type ServiceType = {
   id: ServiceTypeId;
   name: LocalizedText;
   isAvailable: boolean;
+  isVisible?: boolean;
   kind?: ServiceKind;
 };
 
 export type GalleryServiceType = {
   id: GalleryServiceTypeId;
   name: LocalizedText;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type StudioModelGallery = {
   id: StudioModelId;
   name: LocalizedText;
   images: GalleryImage[];
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type GraduationSchoolId = string;
@@ -44,6 +53,8 @@ export type GraduationSchoolId = string;
 export type GraduationSchool = {
   id: GraduationSchoolId;
   name: LocalizedText;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type SceneTypeId = string;
@@ -51,8 +62,10 @@ export type SceneTypeId = string;
 export type GraduationSceneType = {
   id: SceneTypeId;
   name: LocalizedText;
-  description: LocalizedText;
+  description: LocalizedList;
   previewImage: GalleryImage;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type GraduationPackage = {
@@ -61,6 +74,8 @@ export type GraduationPackage = {
   name: LocalizedText;
   priceAud: number;
   details: LocalizedList;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type RegistryPackage = {
@@ -68,6 +83,8 @@ export type RegistryPackage = {
   name: LocalizedText;
   priceAud: number;
   details: LocalizedList;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type AddOnGroupId = "clothing" | "props" | "makeup";
@@ -78,24 +95,30 @@ export type GraduationAddOn = {
   id: string;
   name: LocalizedText;
   priceAud: number;
-  description?: LocalizedText;
+  description?: LocalizedList;
   previewImage?: GalleryImage;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type RegistryAddOn = {
   id: string;
   name: LocalizedText;
   priceAud: number;
-  description?: LocalizedText;
+  description?: LocalizedList;
   previewImage?: GalleryImage;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export type IdPhotoAddOn = {
   id: string;
   name: LocalizedText;
   priceAud: number;
-  description?: LocalizedText;
+  description?: LocalizedList;
   previewImage?: GalleryImage;
+  isAvailable?: boolean;
+  isVisible?: boolean;
 };
 
 export const brand = {
@@ -307,6 +330,10 @@ export const pricingContent = {
     zh: "暂未拓展",
     en: "Coming soon"
   },
+  areaComingSoon: {
+    zh: "暂未开放",
+    en: "Not available yet"
+  },
   availableNow: {
     zh: "当前可选",
     en: "Available now"
@@ -383,14 +410,18 @@ export const serviceAreas: ServiceArea[] = [
     name: {
       zh: "上海",
       en: "Shanghai"
-    }
+    },
+    isAvailable: false,
+    isVisible: true
   },
   {
     id: "melbourne",
     name: {
       zh: "墨尔本",
       en: "Melbourne"
-    }
+    },
+    isAvailable: true,
+    isVisible: true
   }
 ];
 
@@ -479,8 +510,8 @@ const sharedSingleGraduationSceneType: GraduationSceneType = {
     en: "Single scene: campus"
   },
   description: {
-    zh: "适合在所选学校校园内完成标志性地点打卡。",
-    en: "Designed for iconic graduation portraits around the selected campus."
+    zh: ["适合在所选学校校园内完成标志性地点打卡。"],
+    en: ["Designed for iconic graduation portraits around the selected campus."]
   },
   previewImage: optionPreviewImage
 };
@@ -492,8 +523,8 @@ const graduationStudioSceneType: GraduationSceneType = {
     en: "Studio Shoot"
   },
   description: {
-    zh: "适合想要快速完成棚内毕业照，并选择多种背景模板的拍摄。",
-    en: "Designed for a quick in-studio graduation shoot with multiple background templates."
+    zh: ["适合想要快速完成棚内毕业照，并选择多种背景模板的拍摄。"],
+    en: ["Designed for a quick in-studio graduation shoot with multiple background templates."]
   },
   previewImage: optionPreviewImage
 };
@@ -507,8 +538,8 @@ const unimelbGraduationSceneTypes: GraduationSceneType[] = [
       en: "Two scenes: campus + Carlton Garden"
     },
     description: {
-      zh: "包含所选学校校园与 Carlton Garden，适合毕业典礼当天的双场景记录。",
-      en: "Includes the selected campus and Carlton Garden, suitable for graduation ceremony day coverage."
+      zh: ["包含所选学校校园与 Carlton Garden，适合毕业典礼当天的双场景记录。"],
+      en: ["Includes the selected campus and Carlton Garden, suitable for graduation ceremony day coverage."]
     },
     previewImage: optionPreviewImage
   },
@@ -843,8 +874,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
       },
       priceAud: 35,
       description: {
-        zh: "各学校各学院都有。",
-        en: "Available for each school and faculty."
+        zh: ["各学校各学院都有。"],
+        en: ["Available for each school and faculty."]
       },
       previewImage: optionPreviewImage
     },
@@ -932,8 +963,8 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
       },
       priceAud: 149,
       description: {
-        zh: "含化妆、发型、睫毛、修眉，送跟妆，送 5 张精修。",
-        en: "Includes makeup, hair, lashes, brow shaping, on-site touch-up, and 5 retouched photos."
+        zh: ["含化妆、发型、睫毛、修眉，送跟妆，送 5 张精修。"],
+        en: ["Includes makeup, hair, lashes, brow shaping, on-site touch-up, and 5 retouched photos."]
       }
     },
     {
@@ -944,12 +975,28 @@ export const graduationAddOns: Record<AddOnGroupId, GraduationAddOn[]> = {
       },
       priceAud: 79,
       description: {
-        zh: "含化妆、发型、修眉，送跟妆，送 5 张精修；主要修饰五官并增强立体度。",
-        en: "Includes makeup, hair, brow shaping, on-site touch-up, and 5 retouched photos; focused on natural facial definition."
+        zh: ["含化妆、发型、修眉，送跟妆，送 5 张精修；主要修饰五官并增强立体度。"],
+        en: ["Includes makeup, hair, brow shaping, on-site touch-up, and 5 retouched photos; focused on natural facial definition."]
       }
     }
   ]
 };
+
+// Each school starts with the shared defaults, but the editable copy keeps a
+// separate list so schools can publish different add-ons later.
+export const graduationAddOnsBySchool: Record<
+  string,
+  Record<AddOnGroupId, GraduationAddOn[]>
+> = Object.fromEntries(
+  graduationSchools.map((school) => [
+    school.id,
+    {
+      clothing: graduationAddOns.clothing,
+      props: graduationAddOns.props,
+      makeup: graduationAddOns.makeup
+    }
+  ])
+) as Record<string, Record<AddOnGroupId, GraduationAddOn[]>>;
 
 export const graduationStudioProps: GraduationAddOn[] = [];
 
@@ -978,8 +1025,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
       },
       priceAud: 149,
       description: {
-        zh: "发型 + 妆容 + 睫毛，送 5 张精修。",
-        en: "Hair, makeup, lashes, and 5 retouched photos included."
+        zh: ["发型 + 妆容 + 睫毛，送 5 张精修。"],
+        en: ["Hair, makeup, lashes, and 5 retouched photos included."]
       }
     },
     {
@@ -990,8 +1037,8 @@ export const registryAddOns: Record<RegistryAddOnGroupId, RegistryAddOn[]> = {
       },
       priceAud: 79,
       description: {
-        zh: "发型 + 妆容。",
-        en: "Hair and makeup."
+        zh: ["发型 + 妆容。"],
+        en: ["Hair and makeup."]
       }
     }
   ],

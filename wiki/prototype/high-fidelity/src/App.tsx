@@ -12,7 +12,11 @@ import {
   makeAlbumIdFromEmail,
   type ClientAlbum
 } from "./data/clientAlbums";
-import { createDefaultEditableContent, type EditableSiteContent } from "./data/editableContent";
+import {
+  readSavedEditableContent,
+  saveEditableContent,
+  type EditableSiteContent
+} from "./data/editableContent";
 import { readSavedLanguage, saveLanguage } from "./utils/language";
 
 type Route = "home" | "pricing" | "auth" | "customers" | "album";
@@ -117,7 +121,7 @@ export function App() {
   const [route, setRoute] = useState<Route>(() => getRouteFromLocation(window.location));
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => readSavedAuthUser());
   const [editableContent, setEditableContent] = useState<EditableSiteContent>(() =>
-    createDefaultEditableContent()
+    readSavedEditableContent()
   );
   const [clientAlbums, setClientAlbums] = useState<ClientAlbum[]>(() => createDefaultClientAlbums());
   const [selectedAlbumClientId, setSelectedAlbumClientId] = useState("");
@@ -132,6 +136,10 @@ export function App() {
   useEffect(() => {
     saveLanguage(language);
   }, [language]);
+
+  useEffect(() => {
+    saveEditableContent(editableContent);
+  }, [editableContent]);
 
   useEffect(() => {
     const handleLocationChange = () => {
