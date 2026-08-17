@@ -2,11 +2,14 @@ import { ArrowDown, ArrowUp, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
   cloneEditableContent,
+  defaultPricingFlowLayouts,
   makeId,
   placeholderImage,
   type EditableFixedPackage,
   type EditablePricingContent,
-  type EditableServiceType
+  type EditableServiceType,
+  type PricingFlowKind,
+  type PricingFlowSectionKey
 } from "../data/editableContent";
 import type {
   GalleryImage,
@@ -27,19 +30,27 @@ type PricingEditorProps = {
   initialTab?: PricingEditorTab;
   visibleTabs?: PricingEditorTab[];
   initialAreaId?: string;
+  initialServiceTypeId?: string;
   initialSchoolId?: string;
   initialSceneId?: string;
   initialPackageScope?: PackageScope;
+  initialPackageId?: string;
   initialAddOnTarget?: AddOnTarget;
+  initialAddOnGroup?: NormalizedAddOnGroup;
   onClose: () => void;
   onSave: (content: EditablePricingContent) => void;
 };
 
-export type PricingEditorTab = "areas" | "services" | "schools" | "scenes" | "packages" | "addons";
+export type PricingEditorTab = "areas" | "services" | "schools" | "scenes" | "packages" | "addons" | "flow" | "copy";
 export type PackageScope = "graduation" | "registry" | "idPhoto" | "studio";
-export type AddOnTarget = "graduation" | "registry" | "idPhoto";
+export type AddOnTarget = "graduation" | "graduationStudio" | "registry" | "idPhoto";
 type NormalizedAddOnGroup = "clothing" | "props" | "makeup";
 type AddOnOption = GraduationAddOn | RegistryAddOn | IdPhotoAddOn;
+type PublishableItem = {
+  isAvailable?: boolean;
+  isVisible?: boolean;
+};
+type PublishableItemUpdate = Partial<PublishableItem>;
 
 const serviceKindOptions: Array<{ id: ServiceKind; zh: string; en: string }> = [
   { id: "graduation", zh: "毕业照流程", en: "Graduation flow" },
@@ -52,6 +63,34 @@ const addOnGroupLabels: Record<NormalizedAddOnGroup, { zh: string; en: string }>
   clothing: { zh: "服装", en: "Clothing" },
   props: { zh: "道具", en: "Props" },
   makeup: { zh: "妆造", en: "Makeup" }
+};
+
+const pricingFlowKindLabels: Record<PricingFlowKind, { zh: string; en: string }> = {
+  graduation: { zh: "毕业照流程", en: "Graduation flow" },
+  registry: { zh: "注册结婚流程", en: "Registry flow" },
+  idPhoto: { zh: "证件照流程", en: "ID photo flow" }
+};
+
+const pricingFlowSectionLabels: Record<PricingFlowSectionKey, { zh: string; en: string }> = {
+  areas: { zh: "服务地区", en: "Service areas" },
+  services: { zh: "服务类型", en: "Service types" },
+  schools: { zh: "学校", en: "Schools" },
+  scenes: { zh: "场景", en: "Scenes" },
+  studioPackage: { zh: "棚拍套餐", en: "Studio package" },
+  graduationPackage: { zh: "毕业照套餐", en: "Graduation packages" },
+  registryPackage: { zh: "注册结婚套餐", en: "Registry packages" },
+  idPhotoPackage: { zh: "证件照套餐", en: "ID photo package" },
+  registryExtraLocations: { zh: "额外地点", en: "Extra locations" },
+  addOnsIntro: { zh: "加购项说明", en: "Add-on introduction" },
+  clothing: { zh: "毕业照服装", en: "Graduation clothing" },
+  props: { zh: "毕业照道具", en: "Graduation props" },
+  makeup: { zh: "毕业照妆造", en: "Graduation styling" },
+  registryStyling: { zh: "注册结婚妆造", en: "Registry styling" },
+  registryProps: { zh: "注册结婚道具", en: "Registry props" },
+  registryClothing: { zh: "注册结婚服装", en: "Registry clothing" },
+  idPhotoClothing: { zh: "证件照服装", en: "ID photo clothing" },
+  idPhotoStyling: { zh: "证件照妆造", en: "ID photo styling" },
+  idPhotoProps: { zh: "证件照道具", en: "ID photo props" }
 };
 
 function label(language: Language, zh: string, en: string) {
@@ -107,18 +146,62 @@ function createPackage(sceneTypeId: string): GraduationPackage {
     details: {
       zh: [""],
       en: [""]
-    }
+    },
+    isAvailable: false,
+    isVisible: true
   };
 }
 
-function createAddOn(): AddOnOption {
+function createAddOn(includePreview = true): AddOnOption {
   return {
     id: makeId("addon"),
     name: createLocalizedName("新加购项", "New Add-on"),
     priceAud: 0,
-    description: createLocalizedName("", ""),
-    previewImage: cloneEditableContent(placeholderImage)
+    description: { zh: [], en: [] },
+    ...(includePreview ? { previewImage: cloneEditableContent(placeholderImage) } : {}),
+    isAvailable: false,
+    isVisible: true
   };
+}
+
+function PublishControls({
+  language,
+  item,
+  onChange
+}: {
+  language: Language;
+  item: PublishableItem;
+  onChange: (updates: PublishableItemUpdate) => void;
+}) {
+  const isAvailable = item.isAvailable !== false;
+  const isVisible = item.isVisible !== false;
+
+  return (
+    <div className="admin-publish-controls">
+      <label className="admin-check-field">
+        <input
+          type="checkbox"
+          checked={isAvailable}
+          disabled={!isVisible}
+          onChange={(event) => onChange({ isAvailable: event.target.checked })}
+        />
+        <span>{label(language, "上架", "Listed")}</span>
+      </label>
+      <label className="admin-check-field">
+        <input
+          type="checkbox"
+          checked={!isVisible}
+          onChange={(event) =>
+            onChange({
+              isVisible: !event.target.checked,
+              isAvailable: event.target.checked ? false : isAvailable
+            })
+          }
+        />
+        <span>{label(language, "隐藏", "Hidden")}</span>
+      </label>
+    </div>
+  );
 }
 
 const allPricingTabs: Array<[PricingEditorTab, { zh: string; en: string }]> = [
@@ -127,7 +210,9 @@ const allPricingTabs: Array<[PricingEditorTab, { zh: string; en: string }]> = [
   ["schools", { zh: "学校", en: "Schools" }],
   ["scenes", { zh: "场景", en: "Scenes" }],
   ["packages", { zh: "套餐", en: "Packages" }],
-  ["addons", { zh: "加购项", en: "Add-ons" }]
+  ["addons", { zh: "加购项", en: "Add-ons" }],
+  ["flow", { zh: "流程栏", en: "Flow" }],
+  ["copy", { zh: "文案", en: "Copy" }]
 ];
 
 function getExistingId<T extends { id: string }>(items: T[], preferredId: string | undefined) {
@@ -140,10 +225,13 @@ export function PricingEditor({
   initialTab = "areas",
   visibleTabs,
   initialAreaId,
+  initialServiceTypeId,
   initialSchoolId,
   initialSceneId,
   initialPackageScope = "graduation",
+  initialPackageId,
   initialAddOnTarget = "graduation",
+  initialAddOnGroup = "clothing",
   onClose,
   onSave
 }: PricingEditorProps) {
@@ -159,10 +247,15 @@ export function PricingEditor({
     zh: "价格配置",
     en: "Pricing"
   };
+  const [selectedFlowKind, setSelectedFlowKind] = useState<PricingFlowKind>("graduation");
   const [selectedAreaId, setSelectedAreaId] = useState(
     getExistingId(draft.serviceAreas, initialAreaId)
   );
+  const [focusedServiceTypeId] = useState(initialServiceTypeId ?? "");
   const [selectedSchoolId, setSelectedSchoolId] = useState(
+    getExistingId(draft.graduationSchools, initialSchoolId)
+  );
+  const [selectedAddOnSchoolId, setSelectedAddOnSchoolId] = useState(
     getExistingId(draft.graduationSchools, initialSchoolId)
   );
   const [selectedSceneId, setSelectedSceneId] = useState(
@@ -173,8 +266,9 @@ export function PricingEditor({
       : draft.sceneTypesBySchool[getExistingId(draft.graduationSchools, initialSchoolId)]?.[0]?.id ?? ""
   );
   const [packageScope, setPackageScope] = useState<PackageScope>(initialPackageScope);
+  const [focusedPackageId] = useState(initialPackageId ?? "");
   const [addOnTarget, setAddOnTarget] = useState<AddOnTarget>(initialAddOnTarget);
-  const [addOnGroup, setAddOnGroup] = useState<NormalizedAddOnGroup>("clothing");
+  const [addOnGroup, setAddOnGroup] = useState<NormalizedAddOnGroup>(initialAddOnGroup);
 
   const selectedSchoolScenes = selectedSchoolId ? draft.sceneTypesBySchool[selectedSchoolId] ?? [] : [];
   const selectedAreaServiceTypes = selectedAreaId ? draft.serviceTypesByArea[selectedAreaId] ?? [] : [];
@@ -183,6 +277,9 @@ export function PricingEditor({
   const isContextualServiceEditor =
     visibleTabs?.length === 1 && visibleTabs[0] === "services" && Boolean(initialAreaId);
   const selectedArea = draft.serviceAreas.find((area) => area.id === selectedAreaId);
+  const selectedFlowLayout =
+    draft.pricingFlowLayouts?.[selectedFlowKind] ?? defaultPricingFlowLayouts[selectedFlowKind];
+  const allFlowSections = defaultPricingFlowLayouts[selectedFlowKind].order;
 
   const updateAreaName = (areaId: string, field: Language, value: string) => {
     setDraft((currentDraft) => ({
@@ -193,13 +290,102 @@ export function PricingEditor({
     }));
   };
 
+  const moveFlowSection = (sectionIndex: number, direction: -1 | 1) => {
+    setDraft((currentDraft) => {
+      const layout = currentDraft.pricingFlowLayouts[selectedFlowKind] ?? defaultPricingFlowLayouts[selectedFlowKind];
+      const nextIndex = sectionIndex + direction;
+      if (nextIndex < 0 || nextIndex >= layout.order.length) {
+        return currentDraft;
+      }
+
+      const order = [...layout.order];
+      [order[sectionIndex], order[nextIndex]] = [order[nextIndex], order[sectionIndex]];
+      return {
+        ...currentDraft,
+        pricingFlowLayouts: {
+          ...currentDraft.pricingFlowLayouts,
+          [selectedFlowKind]: { ...layout, order }
+        }
+      };
+    });
+  };
+
+  const setFlowSectionHidden = (sectionKey: PricingFlowSectionKey, hidden: boolean) => {
+    setDraft((currentDraft) => {
+      const layout = currentDraft.pricingFlowLayouts[selectedFlowKind] ?? defaultPricingFlowLayouts[selectedFlowKind];
+      return {
+        ...currentDraft,
+        pricingFlowLayouts: {
+          ...currentDraft.pricingFlowLayouts,
+          [selectedFlowKind]: {
+            ...layout,
+            hidden: hidden
+              ? layout.hidden.includes(sectionKey)
+                ? layout.hidden
+                : [...layout.hidden, sectionKey]
+              : layout.hidden.filter((hiddenSection) => hiddenSection !== sectionKey)
+          }
+        }
+      };
+    });
+  };
+
+  const restoreFlowSection = (sectionKey: PricingFlowSectionKey) => {
+    setDraft((currentDraft) => {
+      const layout = currentDraft.pricingFlowLayouts[selectedFlowKind] ?? defaultPricingFlowLayouts[selectedFlowKind];
+      return {
+        ...currentDraft,
+        pricingFlowLayouts: {
+          ...currentDraft.pricingFlowLayouts,
+          [selectedFlowKind]: {
+            order: layout.order.includes(sectionKey) ? layout.order : [...layout.order, sectionKey],
+            hidden: layout.hidden.filter((hiddenSection) => hiddenSection !== sectionKey)
+          }
+        }
+      };
+    });
+  };
+
+  const updateArea = (areaId: string, updater: (area: (typeof draft.serviceAreas)[number]) => (typeof draft.serviceAreas)[number]) => {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      serviceAreas: currentDraft.serviceAreas.map((area) =>
+        area.id === areaId ? updater(area) : area
+      )
+    }));
+  };
+
+  const moveArea = (areaId: string, direction: -1 | 1) => {
+    setDraft((currentDraft) => {
+      const areaIndex = currentDraft.serviceAreas.findIndex((area) => area.id === areaId);
+      const nextIndex = areaIndex + direction;
+
+      if (areaIndex < 0 || nextIndex < 0 || nextIndex >= currentDraft.serviceAreas.length) {
+        return currentDraft;
+      }
+
+      const serviceAreas = [...currentDraft.serviceAreas];
+      [serviceAreas[areaIndex], serviceAreas[nextIndex]] = [serviceAreas[nextIndex], serviceAreas[areaIndex]];
+
+      return {
+        ...currentDraft,
+        serviceAreas
+      };
+    });
+  };
+
   const addArea = () => {
     const id = makeId("area");
     setDraft((currentDraft) => ({
       ...currentDraft,
       serviceAreas: [
         ...currentDraft.serviceAreas,
-        { id, name: createLocalizedName("新地区", "New Area") }
+        {
+          id,
+          name: createLocalizedName("新地区", "New Area"),
+          isAvailable: false,
+          isVisible: true
+        }
       ],
       serviceTypesByArea: {
         ...currentDraft.serviceTypesByArea,
@@ -326,17 +512,46 @@ export function PricingEditor({
     });
   };
 
+  const moveSchool = (schoolIndex: number, direction: -1 | 1) => {
+    setDraft((currentDraft) => {
+      const nextIndex = schoolIndex + direction;
+      if (nextIndex < 0 || nextIndex >= currentDraft.graduationSchools.length) {
+        return currentDraft;
+      }
+
+      const graduationSchools = [...currentDraft.graduationSchools];
+      [graduationSchools[schoolIndex], graduationSchools[nextIndex]] = [
+        graduationSchools[nextIndex],
+        graduationSchools[schoolIndex]
+      ];
+      return { ...currentDraft, graduationSchools };
+    });
+  };
+
   const addSchool = () => {
     const id = makeId("school");
     setDraft((currentDraft) => ({
       ...currentDraft,
       graduationSchools: [
         ...currentDraft.graduationSchools,
-        { id, name: createLocalizedName("新学校", "New School") }
+        {
+          id,
+          name: createLocalizedName("新学校", "New School"),
+          isAvailable: false,
+          isVisible: true
+        }
       ],
       sceneTypesBySchool: {
         ...currentDraft.sceneTypesBySchool,
         [id]: []
+      },
+      graduationAddOnsBySchool: {
+        ...currentDraft.graduationAddOnsBySchool,
+        [id]: {
+          clothing: [],
+          props: [],
+          makeup: []
+        }
       }
     }));
     setSelectedSchoolId(id);
@@ -368,15 +583,21 @@ export function PricingEditor({
       sceneIds.forEach((sceneId) => delete nextPackages[sceneId]);
       const nextScenes = { ...currentDraft.sceneTypesBySchool };
       delete nextScenes[schoolId];
+      const nextGraduationAddOnsBySchool = { ...currentDraft.graduationAddOnsBySchool };
+      delete nextGraduationAddOnsBySchool[schoolId];
       const nextSchools = currentDraft.graduationSchools.filter((schoolOption) => schoolOption.id !== schoolId);
       setSelectedSchoolId(nextSchools[0]?.id ?? "");
+      setSelectedAddOnSchoolId((currentAddOnSchoolId) =>
+        currentAddOnSchoolId === schoolId ? nextSchools[0]?.id ?? "" : currentAddOnSchoolId
+      );
       setSelectedSceneId(nextScenes[nextSchools[0]?.id ?? ""]?.[0]?.id ?? "");
 
       return {
         ...currentDraft,
         graduationSchools: nextSchools,
         sceneTypesBySchool: nextScenes,
-        graduationPackages: nextPackages
+        graduationPackages: nextPackages,
+        graduationAddOnsBySchool: nextGraduationAddOnsBySchool
       };
     });
   };
@@ -390,8 +611,13 @@ export function PricingEditor({
     const scene: GraduationSceneType = {
       id,
       name: createLocalizedName("新场景", "New Scene"),
-      description: createLocalizedName("场景描述", "Scene description"),
-      previewImage: cloneEditableContent(placeholderImage)
+      description: {
+        zh: ["场景描述"],
+        en: ["Scene description"]
+      },
+      previewImage: cloneEditableContent(placeholderImage),
+      isAvailable: false,
+      isVisible: true
     };
 
     setDraft((currentDraft) => ({
@@ -460,6 +686,29 @@ export function PricingEditor({
     });
   };
 
+  const moveScene = (sceneIndex: number, direction: -1 | 1) => {
+    if (!selectedSchoolId) {
+      return;
+    }
+
+    setDraft((currentDraft) => {
+      const scenes = [...(currentDraft.sceneTypesBySchool[selectedSchoolId] ?? [])];
+      const nextIndex = sceneIndex + direction;
+      if (nextIndex < 0 || nextIndex >= scenes.length) {
+        return currentDraft;
+      }
+
+      [scenes[sceneIndex], scenes[nextIndex]] = [scenes[nextIndex], scenes[sceneIndex]];
+      return {
+        ...currentDraft,
+        sceneTypesBySchool: {
+          ...currentDraft.sceneTypesBySchool,
+          [selectedSchoolId]: scenes
+        }
+      };
+    });
+  };
+
   const addGraduationPackage = () => {
     if (!selectedSceneId) {
       return;
@@ -517,6 +766,29 @@ export function PricingEditor({
     }));
   };
 
+  const moveGraduationPackage = (packageIndex: number, direction: -1 | 1) => {
+    if (!selectedSceneId) {
+      return;
+    }
+
+    setDraft((currentDraft) => {
+      const packages = [...(currentDraft.graduationPackages[selectedSceneId] ?? [])];
+      const nextIndex = packageIndex + direction;
+      if (nextIndex < 0 || nextIndex >= packages.length) {
+        return currentDraft;
+      }
+
+      [packages[packageIndex], packages[nextIndex]] = [packages[nextIndex], packages[packageIndex]];
+      return {
+        ...currentDraft,
+        graduationPackages: {
+          ...currentDraft.graduationPackages,
+          [selectedSceneId]: packages
+        }
+      };
+    });
+  };
+
   const addRegistryPackage = () => {
     setDraft((currentDraft) => ({
       ...currentDraft,
@@ -526,7 +798,9 @@ export function PricingEditor({
           id: makeId("package"),
           name: createLocalizedName("新套餐", "New Package"),
           priceAud: 0,
-          details: { zh: [""], en: [""] }
+          details: { zh: [""], en: [""] },
+          isAvailable: false,
+          isVisible: true
         }
       ]
     }));
@@ -556,6 +830,22 @@ export function PricingEditor({
     }));
   };
 
+  const moveRegistryPackage = (packageIndex: number, direction: -1 | 1) => {
+    setDraft((currentDraft) => {
+      const nextIndex = packageIndex + direction;
+      if (nextIndex < 0 || nextIndex >= currentDraft.registryPackages.length) {
+        return currentDraft;
+      }
+
+      const registryPackages = [...currentDraft.registryPackages];
+      [registryPackages[packageIndex], registryPackages[nextIndex]] = [
+        registryPackages[nextIndex],
+        registryPackages[packageIndex]
+      ];
+      return { ...currentDraft, registryPackages };
+    });
+  };
+
   const updateFixedPackage = (
     packageKey: "idPhotoPackage" | "graduationStudioPackage",
     updater: (fixedPackage: EditableFixedPackage) => EditableFixedPackage
@@ -566,9 +856,30 @@ export function PricingEditor({
     }));
   };
 
+  const updatePricingCopy = (copyKey: keyof EditablePricingContent["pricingCopy"], field: Language, value: string) => {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      pricingCopy: {
+        ...currentDraft.pricingCopy,
+        [copyKey]: {
+          ...currentDraft.pricingCopy[copyKey],
+          [field]: value
+        }
+      }
+    }));
+  };
+
   const getAddOns = (): AddOnOption[] => {
+    if (addOnTarget === "graduationStudio") {
+      return draft.graduationStudioProps;
+    }
+
     if (addOnTarget === "graduation") {
-      return draft.graduationAddOns[addOnGroup] ?? [];
+      return (
+        draft.graduationAddOnsBySchool[selectedAddOnSchoolId]?.[addOnGroup] ??
+        draft.graduationAddOns[addOnGroup] ??
+        []
+      );
     }
 
     if (addOnTarget === "registry") {
@@ -592,12 +903,26 @@ export function PricingEditor({
 
   const setAddOns = (nextAddOns: AddOnOption[]) => {
     setDraft((currentDraft) => {
+      if (addOnTarget === "graduationStudio") {
+        return {
+          ...currentDraft,
+          graduationStudioProps: nextAddOns as GraduationAddOn[]
+        };
+      }
+
       if (addOnTarget === "graduation") {
         return {
           ...currentDraft,
-          graduationAddOns: {
-            ...currentDraft.graduationAddOns,
-            [addOnGroup]: nextAddOns as GraduationAddOn[]
+          graduationAddOnsBySchool: {
+            ...currentDraft.graduationAddOnsBySchool,
+            [selectedAddOnSchoolId]: {
+              ...(currentDraft.graduationAddOnsBySchool[selectedAddOnSchoolId] ?? {
+                clothing: [],
+                props: [],
+                makeup: []
+              }),
+              [addOnGroup]: nextAddOns as GraduationAddOn[]
+            }
           }
         };
       }
@@ -635,11 +960,23 @@ export function PricingEditor({
   };
 
   const addAddOn = () => {
-    setAddOns([...getAddOns(), createAddOn()]);
+    setAddOns([...getAddOns(), createAddOn(addOnGroup !== "makeup")]);
   };
 
   const updateAddOn = (addOnId: string, updater: (addOn: AddOnOption) => AddOnOption) => {
     setAddOns(getAddOns().map((addOn) => (addOn.id === addOnId ? updater(addOn) : addOn)));
+  };
+
+  const moveAddOn = (addOnIndex: number, direction: -1 | 1) => {
+    const addOns = getAddOns();
+    const nextIndex = addOnIndex + direction;
+    if (nextIndex < 0 || nextIndex >= addOns.length) {
+      return;
+    }
+
+    const nextAddOns = [...addOns];
+    [nextAddOns[addOnIndex], nextAddOns[nextIndex]] = [nextAddOns[nextIndex], nextAddOns[addOnIndex]];
+    setAddOns(nextAddOns);
   };
 
   const deleteAddOn = (addOnId: string) => {
@@ -669,38 +1006,45 @@ export function PricingEditor({
     </>
   );
 
-  const renderPackageDetails = (
+  const renderLocalizedListFields = (
     details: LocalizedList,
-    onChange: (details: LocalizedList) => void
+    onChange: (details: LocalizedList) => void,
+    copy = {
+      title: { zh: "详情条目", en: "Details" },
+      zhHeader: { zh: "中文详情", en: "Chinese detail" },
+      enHeader: { zh: "英文详情", en: "English detail" },
+      zhPlaceholder: { zh: "中文详情", en: "Chinese detail" },
+      enPlaceholder: { zh: "英文详情", en: "English detail" }
+    }
   ) => {
     const detailCount = Math.max(details.zh.length, details.en.length);
 
     return (
       <div className="admin-detail-list">
         <div className="admin-list-heading">
-          <span>{label(language, "详情条目", "Details")}</span>
+          <span>{copy.title[language]}</span>
           <button type="button" onClick={() => onChange(addDetail(details))}>
             <Plus size={15} aria-hidden="true" />
             <span>{label(language, "添加", "Add")}</span>
           </button>
         </div>
         <div className="admin-detail-row admin-detail-row-heading">
-          <span>{label(language, "中文详情", "Chinese detail")}</span>
-          <span>{label(language, "英文详情", "English detail")}</span>
+          <span>{copy.zhHeader[language]}</span>
+          <span>{copy.enHeader[language]}</span>
           <span aria-hidden="true" />
         </div>
         {Array.from({ length: detailCount }).map((_, detailIndex) => (
           <div className="admin-detail-row" key={detailIndex}>
             <input
               value={details.zh[detailIndex] ?? ""}
-              placeholder="中文详情"
+              placeholder={copy.zhPlaceholder[language]}
               onChange={(event) =>
                 onChange(updateLocalizedList(details, "zh", detailIndex, event.target.value))
               }
             />
             <input
               value={details.en[detailIndex] ?? ""}
-              placeholder="English detail"
+              placeholder={copy.enPlaceholder[language]}
               onChange={(event) =>
                 onChange(updateLocalizedList(details, "en", detailIndex, event.target.value))
               }
@@ -717,10 +1061,37 @@ export function PricingEditor({
   const renderPackageCard = (
     packageItem: GraduationPackage | RegistryPackage,
     updatePackage: (updater: (packageItem: any) => any) => void,
-    deletePackage: () => void
+    deletePackage: () => void,
+    movePackage: (direction: -1 | 1) => void,
+    packageIndex: number,
+    packageCount: number,
+    isContextTarget = false
   ) => (
-    <div className="admin-edit-card" key={packageItem.id}>
+    <div
+      className={isContextTarget ? "admin-edit-card is-context-target" : "admin-edit-card"}
+      key={packageItem.id}
+    >
       <div className="admin-card-actions">
+        <button
+          className="admin-card-order-button"
+          type="button"
+          onClick={() => movePackage(-1)}
+          disabled={packageIndex === 0}
+          aria-label={label(language, "上移套餐", "Move package up")}
+          title={label(language, "上移套餐", "Move package up")}
+        >
+          <ArrowUp size={16} aria-hidden="true" />
+        </button>
+        <button
+          className="admin-card-order-button"
+          type="button"
+          onClick={() => movePackage(1)}
+          disabled={packageIndex === packageCount - 1}
+          aria-label={label(language, "下移套餐", "Move package down")}
+          title={label(language, "下移套餐", "Move package down")}
+        >
+          <ArrowDown size={16} aria-hidden="true" />
+        </button>
         <button className="admin-danger-button admin-card-delete-button" type="button" onClick={deletePackage}>
           <Trash2 size={16} aria-hidden="true" />
           <span>{label(language, "删除套餐", "Delete Package")}</span>
@@ -744,8 +1115,13 @@ export function PricingEditor({
             }
           />
         </label>
+        <PublishControls
+          language={language}
+          item={packageItem}
+          onChange={(updates) => updatePackage((currentPackage) => ({ ...currentPackage, ...updates }))}
+        />
       </div>
-      {renderPackageDetails(packageItem.details, (details) =>
+      {renderLocalizedListFields(packageItem.details, (details) =>
         updatePackage((currentPackage) => ({ ...currentPackage, details }))
       )}
     </div>
@@ -777,20 +1153,46 @@ export function PricingEditor({
             }
           />
         </label>
+        <PublishControls
+          language={language}
+          item={fixedPackage}
+          onChange={(updates) => updateFixedPackage(packageKey, (currentPackage) => ({ ...currentPackage, ...updates }))}
+        />
       </div>
-      {renderPackageDetails(fixedPackage.details, (details) =>
+      {renderLocalizedListFields(fixedPackage.details, (details) =>
         updateFixedPackage(packageKey, (currentPackage) => ({ ...currentPackage, details }))
       )}
     </div>
   );
 
-  const renderAddOnFields = (addOn: AddOnOption) => {
+  const renderAddOnFields = (addOn: AddOnOption, addOnIndex: number, addOnCount: number) => {
+    const shouldShowPreview = addOnGroup !== "makeup";
     const previewImage = withImage(addOn.previewImage);
-    const description = addOn.description ?? createLocalizedName("", "");
+    const description = addOn.description ?? { zh: [], en: [] };
 
     return (
       <div className="admin-edit-card" key={addOn.id}>
         <div className="admin-card-actions">
+          <button
+            className="admin-card-order-button"
+            type="button"
+            onClick={() => moveAddOn(addOnIndex, -1)}
+            disabled={addOnIndex === 0}
+            aria-label={label(language, "上移加购项", "Move add-on up")}
+            title={label(language, "上移加购项", "Move add-on up")}
+          >
+            <ArrowUp size={16} aria-hidden="true" />
+          </button>
+          <button
+            className="admin-card-order-button"
+            type="button"
+            onClick={() => moveAddOn(addOnIndex, 1)}
+            disabled={addOnIndex === addOnCount - 1}
+            aria-label={label(language, "下移加购项", "Move add-on down")}
+            title={label(language, "下移加购项", "Move add-on down")}
+          >
+            <ArrowDown size={16} aria-hidden="true" />
+          </button>
           <button
             className="admin-danger-button admin-card-delete-button"
             type="button"
@@ -800,6 +1202,11 @@ export function PricingEditor({
             <span>{label(language, "删除", "Delete")}</span>
           </button>
         </div>
+        {shouldShowPreview && (
+          <div className="admin-add-on-preview" aria-label={previewImage.alt[language]}>
+            <img src={previewImage.src} alt={previewImage.alt[language]} />
+          </div>
+        )}
         <div className="admin-edit-row admin-edit-row-wide">
           {renderLocalizedNameFields(
             addOn.name.zh,
@@ -818,74 +1225,71 @@ export function PricingEditor({
               }
             />
           </label>
+          <PublishControls
+            language={language}
+            item={addOn}
+            onChange={(updates) => updateAddOn(addOn.id, (currentAddOn) => ({ ...currentAddOn, ...updates }))}
+          />
         </div>
+        {renderLocalizedListFields(
+          description,
+          (nextDescription) =>
+            updateAddOn(addOn.id, (currentAddOn) => ({ ...currentAddOn, description: nextDescription })),
+          {
+            title: { zh: "描述条目", en: "Description items" },
+            zhHeader: { zh: "中文描述", en: "Chinese description" },
+            enHeader: { zh: "英文描述", en: "English description" },
+            zhPlaceholder: { zh: "中文描述", en: "Chinese description" },
+            enPlaceholder: { zh: "英文描述", en: "English description" }
+          }
+        )}
         <div className="admin-edit-row admin-edit-row-wide">
-          <label>
-            <span>中文描述</span>
-            <input
-              value={description.zh}
-              onChange={(event) =>
-                updateAddOn(addOn.id, (currentAddOn) => ({
-                  ...currentAddOn,
-                  description: { ...(currentAddOn.description ?? createLocalizedName("", "")), zh: event.target.value }
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>English description</span>
-            <input
-              value={description.en}
-              onChange={(event) =>
-                updateAddOn(addOn.id, (currentAddOn) => ({
-                  ...currentAddOn,
-                  description: { ...(currentAddOn.description ?? createLocalizedName("", "")), en: event.target.value }
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>预览图地址</span>
-            <input
-              value={previewImage.src}
-              onChange={(event) =>
-                updateAddOn(addOn.id, (currentAddOn) => ({
-                  ...currentAddOn,
-                  previewImage: { ...withImage(currentAddOn.previewImage), src: event.target.value || placeholderImage.src }
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>预览图中文 alt</span>
-            <input
-              value={previewImage.alt.zh}
-              onChange={(event) =>
-                updateAddOn(addOn.id, (currentAddOn) => ({
-                  ...currentAddOn,
-                  previewImage: {
-                    ...withImage(currentAddOn.previewImage),
-                    alt: { ...withImage(currentAddOn.previewImage).alt, zh: event.target.value }
+          {shouldShowPreview && (
+            <>
+              <label>
+                <span>预览图地址</span>
+                <input
+                  value={previewImage.src}
+                  onChange={(event) =>
+                    updateAddOn(addOn.id, (currentAddOn) => ({
+                      ...currentAddOn,
+                      previewImage: { ...withImage(currentAddOn.previewImage), src: event.target.value || placeholderImage.src }
+                    }))
                   }
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>Preview English alt</span>
-            <input
-              value={previewImage.alt.en}
-              onChange={(event) =>
-                updateAddOn(addOn.id, (currentAddOn) => ({
-                  ...currentAddOn,
-                  previewImage: {
-                    ...withImage(currentAddOn.previewImage),
-                    alt: { ...withImage(currentAddOn.previewImage).alt, en: event.target.value }
+                />
+              </label>
+              <label>
+                <span>预览图中文 alt</span>
+                <input
+                  value={previewImage.alt.zh}
+                  onChange={(event) =>
+                    updateAddOn(addOn.id, (currentAddOn) => ({
+                      ...currentAddOn,
+                      previewImage: {
+                        ...withImage(currentAddOn.previewImage),
+                        alt: { ...withImage(currentAddOn.previewImage).alt, zh: event.target.value }
+                      }
+                    }))
                   }
-                }))
-              }
-            />
-          </label>
+                />
+              </label>
+              <label>
+                <span>Preview English alt</span>
+                <input
+                  value={previewImage.alt.en}
+                  onChange={(event) =>
+                    updateAddOn(addOn.id, (currentAddOn) => ({
+                      ...currentAddOn,
+                      previewImage: {
+                        ...withImage(currentAddOn.previewImage),
+                        alt: { ...withImage(currentAddOn.previewImage).alt, en: event.target.value }
+                      }
+                    }))
+                  }
+                />
+              </label>
+            </>
+          )}
         </div>
       </div>
     );
@@ -933,8 +1337,31 @@ export function PricingEditor({
           {activeTab === "areas" && (
             <div className="admin-stack">
               {draft.serviceAreas.map((area) => (
-                <div className="admin-edit-card" key={area.id}>
+                <div
+                  className={area.id === selectedAreaId ? "admin-edit-card is-context-target" : "admin-edit-card"}
+                  key={area.id}
+                >
                   <div className="admin-card-actions">
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveArea(area.id, -1)}
+                      disabled={draft.serviceAreas[0]?.id === area.id}
+                      aria-label={label(language, "上移服务地区", "Move area up")}
+                      title={label(language, "上移服务地区", "Move area up")}
+                    >
+                      <ArrowUp size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveArea(area.id, 1)}
+                      disabled={draft.serviceAreas[draft.serviceAreas.length - 1]?.id === area.id}
+                      aria-label={label(language, "下移服务地区", "Move area down")}
+                      title={label(language, "下移服务地区", "Move area down")}
+                    >
+                      <ArrowDown size={16} aria-hidden="true" />
+                    </button>
                     <button
                       className="admin-danger-button admin-card-delete-button"
                       type="button"
@@ -951,6 +1378,11 @@ export function PricingEditor({
                       (value) => updateAreaName(area.id, "zh", value),
                       (value) => updateAreaName(area.id, "en", value)
                     )}
+                    <PublishControls
+                      language={language}
+                      item={area}
+                      onChange={(updates) => updateArea(area.id, (currentArea) => ({ ...currentArea, ...updates }))}
+                    />
                   </div>
                 </div>
               ))}
@@ -984,7 +1416,14 @@ export function PricingEditor({
               </div>
 
               {selectedAreaServiceTypes.map((serviceType, serviceTypeIndex) => (
-                <div className="admin-edit-card" key={serviceType.id}>
+                <div
+                  className={
+                    serviceType.id === focusedServiceTypeId
+                      ? "admin-edit-card is-context-target"
+                      : "admin-edit-card"
+                  }
+                  key={serviceType.id}
+                >
                   <div className="admin-card-actions">
                     <button
                       className="admin-card-order-button"
@@ -1040,19 +1479,18 @@ export function PricingEditor({
                         ))}
                       </select>
                     </label>
-                    <label className="admin-check-field">
-                      <input
-                        type="checkbox"
-                        checked={serviceType.isAvailable}
-                        onChange={(event) =>
-                          updateServiceType(serviceType.id, (currentServiceType) => ({
-                            ...currentServiceType,
-                            isAvailable: event.target.checked
-                          }))
-                        }
-                      />
-                      <span>{label(language, "上架", "Listed")}</span>
-                    </label>
+                    <PublishControls
+                      language={language}
+                      item={serviceType}
+                      onChange={(updates) =>
+                        updateServiceType(serviceType.id, (currentServiceType) => ({
+                          ...currentServiceType,
+                          ...updates,
+                          isAvailable: updates.isAvailable ?? currentServiceType.isAvailable,
+                          isVisible: updates.isVisible ?? currentServiceType.isVisible
+                        }))
+                      }
+                    />
                   </div>
                 </div>
               ))}
@@ -1066,9 +1504,32 @@ export function PricingEditor({
 
           {activeTab === "schools" && (
             <div className="admin-stack">
-              {draft.graduationSchools.map((school) => (
-                <div className="admin-edit-card" key={school.id}>
+              {draft.graduationSchools.map((school, schoolIndex) => (
+                <div
+                  className={school.id === selectedSchoolId ? "admin-edit-card is-context-target" : "admin-edit-card"}
+                  key={school.id}
+                >
                   <div className="admin-card-actions">
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveSchool(schoolIndex, -1)}
+                      disabled={schoolIndex === 0}
+                      aria-label={label(language, "上移学校", "Move school up")}
+                      title={label(language, "上移学校", "Move school up")}
+                    >
+                      <ArrowUp size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveSchool(schoolIndex, 1)}
+                      disabled={schoolIndex === draft.graduationSchools.length - 1}
+                      aria-label={label(language, "下移学校", "Move school down")}
+                      title={label(language, "下移学校", "Move school down")}
+                    >
+                      <ArrowDown size={16} aria-hidden="true" />
+                    </button>
                     <button
                       className="admin-danger-button admin-card-delete-button"
                       type="button"
@@ -1085,6 +1546,20 @@ export function PricingEditor({
                       (value) => updateSchoolName(school.id, "zh", value),
                       (value) => updateSchoolName(school.id, "en", value)
                     )}
+                    <PublishControls
+                      language={language}
+                      item={school}
+                      onChange={(updates) =>
+                        setDraft((currentDraft) => ({
+                          ...currentDraft,
+                          graduationSchools: currentDraft.graduationSchools.map((currentSchool) =>
+                            currentSchool.id === school.id
+                              ? { ...currentSchool, ...updates }
+                              : currentSchool
+                          )
+                        }))
+                      }
+                    />
                   </div>
                 </div>
               ))}
@@ -1116,9 +1591,32 @@ export function PricingEditor({
                 </label>
               </div>
 
-              {selectedSchoolScenes.map((scene) => (
-                <div className="admin-edit-card" key={scene.id}>
+              {selectedSchoolScenes.map((scene, sceneIndex) => (
+                <div
+                  className={scene.id === selectedSceneId ? "admin-edit-card is-context-target" : "admin-edit-card"}
+                  key={scene.id}
+                >
                   <div className="admin-card-actions">
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveScene(sceneIndex, -1)}
+                      disabled={sceneIndex === 0}
+                      aria-label={label(language, "上移场景", "Move scene up")}
+                      title={label(language, "上移场景", "Move scene up")}
+                    >
+                      <ArrowUp size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      className="admin-card-order-button"
+                      type="button"
+                      onClick={() => moveScene(sceneIndex, 1)}
+                      disabled={sceneIndex === selectedSchoolScenes.length - 1}
+                      aria-label={label(language, "下移场景", "Move scene down")}
+                      title={label(language, "下移场景", "Move scene down")}
+                    >
+                      <ArrowDown size={16} aria-hidden="true" />
+                    </button>
                     <button
                       className="admin-danger-button admin-card-delete-button"
                       type="button"
@@ -1128,6 +1626,15 @@ export function PricingEditor({
                       <span>{label(language, "删除场景", "Delete Scene")}</span>
                     </button>
                   </div>
+                  <div
+                    className="admin-add-on-preview"
+                    aria-label={withImage(scene.previewImage).alt[language]}
+                  >
+                    <img
+                      src={withImage(scene.previewImage).src}
+                      alt={withImage(scene.previewImage).alt[language]}
+                    />
+                  </div>
                   <div className="admin-edit-row admin-edit-row-wide">
                     {renderLocalizedNameFields(
                       scene.name.zh,
@@ -1136,31 +1643,18 @@ export function PricingEditor({
                       (value) => updateScene(scene.id, (currentScene) => ({ ...currentScene, name: { ...currentScene.name, en: value } }))
                     )}
                   </div>
+                  {renderLocalizedListFields(
+                    scene.description,
+                    (description) => updateScene(scene.id, (currentScene) => ({ ...currentScene, description })),
+                    {
+                      title: { zh: "描述条目", en: "Description items" },
+                      zhHeader: { zh: "中文描述", en: "Chinese description" },
+                      enHeader: { zh: "英文描述", en: "English description" },
+                      zhPlaceholder: { zh: "中文描述", en: "Chinese description" },
+                      enPlaceholder: { zh: "英文描述", en: "English description" }
+                    }
+                  )}
                   <div className="admin-edit-row admin-edit-row-wide">
-                    <label>
-                      <span>中文描述</span>
-                      <input
-                        value={scene.description.zh}
-                        onChange={(event) =>
-                          updateScene(scene.id, (currentScene) => ({
-                            ...currentScene,
-                            description: { ...currentScene.description, zh: event.target.value }
-                          }))
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>English description</span>
-                      <input
-                        value={scene.description.en}
-                        onChange={(event) =>
-                          updateScene(scene.id, (currentScene) => ({
-                            ...currentScene,
-                            description: { ...currentScene.description, en: event.target.value }
-                          }))
-                        }
-                      />
-                    </label>
                     <label>
                       <span>预览图地址</span>
                       <input
@@ -1203,6 +1697,13 @@ export function PricingEditor({
                         }
                       />
                     </label>
+                    <PublishControls
+                      language={language}
+                      item={scene}
+                      onChange={(updates) =>
+                        updateScene(scene.id, (currentScene) => ({ ...currentScene, ...updates }))
+                      }
+                    />
                   </div>
                 </div>
               ))}
@@ -1273,11 +1774,15 @@ export function PricingEditor({
                     renderFixedPackage(draft.graduationStudioPackage, "graduationStudioPackage")
                   ) : (
                     <>
-                      {selectedGraduationPackages.map((graduationPackage) =>
+                      {selectedGraduationPackages.map((graduationPackage, packageIndex) =>
                         renderPackageCard(
                           graduationPackage,
                           (updater) => updateGraduationPackage(graduationPackage.id, updater),
-                          () => deleteGraduationPackage(graduationPackage.id)
+                          () => deleteGraduationPackage(graduationPackage.id),
+                          (direction) => moveGraduationPackage(packageIndex, direction),
+                          packageIndex,
+                          selectedGraduationPackages.length,
+                          graduationPackage.id === focusedPackageId
                         )
                       )}
                       <button className="admin-add-button" type="button" onClick={addGraduationPackage} disabled={!selectedSceneId}>
@@ -1291,11 +1796,15 @@ export function PricingEditor({
 
               {packageScope === "registry" && (
                 <>
-                  {draft.registryPackages.map((registryPackage) =>
+                  {draft.registryPackages.map((registryPackage, packageIndex) =>
                     renderPackageCard(
                       registryPackage,
                       (updater) => updateRegistryPackage(registryPackage.id, updater),
-                      () => deleteRegistryPackage(registryPackage.id)
+                      () => deleteRegistryPackage(registryPackage.id),
+                      (direction) => moveRegistryPackage(packageIndex, direction),
+                      packageIndex,
+                      draft.registryPackages.length,
+                      registryPackage.id === focusedPackageId
                     )
                   )}
                   <button className="admin-add-button" type="button" onClick={addRegistryPackage}>
@@ -1315,15 +1824,44 @@ export function PricingEditor({
               <div className="admin-toolbar">
                 <label className="admin-field">
                   <span>{label(language, "服务", "Service")}</span>
-                  <select value={addOnTarget} onChange={(event) => setAddOnTarget(event.target.value as AddOnTarget)}>
+                  <select
+                    value={addOnTarget}
+                    onChange={(event) => {
+                      const nextTarget = event.target.value as AddOnTarget;
+                      setAddOnTarget(nextTarget);
+                      if (nextTarget === "graduationStudio") {
+                        setAddOnGroup("props");
+                      }
+                    }}
+                  >
                     <option value="graduation">{label(language, "毕业照", "Graduation")}</option>
+                    <option value="graduationStudio">{label(language, "毕业照棚拍", "Graduation Studio")}</option>
                     <option value="registry">{label(language, "注册结婚", "Registry")}</option>
                     <option value="idPhoto">{label(language, "证件照", "ID Photo")}</option>
                   </select>
                 </label>
+                {addOnTarget === "graduation" && (
+                  <label className="admin-field">
+                    <span>{label(language, "所属学校", "School")}</span>
+                    <select
+                      value={selectedAddOnSchoolId}
+                      onChange={(event) => setSelectedAddOnSchoolId(event.target.value)}
+                    >
+                      {draft.graduationSchools.map((school) => (
+                        <option value={school.id} key={school.id}>
+                          {school.name[language]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label className="admin-field">
                   <span>{label(language, "分组", "Group")}</span>
-                  <select value={addOnGroup} onChange={(event) => setAddOnGroup(event.target.value as NormalizedAddOnGroup)}>
+                  <select
+                    value={addOnGroup}
+                    disabled={addOnTarget === "graduationStudio"}
+                    onChange={(event) => setAddOnGroup(event.target.value as NormalizedAddOnGroup)}
+                  >
                     {(["clothing", "props", "makeup"] as NormalizedAddOnGroup[]).map((group) => (
                       <option value={group} key={group}>
                         {addOnGroupLabels[group][language]}
@@ -1333,11 +1871,123 @@ export function PricingEditor({
                 </label>
               </div>
 
-              {getAddOns().map((addOn) => renderAddOnFields(addOn))}
+              {getAddOns().map((addOn, addOnIndex, addOns) =>
+                renderAddOnFields(addOn, addOnIndex, addOns.length)
+              )}
               <button className="admin-add-button" type="button" onClick={addAddOn}>
                 <Plus size={18} aria-hidden="true" />
                 <span>{label(language, "添加加购项", "Add Add-on")}</span>
               </button>
+            </div>
+          )}
+
+          {activeTab === "flow" && (
+            <div className="admin-stack">
+              <label className="admin-field">
+                <span>{label(language, "流程", "Flow")}</span>
+                <select
+                  value={selectedFlowKind}
+                  onChange={(event) => setSelectedFlowKind(event.target.value as PricingFlowKind)}
+                >
+                  {(Object.keys(pricingFlowKindLabels) as PricingFlowKind[]).map((flowKind) => (
+                    <option value={flowKind} key={flowKind}>
+                      {pricingFlowKindLabels[flowKind][language]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {selectedFlowLayout.order.map((sectionKey, sectionIndex) => {
+                const isHidden = selectedFlowLayout.hidden.includes(sectionKey);
+                return (
+                  <div className="admin-edit-card" key={sectionKey}>
+                    <div className="admin-card-actions">
+                      <button
+                        className="admin-card-order-button"
+                        type="button"
+                        onClick={() => moveFlowSection(sectionIndex, -1)}
+                        disabled={sectionIndex === 0}
+                        aria-label={label(language, "上移流程栏", "Move flow section up")}
+                        title={label(language, "上移流程栏", "Move flow section up")}
+                      >
+                        <ArrowUp size={16} aria-hidden="true" />
+                      </button>
+                      <button
+                        className="admin-card-order-button"
+                        type="button"
+                        onClick={() => moveFlowSection(sectionIndex, 1)}
+                        disabled={sectionIndex === selectedFlowLayout.order.length - 1}
+                        aria-label={label(language, "下移流程栏", "Move flow section down")}
+                        title={label(language, "下移流程栏", "Move flow section down")}
+                      >
+                        <ArrowDown size={16} aria-hidden="true" />
+                      </button>
+                      <label className="admin-check-field">
+                        <input
+                          type="checkbox"
+                          checked={!isHidden}
+                          onChange={(event) => setFlowSectionHidden(sectionKey, !event.target.checked)}
+                        />
+                        <span>{label(language, "显示", "Visible")}</span>
+                      </label>
+                    </div>
+                    <strong>{pricingFlowSectionLabels[sectionKey][language]}</strong>
+                  </div>
+                );
+              })}
+
+              {allFlowSections.filter((sectionKey) => !selectedFlowLayout.order.includes(sectionKey)).length > 0 && (
+                <div className="admin-edit-card">
+                  <strong>{label(language, "已移除流程栏", "Removed flow sections")}</strong>
+                  <div className="admin-row-actions">
+                    {allFlowSections
+                      .filter((sectionKey) => !selectedFlowLayout.order.includes(sectionKey))
+                      .map((sectionKey) => (
+                        <button
+                          className="admin-secondary-button"
+                          type="button"
+                          key={sectionKey}
+                          onClick={() => restoreFlowSection(sectionKey)}
+                        >
+                          <Plus size={15} aria-hidden="true" />
+                          {pricingFlowSectionLabels[sectionKey][language]}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "copy" && (
+            <div className="admin-stack">
+              {Object.entries(draft.pricingCopy).map(([copyKey, copyValue]) => (
+                <div className="admin-edit-card" key={copyKey}>
+                  <div className="admin-card-actions">
+                    <strong>{copyKey}</strong>
+                  </div>
+                  <div className="admin-edit-row admin-edit-row-wide">
+                    <label>
+                      <span>中文</span>
+                      <input
+                        value={copyValue.zh}
+                        onChange={(event) =>
+                          updatePricingCopy(copyKey as keyof EditablePricingContent["pricingCopy"], "zh", event.target.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span>English</span>
+                      <input
+                        value={copyValue.en}
+                        onChange={(event) =>
+                          updatePricingCopy(copyKey as keyof EditablePricingContent["pricingCopy"], "en", event.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -18,6 +18,18 @@ type HomePageProps = {
   onNavigatePricing: () => void;
 };
 
+function isGalleryVisible(item: { isVisible?: boolean }) {
+  return item.isVisible !== false;
+}
+
+function isGalleryAvailable(item: { isAvailable?: boolean }) {
+  return item.isAvailable !== false;
+}
+
+function unavailableLabel(language: Language) {
+  return language === "zh" ? "暂未开放" : "Not available yet";
+}
+
 export function HomePage({ language, content, isAdmin, onChange, onNavigatePricing }: HomePageProps) {
   const [selectedGalleryTypeId, setSelectedGalleryTypeId] = useState<GalleryServiceTypeId>("graduation");
   const [expandedStudioAlbumId, setExpandedStudioAlbumId] = useState<StudioModelId | null>(null);
@@ -26,20 +38,30 @@ export function HomePage({ language, content, isAdmin, onChange, onNavigatePrici
   const resumeTimeoutRef = useRef<number | null>(null);
   const isAutoScrollingRef = useRef(true);
   const isStudioGallery = selectedGalleryTypeId === "studio-shoot";
+  const visibleServiceTypes = useMemo(
+    () => content.serviceTypes.filter(isGalleryVisible),
+    [content.serviceTypes]
+  );
+  const visibleStudioAlbums = useMemo(
+    () => content.studioModelGalleries.filter(isGalleryVisible),
+    [content.studioModelGalleries]
+  );
   const expandedStudioAlbum =
-    content.studioModelGalleries.find((studioAlbum) => studioAlbum.id === expandedStudioAlbumId) ?? null;
-  const selectedGalleryImages = content.imagesByServiceType[selectedGalleryTypeId] ?? [];
+    visibleStudioAlbums.find((studioAlbum) => studioAlbum.id === expandedStudioAlbumId) ?? null;
+  const selectedGalleryImages = (content.imagesByServiceType[selectedGalleryTypeId] ?? []).filter(
+    isGalleryVisible
+  );
   const scrollingImages = useMemo(
     () => [...selectedGalleryImages, ...selectedGalleryImages],
     [selectedGalleryImages]
   );
 
   useEffect(() => {
-    if (!content.serviceTypes.some((serviceType) => serviceType.id === selectedGalleryTypeId)) {
-      setSelectedGalleryTypeId(content.serviceTypes[0]?.id ?? "");
+    if (!visibleServiceTypes.some((serviceType) => serviceType.id === selectedGalleryTypeId)) {
+      setSelectedGalleryTypeId(visibleServiceTypes[0]?.id ?? "");
       setExpandedStudioAlbumId(null);
     }
-  }, [content.serviceTypes, selectedGalleryTypeId]);
+  }, [selectedGalleryTypeId, visibleServiceTypes]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -181,13 +203,16 @@ export function HomePage({ language, content, isAdmin, onChange, onNavigatePrici
             role="tablist"
             aria-label={language === "zh" ? "选择作品服务类型" : "Choose gallery service type"}
           >
-            {content.serviceTypes.map((serviceType) => {
+            {visibleServiceTypes.map((serviceType) => {
               const isSelected = selectedGalleryTypeId === serviceType.id;
+              const isAvailable = isGalleryAvailable(serviceType);
 
               return (
                 <button
                   className={
-                    isSelected
+                    !isAvailable
+                      ? "gallery-filter-button is-unavailable"
+                      : isSelected
                       ? "gallery-filter-button is-selected"
                       : "gallery-filter-button"
                   }
@@ -195,6 +220,8 @@ export function HomePage({ language, content, isAdmin, onChange, onNavigatePrici
                   role="tab"
                   key={serviceType.id}
                   onClick={() => selectGalleryType(serviceType.id)}
+                  disabled={!isAvailable}
+                  title={!isAvailable ? unavailableLabel(language) : undefined}
                   aria-selected={isSelected}
                 >
                   <span>{serviceType.name[language]}</span>
@@ -208,24 +235,34 @@ export function HomePage({ language, content, isAdmin, onChange, onNavigatePrici
         {isStudioGallery ? (
           <div className="studio-gallery-view">
             <div className="studio-album-grid" aria-label={homeContent.studioModelLabel[language]}>
-              {content.studioModelGalleries.map((studioAlbum) => {
+              {visibleStudioAlbums.map((studioAlbum) => {
                 const isExpanded = expandedStudioAlbumId === studioAlbum.id;
-                const coverImage = studioAlbum.images[0];
+                const visibleImages = studioAlbum.images.filter(isGalleryVisible);
+                const coverImage = visibleImages[0];
+                const isAvailable = isGalleryAvailable(studioAlbum);
                 const photoCount =
                   language === "zh"
-                    ? `${studioAlbum.images.length} 张`
-                    : `${studioAlbum.images.length} photos`;
+                    ? `${visibleImages.length} 张`
+                    : `${visibleImages.length} photos`;
 
                 return (
                   <button
-                    className={isExpanded ? "studio-album-card is-expanded" : "studio-album-card"}
+                    className={
+                      !isAvailable
+                        ? "studio-album-card is-unavailable"
+                        : isExpanded
+                        ? "studio-album-card is-expanded"
+                        : "studio-album-card"
+                    }
                     type="button"
                     key={studioAlbum.id}
-                    onClick={() => toggleStudioAlbum(studioAlbum.id)}
+                    onClick={() => isAvailable && toggleStudioAlbum(studioAlbum.id)}
+                    disabled={!isAvailable}
+                    title={!isAvailable ? unavailableLabel(language) : undefined}
                     aria-expanded={isExpanded}
                     aria-controls={`${studioAlbum.id}-gallery`}
                   >
-                    {studioAlbum.images.slice(1, 4).map((image, stackIndex) => (
+                    {visibleImages.slice(1, 4).map((image, stackIndex) => (
                       <span
                         className={`studio-album-stack studio-album-stack-${stackIndex + 1}`}
                         key={`${studioAlbum.id}-stack-${stackIndex}`}
@@ -263,8 +300,17 @@ export function HomePage({ language, content, isAdmin, onChange, onNavigatePrici
             <div className="gallery-track" ref={carouselRef}>
               {scrollingImages.length > 0 ? (
                 scrollingImages.map((image, index) => (
-                  <figure className="gallery-item" key={`${image.src}-${index}`}>
+                  <figure
+                    className={
+                      isGalleryAvailable(image) ? "gallery-item" : "gallery-item is-unavailable"
+                    }
+                    key={`${image.src}-${index}`}
+                    title={!isGalleryAvailable(image) ? unavailableLabel(language) : undefined}
+                  >
                     <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                    {!isGalleryAvailable(image) && (
+                      <span className="gallery-unavailable-label">{unavailableLabel(language)}</span>
+                    )}
                   </figure>
                 ))
               ) : (
@@ -316,12 +362,20 @@ export function HomePage({ language, content, isAdmin, onChange, onNavigatePrici
             </div>
 
             <div className="studio-album-modal-grid">
-              {expandedStudioAlbum.images.map((image, imageIndex) => (
+              {expandedStudioAlbum.images.filter(isGalleryVisible).map((image, imageIndex) => (
                 <figure
-                  className="studio-album-modal-photo"
+                  className={
+                    isGalleryAvailable(image)
+                      ? "studio-album-modal-photo"
+                      : "studio-album-modal-photo is-unavailable"
+                  }
                   key={`${expandedStudioAlbum.id}-photo-${imageIndex}`}
+                  title={!isGalleryAvailable(image) ? unavailableLabel(language) : undefined}
                 >
                   <img src={image.src} alt={image.alt[language]} loading="lazy" />
+                  {!isGalleryAvailable(image) && (
+                    <span className="gallery-unavailable-label">{unavailableLabel(language)}</span>
+                  )}
                 </figure>
               ))}
             </div>
