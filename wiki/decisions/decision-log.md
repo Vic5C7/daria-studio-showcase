@@ -1,67 +1,34 @@
-# Decision Log / 决策记录索引
+# Decision Log
+# 决策记录
 
-## Document Purpose / 文档目的
+## ADR-001: Keep prototype and production implementation separate
+## ADR-001：原型与正式实现分离
 
-This document indexes architecture decision records for the DARIA STUDIO platform planning work.
+**Status / 状态:** Accepted / 已接受
 
-本文档索引 DARIA STUDIO 平台规划阶段的架构决策记录。
+The high-fidelity prototype remains in the public showcase repository for demonstrations and visual reference. Production application code belongs in the private platform repository.
+高保真原型保留在公开展示仓库中，用于演示和视觉参考。正式应用代码属于私有平台仓库。
 
-ADR status values:
+## ADR-002: Treat the prototype as a visual and interaction baseline
+## ADR-002：将原型作为视觉和交互基线
 
-ADR 状态值：
+**Status / 状态:** Accepted / 已接受
 
-- Accepted: the decision is confirmed and should guide implementation.
-- Accepted with deferred detail: the main direction is confirmed, but one or more implementation details remain open.
-- Proposed: a recommended direction exists, but it still needs explicit confirmation.
-- Superseded: the decision has been replaced by a later ADR.
+The production frontend should match the approved prototype unless a documented usability, accessibility, security, or technical concern is raised and confirmed.
+正式前端应匹配已确认原型，除非发现并确认了可用性、无障碍、安全或技术问题。
 
-- Accepted：决策已确认，应指导后续实现。
-- Accepted with deferred detail：主要方向已确认，但仍有一个或多个实现细节待定。
-- Proposed：已有推荐方向，但仍需明确确认。
-- Superseded：该决策已被后续 ADR 替代。
+## ADR-003: Make pricing data-driven
+## ADR-003：价格数据驱动
 
-## Architecture Decisions / 架构决策
+**Status / 状态:** Proposed / 拟议
 
-| ADR | Title | Status | Date |
-| --- | --- | --- | --- |
-| [ADR-001](adr-001-frontend-stack.md) | Frontend Stack | Accepted | 2026-08-07 |
-| [ADR-002](adr-002-backend-stack.md) | Backend Stack and Separation | Accepted | 2026-08-07 |
-| [ADR-003](adr-003-production-cloud-platform.md) | Production Cloud Platform | Accepted with deferred detail | 2026-08-07 |
-| [ADR-004](adr-004-database-platform.md) | Database Platform | Accepted with deferred detail | 2026-08-07 |
-| [ADR-005](adr-005-object-storage.md) | Object Storage for Photo Assets | Accepted with deferred detail | 2026-08-07 |
-| [ADR-006](adr-006-localization-data-storage.md) | Localization and Data Storage | Accepted with deferred detail | 2026-08-07 |
-| [ADR-007](adr-007-api-style.md) | API Style | Accepted | 2026-08-07 |
-| [ADR-008](adr-008-authentication-boundary.md) | Authentication Boundary | Accepted | 2026-08-07 |
-| [ADR-009](adr-009-authentication-implementation.md) | Authentication Implementation | Accepted | 2026-08-08 |
+Service areas, service types, packages, add-ons, availability, localized labels, and price rules should be managed as data rather than hard-coded UI branches. The final storage and editing model remains a Sprint 0 decision.
+服务地区、服务类型、套餐、加购项、可用性、双语标签和价格规则应作为数据管理，而不是硬编码在界面分支中。最终存储和编辑模型在第 0 个迭代中确认。
 
-| ADR | 标题 | 状态 | 日期 |
-| --- | --- | --- | --- |
-| [ADR-001](adr-001-frontend-stack.md) | 前端技术栈 | Accepted | 2026-08-07 |
-| [ADR-002](adr-002-backend-stack.md) | 后端技术栈与前后端分离 | Accepted | 2026-08-07 |
-| [ADR-003](adr-003-production-cloud-platform.md) | 生产云平台 | Accepted with deferred detail | 2026-08-07 |
-| [ADR-004](adr-004-database-platform.md) | 数据库平台 | Accepted with deferred detail | 2026-08-07 |
-| [ADR-005](adr-005-object-storage.md) | 照片资产对象存储 | Accepted with deferred detail | 2026-08-07 |
-| [ADR-006](adr-006-localization-data-storage.md) | 多语言与数据存储 | Accepted with deferred detail | 2026-08-07 |
-| [ADR-007](adr-007-api-style.md) | API 风格 | Accepted | 2026-08-07 |
-| [ADR-008](adr-008-authentication-boundary.md) | 认证边界 | Accepted | 2026-08-07 |
-| [ADR-009](adr-009-authentication-implementation.md) | 认证实现方式 | Accepted | 2026-08-08 |
+## ADR-004: Keep price calculation authoritative on the server
+## ADR-004：由服务端负责权威价格计算
 
-## Remaining Decision Work / 剩余决策工作
+**Status / 状态:** Proposed / 拟议
 
-The following details still need later confirmation:
-
-以下细节后续仍需确认：
-
-- Tencent Cloud server product: Lighthouse, CVM, container service, or serverless.
-- Concrete managed PostgreSQL product: TencentDB for PostgreSQL, TDSQL-C for PostgreSQL, or another managed PostgreSQL option.
-- Email delivery provider for account verification and password reset.
-- Exact upload file types and file size limits.
-- Zip package generation strategy.
-- Public content publishing workflow: save-and-publish or draft-review-publish.
-
-- 腾讯云服务器产品：Lighthouse、CVM、容器服务或 Serverless。
-- 具体托管 PostgreSQL 产品：TencentDB for PostgreSQL、TDSQL-C for PostgreSQL，或其他托管 PostgreSQL 方案。
-- 用于账号验证和密码重置的邮件发送服务商。
-- 准确上传文件类型和文件大小限制。
-- 压缩包生成策略。
-- 公开内容发布流程：保存即发布，或草稿-复核-发布。
+The frontend may show an estimate, but the production backend must validate selections and calculate the authoritative amount from a versioned configuration.
+前端可以展示预计价格，但正式后端必须验证选择，并根据版本化配置计算权威金额。
