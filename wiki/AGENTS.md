@@ -17,6 +17,7 @@
 ## Wiki 维护边界
 
 - `user-stories/` 记录用户故事和需求拆分。
+- `requirements/` 记录从原型和已确认业务规则中提取的功能与非功能需求。
 - `acceptance-criteria/` 记录验收标准和可测试预期。
 - `testing/` 记录测试计划和测试用例。
 - `decisions/` 记录重要产品、架构和工作流决策。
