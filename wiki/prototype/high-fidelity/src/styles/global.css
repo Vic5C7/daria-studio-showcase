@@ -2334,6 +2334,96 @@ textarea {
   text-align: right;
 }
 
+.pricing-copy-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 24px auto 0;
+  max-width: 900px;
+  padding: 22px 24px;
+  border: 1px solid rgba(159, 116, 55, 0.24);
+  border-radius: 8px;
+  background: rgba(239, 231, 218, 0.72);
+  box-shadow: 0 18px 46px rgba(30, 28, 26, 0.06);
+}
+
+.pricing-copy-content {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.pricing-copy-eyebrow {
+  margin: 0;
+  color: #9f7437;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pricing-copy-content h2,
+.pricing-copy-content p {
+  margin: 0;
+}
+
+.pricing-copy-content h2 {
+  color: #1e1c1a;
+  font-size: 1.25rem;
+}
+
+.pricing-copy-content > p:last-child {
+  color: #59534c;
+  line-height: 1.5;
+}
+
+.pricing-copy-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.pricing-wechat {
+  display: grid;
+  gap: 3px;
+  min-width: 132px;
+  color: #59534c;
+  font-size: 0.86rem;
+  text-align: right;
+}
+
+.pricing-wechat strong {
+  color: #1e1c1a;
+  font-size: 1rem;
+}
+
+.pricing-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 16px;
+  border: 1px solid #1e1c1a;
+  border-radius: 8px;
+  background: #1e1c1a;
+  color: #ffffff;
+  font-weight: 900;
+  white-space: nowrap;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.pricing-copy-button:hover {
+  border-color: #9f7437;
+  background: #9f7437;
+  transform: translateY(-1px);
+}
+
 .wedding-price {
   color: #1e1c1a;
   font-family: Georgia, "Times New Roman", "Microsoft YaHei", serif;
@@ -2881,6 +2971,16 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .pricing-copy-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pricing-copy-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .service-options,
   .school-options,
   .addon-options,
@@ -3076,6 +3176,19 @@ textarea {
 
   .pricing-layout {
     grid-template-columns: 1fr;
+  }
+
+  .pricing-copy-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pricing-wechat {
+    text-align: left;
+  }
+
+  .pricing-copy-button {
+    width: 100%;
   }
 
   .two-options,

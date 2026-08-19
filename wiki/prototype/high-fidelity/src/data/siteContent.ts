@@ -401,6 +401,34 @@ export const pricingContent = {
   notesMaxReached: {
     zh: "已达到 10 条备注上限。",
     en: "10-note limit reached."
+  },
+  copySelectionEyebrow: {
+    zh: "联系工作室",
+    en: "Contact the studio"
+  },
+  copySelectionTitle: {
+    zh: "复制全部选择信息",
+    en: "Copy all selection details"
+  },
+  copySelectionHelper: {
+    zh: "复制套餐、加购项、备注和预计总价，发送给客服。",
+    en: "Copy your package, add-ons, notes, and estimated total to send to support."
+  },
+  copySelectionButton: {
+    zh: "一键复制全部信息",
+    en: "Copy all details"
+  },
+  copySelectionSuccess: {
+    zh: "已复制全部信息",
+    en: "All details copied"
+  },
+  copySelectionFailure: {
+    zh: "复制失败，请手动复制",
+    en: "Copy failed. Please copy manually."
+  },
+  customerServiceWechat: {
+    zh: "客服微信",
+    en: "WeChat support"
   }
 } satisfies Record<string, LocalizedText>;
 

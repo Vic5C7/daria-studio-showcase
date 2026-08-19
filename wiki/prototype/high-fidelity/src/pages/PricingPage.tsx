@@ -3,6 +3,8 @@ import {
   ArrowLeft,
   ChevronDown,
   BadgePlus,
+  Check,
+  Copy,
   Gift,
   HeartHandshake,
   Images,
@@ -150,6 +152,7 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const [addedFlowSections] = useState<PricingFlowSectionInstance[]>([]);
   const [isAddSectionMenuOpen, setIsAddSectionMenuOpen] = useState(false);
   const [isSpotGalleryOpen, setIsSpotGalleryOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
 
   const {
     serviceAreas,
@@ -168,7 +171,10 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
     pricingCopy
   } = content;
 
-  const pricingContent = pricingCopy ?? defaultPricingContent;
+  const pricingContent = {
+    ...defaultPricingContent,
+    ...(pricingCopy ?? {})
+  };
 
   const graduationAddOns = selectedSchoolId
     ? graduationAddOnsBySchool[selectedSchoolId] ?? sharedGraduationAddOns
@@ -180,6 +186,10 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const visibleServiceAreas = useMemo(
     () => serviceAreas.filter(isContentVisible),
     [serviceAreas]
+  );
+  const selectedArea = useMemo(
+    () => serviceAreas.find((area) => area.id === selectedAreaId),
+    [selectedAreaId, serviceAreas]
   );
   const visibleGraduationSchools = useMemo(
     () => graduationSchools.filter(isContentVisible),
@@ -425,6 +435,156 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
   const totalDisplay = hasConfirmedTotal
     ? formatAud(totalPrice)
     : pricingContent.choosePackageTotal[language];
+
+  const selectedPackageName = isStudioGraduation
+    ? graduationStudioPackage.title[language]
+    : isIdPhotoService
+      ? idPhotoPackage.title[language]
+      : isRegistryService
+        ? selectedRegistryPackage?.name[language]
+        : selectedPackage?.name[language];
+
+  const selectedAddOnGroups = useMemo(() => {
+    const selectedIds = new Set(selectedAddOnIds);
+    const groups: Array<{ label: string; section: AddOnNoteSection; options: AddOnOption[] }> = isGraduationService
+      ? isStudioGraduation
+        ? [
+            { label: pricingContent.makeupLabel[language], section: "makeup", options: graduationAddOns.makeup ?? [] },
+            { label: pricingContent.propsLabel[language], section: "props", options: graduationStudioProps }
+          ]
+        : [
+            { label: pricingContent.clothingLabel[language], section: "clothing", options: graduationAddOns.clothing ?? [] },
+            { label: pricingContent.propsLabel[language], section: "props", options: availablePropsAddOns },
+            { label: pricingContent.makeupLabel[language], section: "makeup", options: graduationAddOns.makeup ?? [] }
+          ]
+      : isRegistryService
+        ? [
+            { label: pricingContent.makeupLabel[language], section: "registryStyling", options: registryAddOns.registryStyling ?? [] },
+            { label: pricingContent.propsLabel[language], section: "registryProps", options: registryAddOns.registryProps ?? [] },
+            { label: pricingContent.clothingLabel[language], section: "registryClothing", options: registryAddOns.registryClothing ?? [] }
+          ]
+        : isIdPhotoService
+          ? [
+              { label: pricingContent.clothingLabel[language], section: "idPhotoClothing", options: idPhotoAddOns.idPhotoClothing ?? [] },
+              { label: pricingContent.makeupLabel[language], section: "idPhotoStyling", options: idPhotoAddOns.idPhotoStyling ?? [] },
+              { label: pricingContent.propsLabel[language], section: "idPhotoProps", options: idPhotoAddOns.idPhotoProps ?? [] }
+            ]
+          : [];
+
+    return groups.map((group) => ({
+      label: group.label,
+      addOns: group.options.filter((addOn) => selectedIds.has(addOn.id)),
+      notes: sectionNotes[group.section]
+    }));
+  }, [
+    availablePropsAddOns,
+    graduationAddOns.clothing,
+    graduationAddOns.makeup,
+    graduationStudioProps,
+    idPhotoAddOns.idPhotoClothing,
+    idPhotoAddOns.idPhotoProps,
+    idPhotoAddOns.idPhotoStyling,
+    isGraduationService,
+    isIdPhotoService,
+    isRegistryService,
+    isStudioGraduation,
+    language,
+    pricingContent,
+    registryAddOns.registryClothing,
+    registryAddOns.registryProps,
+    registryAddOns.registryStyling,
+    selectedAddOnIds,
+    sectionNotes
+  ]);
+
+  const selectionSummary = useMemo(() => {
+    const lines = [
+      "DARIA STUDIO",
+      `${pricingContent.areaLabel[language]}: ${selectedArea?.name[language] ?? "-"}`,
+      `${pricingContent.serviceTypeLabel[language]}: ${selectedServiceType?.name[language] ?? "-"}`
+    ];
+
+    if (selectedSchool) {
+      lines.push(`${pricingContent.schoolLabel[language]}: ${selectedSchool.name[language]}`);
+    }
+
+    if (selectedSceneType) {
+      lines.push(`${pricingContent.sceneTypeLabel[language]}: ${selectedSceneType.name[language]}`);
+      lines.push(`${pricingContent.sceneTypeLabel[language]} ${pricingContent.notesTitle[language]}: ${sectionNotes.schoolScene.join(" | ")}`);
+    }
+
+    if (selectedPackageName) {
+      lines.push(`${pricingContent.packageLabel[language]}: ${selectedPackageName}`);
+      if (isGraduationService) {
+        lines.push(`${pricingContent.packageLabel[language]} ${pricingContent.notesTitle[language]}: ${sectionNotes.package.join(" | ")}`);
+      }
+    }
+
+    if (isRegistryService) {
+      lines.push(
+        `${pricingContent.registryExtraLocationLabel[language]}: ${sectionNotes.registryExtraLocations.join(" | ")}`
+      );
+    }
+
+    selectedAddOnGroups.forEach(({ label, addOns, notes }) => {
+      lines.push(
+        `${label}: ${addOns
+          .map((addOn) => `${addOn.name[language]} (${formatAud(addOn.priceAud)})`)
+          .join(", ")}`
+      );
+      lines.push(`${label} ${pricingContent.notesTitle[language]}: ${notes.join(" | ")}`);
+    });
+
+    lines.push(`${pricingContent.estimatedTotal[language]}: ${totalDisplay}`);
+    lines.push(`${pricingContent.customerServiceWechat[language]}: Moerben2027`);
+
+    return lines.join("\n");
+  }, [
+    language,
+    pricingContent,
+    sectionNotes,
+    selectedAddOnGroups,
+    selectedArea,
+    selectedPackageName,
+    selectedSceneType,
+    selectedSchool,
+    selectedServiceType,
+    totalDisplay
+  ]);
+
+  useEffect(() => {
+    setCopyStatus("idle");
+  }, [selectionSummary]);
+
+  const copySelectionSummary = async () => {
+    if (!hasConfirmedTotal) {
+      return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(selectionSummary);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = selectionSummary;
+        textArea.setAttribute("readonly", "true");
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
+        const didCopy = document.execCommand("copy");
+        textArea.remove();
+
+        if (!didCopy) {
+          throw new Error("Clipboard copy was not available");
+        }
+      }
+
+      setCopyStatus("success");
+    } catch {
+      setCopyStatus("error");
+    }
+  };
 
   const currentFlowKind: PricingFlowKind = isRegistryService
     ? "registry"
@@ -2132,6 +2292,32 @@ export function PricingPage({ language, content, isAdmin, onChange, onNavigateHo
 
         {renderAddFlowSectionControl()}
       </div>
+
+      {hasConfirmedTotal && (
+        <section className="pricing-copy-panel" aria-labelledby="pricing-copy-title">
+          <div className="pricing-copy-content">
+            <p className="pricing-copy-eyebrow">{pricingContent.copySelectionEyebrow[language]}</p>
+            <h2 id="pricing-copy-title">{pricingContent.copySelectionTitle[language]}</h2>
+            <p>{pricingContent.copySelectionHelper[language]}</p>
+          </div>
+          <div className="pricing-copy-actions">
+            <div className="pricing-wechat">
+              <span>{pricingContent.customerServiceWechat[language]}</span>
+              <strong>Moerben2027</strong>
+            </div>
+            <button className="pricing-copy-button" type="button" onClick={copySelectionSummary}>
+              {copyStatus === "success" ? <Check size={18} aria-hidden="true" /> : <Copy size={18} aria-hidden="true" />}
+              <span>
+                {copyStatus === "success"
+                  ? pricingContent.copySelectionSuccess[language]
+                  : copyStatus === "error"
+                    ? pricingContent.copySelectionFailure[language]
+                    : pricingContent.copySelectionButton[language]}
+              </span>
+            </button>
+          </div>
+        </section>
+      )}
 
       {isEditorOpen && (
           <PricingEditor
